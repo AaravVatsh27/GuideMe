@@ -1,0 +1,476 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+enum Class {
+  CLASS_10
+  CLASS_11
+  CLASS_12
+  UG_1
+  UG_2
+  UG_3
+  UG_4
+}
+
+enum Board {
+  CBSE
+  ICSE
+  STATE
+  INTERNATIONAL
+}
+
+enum Stream {
+  SCIENCE_PCM
+  SCIENCE_PCB
+  COMMERCE
+  ARTS
+  ENGINEERING
+  MEDICAL
+  LAW
+  MANAGEMENT
+  UNDECIDED
+}
+
+enum TargetExam {
+  JEE
+  NEET
+  CA_FOUNDATION
+  CLAT
+  GATE
+  CAT
+  GRE
+  GMAT
+  UPSC
+  NDA
+  OTHER
+  UNDECIDED
+}
+
+enum ConfusionType {
+  STREAM_SELECTION
+  EXAM_CHOICE
+  COLLEGE_SELECTION
+  CAREER_DIRECTION
+  SUBJECT_COMBINATION
+  COACHING_SELECTION
+}
+
+enum MentorTier {
+  RISING
+  VERIFIED
+  ELITE
+}
+
+enum SessionType {
+  INTRO
+  PAID
+}
+
+enum SessionStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+}
+
+enum NotificationType {
+  SESSION_BOOKED
+  SESSION_REMINDER
+  SESSION_STARTING
+  SESSION_COMPLETED
+  PAYMENT_RECEIVED
+  PAYOUT_SENT
+  NEW_REVIEW
+  MENTOR_VERIFIED
+  SYSTEM
+}
+
+enum ParentalPressure {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  LINK
+}
+
+model User {
+  id                 String               @id @default(uuid()) @db.Uuid
+  email              String               @unique
+  phone              String?              @unique
+  name               String
+  image              String?
+  role               Role                 @default(STUDENT)
+  emailVerified      Boolean              @default(false)
+  phoneVerified      Boolean              @default(false)
+  isActive           Boolean              @default(true)
+  deletedAt          DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  lastActiveAt       DateTime?
+  onboardingComplete Boolean              @default(false)
+  onboardingStep     Int                  @default(0)
+  studentProfile     StudentProfile?
+  mentorProfile      MentorProfile?
+  studentSessions    Session[]            @relation("StudentSessions")
+  mentorSessions     Session[]            @relation("MentorSessions")
+  cancelledSessions  Session[]            @relation("CancelledBy")
+  reviewsWritten     Review[]             @relation("ReviewStudent")
+  reviewsReceived    Review[]             @relation("ReviewMentor")
+  payments           Payment[]
+  payouts            Payout[]             @relation("MentorPayouts")
+  availabilities     Availability[]       @relation("MentorAvailabilities")
+  notifications      Notification[]
+  sentMessages       Message[]            @relation("MessageSender")
+  receivedMessages   Message[]            @relation("MessageReceiver")
+  savedMentors       SavedMentor[]        @relation("SavedByStudent")
+  savedByStudents    SavedMentor[]        @relation("SavedMentorTarget")
+  sessionNotes       SessionNote[]
+  mentorVerification MentorVerification?  @relation("MentorVerificationTarget")
+  reviewedVerifiers  MentorVerification[] @relation("VerificationReviewedBy")
+  auditLogs          AuditLog[]
+
+  @@index([role, isActive])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@index([lastActiveAt])
+  @@index([onboardingComplete, onboardingStep])
+}
+
+model StudentProfile {
+  userId             String            @id @db.Uuid
+  class              Class
+  board              Board
+  stream             Stream
+  targetExam         TargetExam
+  confusionType      ConfusionType
+  city               String?
+  state              String?
+  languagePreference String?
+  parentalPressure   ParentalPressure
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([class, board, stream])
+  @@index([targetExam, confusionType])
+  @@index([city, state])
+  @@index([languagePreference])
+}
+
+model MentorProfile {
+  userId            String       @id @db.Uuid
+  username          String       @unique
+  college           String
+  degree            String
+  branch            String
+  yearOfStudy       Int
+  tier              MentorTier   @default(RISING)
+  bio               String       @db.Text
+  headline          String
+  examsCleared      String[]     @default([])
+  specialisations   String[]     @default([])
+  priceMin          Int
+  priceMax          Int
+  isAvailable       Boolean      @default(true)
+  isVerified        Boolean      @default(false)
+  isActive          Boolean      @default(true)
+  totalSessions     Int          @default(0)
+  avgRating         Float        @default(0)
+  totalReviews      Int          @default(0)
+  responseRate      Float        @default(0)
+  linkedinUrl       String?
+  introVideoUrl     String?
+  onboardingStep    Int          @default(0)
+  profileViews      Int          @default(0)
+  lastProfileUpdate DateTime     @default(now())
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tier, isAvailable, isActive])
+  @@index([college, degree, branch])
+  @@index([avgRating, totalReviews])
+  @@index([profileViews])
+  @@index([lastProfileUpdate])
+}
+
+model Session {
+  id                 String         @id @default(uuid()) @db.Uuid
+  studentId          String         @db.Uuid
+  mentorId           String         @db.Uuid
+  type               SessionType
+  status             SessionStatus  @default(SCHEDULED)
+  scheduledAt        DateTime
+  startedAt          DateTime?
+  endedAt            DateTime?
+  durationMinutes    Int
+  price              Int
+  platformCut        Int
+  mentorEarning      Int
+  meetingLink        String?
+  meetingRoomId      String?
+  cancelledBy        String?        @db.Uuid
+  cancellationReason String?        @db.Text
+  cancelledAt        DateTime?
+  studentJoined      Boolean        @default(false)
+  mentorJoined       Boolean        @default(false)
+  studentJoinedAt    DateTime?
+  mentorJoinedAt     DateTime?
+  aiSummary          String?        @db.Text
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  student            User           @relation("StudentSessions", fields: [studentId], references: [id], onDelete: Cascade)
+  mentor             User           @relation("MentorSessions", fields: [mentorId], references: [id], onDelete: Cascade)
+  cancelledByUser    User?          @relation("CancelledBy", fields: [cancelledBy], references: [id], onDelete: SetNull)
+  review             Review?
+  payment            Payment?
+  payout             Payout?
+  booking            Booking?
+  messages           Message[]
+  notes              SessionNote[]
+
+  @@index([studentId])
+  @@index([mentorId])
+  @@index([cancelledBy])
+  @@index([status, scheduledAt])
+  @@index([type, scheduledAt])
+  @@index([studentId, scheduledAt])
+  @@index([mentorId, scheduledAt])
+  @@index([createdAt])
+}
+
+model Review {
+  id          String   @id @default(uuid()) @db.Uuid
+  sessionId   String   @unique @db.Uuid
+  studentId   String   @db.Uuid
+  mentorId    String   @db.Uuid
+  rating      Int
+  reviewText  String?  @db.Text
+  tags        String[] @default([])
+  wouldRebook Boolean
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student     User     @relation("ReviewStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  mentor      User     @relation("ReviewMentor", fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([mentorId])
+  @@index([mentorId, rating])
+  @@index([isPublic, createdAt])
+  @@index([createdAt])
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  sessionId         String        @unique @db.Uuid
+  userId            String        @db.Uuid
+  razorpayOrderId   String        @unique
+  razorpayPaymentId String?       @unique
+  amount            Int
+  currency          String        @default("INR")
+  status            PaymentStatus @default(PENDING)
+  refundId          String?
+  refundAmount      Int?
+  refundStatus      PaymentStatus?
+  paidAt            DateTime?
+  refundedAt        DateTime?
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+  session           Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status, createdAt])
+  @@index([paidAt])
+  @@index([refundedAt])
+}
+
+model Payout {
+  id            String       @id @default(uuid()) @db.Uuid
+  mentorId      String       @db.Uuid
+  sessionId     String       @unique @db.Uuid
+  amount        Int
+  status        PayoutStatus @default(PENDING)
+  upiId         String?
+  transactionId String?
+  failureReason String?      @db.Text
+  scheduledAt   DateTime?
+  processedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  mentor        User         @relation("MentorPayouts", fields: [mentorId], references: [id], onDelete: Cascade)
+  session       Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([mentorId])
+  @@index([status, scheduledAt])
+  @@index([processedAt])
+  @@index([createdAt])
+}
+
+model Availability {
+  id           String    @id @default(uuid()) @db.Uuid
+  mentorId     String    @db.Uuid
+  dayOfWeek    Int
+  startTime    String
+  endTime      String
+  isRecurring  Boolean   @default(true)
+  specificDate DateTime? @db.Date
+  timezone     String
+  isActive     Boolean   @default(true)
+  mentor       User      @relation("MentorAvailabilities", fields: [mentorId], references: [id], onDelete: Cascade)
+  bookings     Booking[]
+
+  @@index([mentorId])
+  @@index([mentorId, dayOfWeek, isActive])
+  @@index([mentorId, specificDate])
+  @@index([specificDate])
+}
+
+model Booking {
+  id             String       @id @default(uuid()) @db.Uuid
+  availabilityId String       @db.Uuid
+  sessionId      String       @unique @db.Uuid
+  bookedAt       DateTime     @default(now())
+  expiresAt      DateTime?
+  availability   Availability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+  session        Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([availabilityId])
+  @@index([bookedAt])
+  @@index([expiresAt])
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  title     String
+  body      String           @db.Text
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  link      String?
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead, createdAt])
+  @@index([type, createdAt])
+}
+
+model Message {
+  id          String      @id @default(uuid()) @db.Uuid
+  sessionId   String      @db.Uuid
+  senderId    String      @db.Uuid
+  receiverId  String      @db.Uuid
+  content     String      @db.Text
+  messageType MessageType @default(TEXT)
+  fileUrl     String?
+  isRead      Boolean     @default(false)
+  readAt      DateTime?
+  createdAt   DateTime    @default(now())
+  session     Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender      User        @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User        @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([receiverId, isRead, createdAt])
+  @@index([sessionId, createdAt])
+}
+
+model SavedMentor {
+  id        String   @id @default(uuid()) @db.Uuid
+  studentId String   @db.Uuid
+  mentorId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  student   User     @relation("SavedByStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  mentor    User     @relation("SavedMentorTarget", fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, mentorId])
+  @@index([studentId])
+  @@index([mentorId])
+  @@index([createdAt])
+}
+
+model SessionNote {
+  id        String   @id @default(uuid()) @db.Uuid
+  sessionId String   @db.Uuid
+  authorId  String   @db.Uuid
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model MentorVerification {
+  id              String             @id @default(uuid()) @db.Uuid
+  mentorId        String             @unique @db.Uuid
+  collegeIdUrl    String
+  status          VerificationStatus @default(PENDING)
+  reviewedBy      String?            @db.Uuid
+  reviewedAt      DateTime?
+  rejectionReason String?            @db.Text
+  submittedAt     DateTime           @default(now())
+  mentor          User               @relation("MentorVerificationTarget", fields: [mentorId], references: [id], onDelete: Cascade)
+  reviewer        User?              @relation("VerificationReviewedBy", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([status, submittedAt])
+  @@index([reviewedBy])
+  @@index([reviewedAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
