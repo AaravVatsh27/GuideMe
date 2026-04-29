@@ -204,6 +204,99 @@ export async function sendSessionReminder(
   );
 }
 
+export async function sendSessionCompletionEmails(
+  session: EmailSession,
+  student: EmailUser,
+  mentor: EmailUser,
+  summary: string,
+) {
+  return sendEmail(
+    [student.email, mentor.email],
+    "Your GuideMe session is complete",
+    buildEmailShell({
+      preview: "Your mentoring session has been completed.",
+      title: "Session completed",
+      body: [
+        `${student.name} and ${mentor.name}, your ${session.durationMinutes}-minute session is now marked complete.`,
+        `Session ID: ${session.id}`,
+        `Summary: ${summary}`,
+      ],
+      cta: session.meetingLink
+        ? {
+            label: "Open session room",
+            href: session.meetingLink,
+            background: "#0f766e",
+            color: "#f8fafc",
+          }
+        : undefined,
+    }),
+  );
+}
+
+export async function sendReviewRequestEmail(
+  session: EmailSession,
+  student: EmailUser,
+  mentor: EmailUser,
+  reviewLink: string,
+) {
+  return sendEmail(
+    student.email,
+    "Tell us how your GuideMe session went",
+    buildEmailShell({
+      preview: "Leave a review for your mentor.",
+      title: "Share your feedback",
+      body: [
+        `${student.name}, your session with ${mentor.name} has wrapped up.`,
+        "A quick review helps us keep mentor quality high and gives other students better context.",
+      ],
+      cta: {
+        label: "Leave a review",
+        href: reviewLink,
+        background: "#f59e0b",
+        color: "#020617",
+      },
+      footer: `Session ID: ${session.id}`,
+    }),
+  );
+}
+
+export async function sendSessionCancellationEmails(
+  session: EmailSession,
+  student: EmailUser,
+  mentor: EmailUser,
+  details: {
+    cancelledByName: string;
+    reason: string;
+    refundAmount: number;
+    isNoShow?: boolean;
+  },
+) {
+  const refundLine =
+    details.refundAmount > 0
+      ? `Refund: ${formatMoney(details.refundAmount)}`
+      : "Refund: No refund applies to this cancellation.";
+
+  return sendEmail(
+    [student.email, mentor.email],
+    details.isNoShow
+      ? "GuideMe session marked as mentor no-show"
+      : "Your GuideMe session has been cancelled",
+    buildEmailShell({
+      preview: "A mentoring session has been cancelled.",
+      title: details.isNoShow ? "Mentor no-show recorded" : "Session cancelled",
+      body: [
+        `${details.cancelledByName} cancelled the session scheduled for ${format(
+          session.scheduledAt,
+          "EEE, d MMM yyyy 'at' h:mm a",
+        )}.`,
+        `Reason: ${details.reason}`,
+        refundLine,
+      ],
+      footer: `Session ID: ${session.id}`,
+    }),
+  );
+}
+
 export async function sendPayoutConfirmation(
   payout: EmailPayout,
   mentor: EmailUser,
