@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Setup
+
+Create `.env.local` from `.env.example` and set the database URLs for Supabase:
+
+- `DATABASE_URL` is the Prisma runtime connection and should use the Supabase transaction pooler on port `6543` with `?pgbouncer=true`.
+- `DIRECT_URL` is the Prisma CLI connection for migrations and introspection and should use the direct database host on port `5432`. If your machine is IPv4-only, Supabase session mode on port `5432` is a valid fallback.
+
+The Prisma CLI config in [prisma.config.ts](/C:/Users/vatsh/OneDrive/Desktop/GuideMe/prisma.config.ts:1) reads `DIRECT_URL` from `.env.local`, and the Prisma client in [lib/db.ts](/C:/Users/vatsh/OneDrive/Desktop/GuideMe/lib/db.ts:1) uses `DATABASE_URL` at runtime.
+
 ## Getting Started
 
 First, run the development server:

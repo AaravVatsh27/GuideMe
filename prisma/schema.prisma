@@ -38,6 +38,11 @@ enum Stream {
   MEDICAL
   LAW
   MANAGEMENT
+  HIGHER_STUDIES
+  PLACEMENTS
+  COMPETITIVE_EXAMS
+  SKILL_BUILDING
+  ENTREPRENEURSHIP
   UNDECIDED
 }
 
@@ -63,6 +68,8 @@ enum ConfusionType {
   CAREER_DIRECTION
   SUBJECT_COMBINATION
   COACHING_SELECTION
+  PLANNING_NEXT_TWO_YEARS
+  POST_GRADUATION_PATH
 }
 
 enum MentorTier {
@@ -164,6 +171,7 @@ model User {
   mentorVerification MentorVerification?  @relation("MentorVerificationTarget")
   reviewedVerifiers  MentorVerification[] @relation("VerificationReviewedBy")
   auditLogs          AuditLog[]
+  accounts           Account[]
 
   @@index([role, isActive])
   @@index([deletedAt])
@@ -172,17 +180,45 @@ model User {
   @@index([onboardingComplete, onboardingStep])
 }
 
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
 model StudentProfile {
   userId             String            @id @db.Uuid
   class              Class
-  board              Board
+  board              Board?
   stream             Stream
-  targetExam         TargetExam
-  confusionType      ConfusionType
+  targetExam         TargetExam?
+  confusionType      ConfusionType?
+  confusionTypes     ConfusionType[]   @default([])
   city               String?
   state              String?
   languagePreference String?
-  parentalPressure   ParentalPressure
+  parentalPressure   ParentalPressure?
   user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([class, board, stream])
@@ -194,17 +230,19 @@ model StudentProfile {
 model MentorProfile {
   userId            String       @id @db.Uuid
   username          String       @unique
-  college           String
-  degree            String
-  branch            String
-  yearOfStudy       Int
+  college           String?
+  degree            String?
+  branch            String?
+  yearOfStudy       Int?
+  expectedGraduationYear Int?
   tier              MentorTier   @default(RISING)
-  bio               String       @db.Text
-  headline          String
+  bio               String?      @db.Text
+  headline          String?
   examsCleared      String[]     @default([])
+  examYears         Json?
   specialisations   String[]     @default([])
-  priceMin          Int
-  priceMax          Int
+  priceMin          Int?
+  priceMax          Int?
   isAvailable       Boolean      @default(true)
   isVerified        Boolean      @default(false)
   isActive          Boolean      @default(true)
@@ -444,7 +482,7 @@ model SessionNote {
 model MentorVerification {
   id              String             @id @default(uuid()) @db.Uuid
   mentorId        String             @unique @db.Uuid
-  collegeIdUrl    String
+  collegeIdUrl    String?
   status          VerificationStatus @default(PENDING)
   reviewedBy      String?            @db.Uuid
   reviewedAt      DateTime?
