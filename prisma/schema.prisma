@@ -129,6 +129,33 @@ enum MessageType {
   LINK
 }
 
+enum MarketingMentorPlacement {
+  HERO_SPOTLIGHT
+  SCHOOL_GRID
+  UG_GRID
+}
+
+enum MarketingMentorAvatarTone {
+  TEAL
+  AMBER
+}
+
+enum MarketingPricingAccent {
+  TEAL
+  POPULAR
+  AMBER
+}
+
+enum MarketingNavPlacement {
+  HEADER
+  MOBILE
+  SECTION_NAV
+  FOOTER_PLATFORM
+  FOOTER_MENTORS
+  FOOTER_CONNECT
+  FOOTER_LEGAL
+}
+
 model User {
   id                 String               @id @default(uuid()) @db.Uuid
   email              String               @unique
@@ -173,7 +200,7 @@ model User {
 }
 
 model StudentProfile {
-  userId             String            @id @db.Uuid
+  userId             String           @id @db.Uuid
   class              Class
   board              Board
   stream             Stream
@@ -183,7 +210,7 @@ model StudentProfile {
   state              String?
   languagePreference String?
   parentalPressure   ParentalPressure
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([class, board, stream])
   @@index([targetExam, confusionType])
@@ -192,32 +219,32 @@ model StudentProfile {
 }
 
 model MentorProfile {
-  userId            String       @id @db.Uuid
-  username          String       @unique
+  userId            String     @id @db.Uuid
+  username          String     @unique
   college           String
   degree            String
   branch            String
   yearOfStudy       Int
-  tier              MentorTier   @default(RISING)
-  bio               String       @db.Text
+  tier              MentorTier @default(RISING)
+  bio               String     @db.Text
   headline          String
-  examsCleared      String[]     @default([])
-  specialisations   String[]     @default([])
+  examsCleared      String[]   @default([])
+  specialisations   String[]   @default([])
   priceMin          Int
   priceMax          Int
-  isAvailable       Boolean      @default(true)
-  isVerified        Boolean      @default(false)
-  isActive          Boolean      @default(true)
-  totalSessions     Int          @default(0)
-  avgRating         Float        @default(0)
-  totalReviews      Int          @default(0)
-  responseRate      Float        @default(0)
+  isAvailable       Boolean    @default(true)
+  isVerified        Boolean    @default(false)
+  isActive          Boolean    @default(true)
+  totalSessions     Int        @default(0)
+  avgRating         Float      @default(0)
+  totalReviews      Int        @default(0)
+  responseRate      Float      @default(0)
   linkedinUrl       String?
   introVideoUrl     String?
-  onboardingStep    Int          @default(0)
-  profileViews      Int          @default(0)
-  lastProfileUpdate DateTime     @default(now())
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  onboardingStep    Int        @default(0)
+  profileViews      Int        @default(0)
+  lastProfileUpdate DateTime   @default(now())
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([tier, isAvailable, isActive])
   @@index([college, degree, branch])
@@ -227,11 +254,11 @@ model MentorProfile {
 }
 
 model Session {
-  id                 String         @id @default(uuid()) @db.Uuid
-  studentId          String         @db.Uuid
-  mentorId           String         @db.Uuid
+  id                 String        @id @default(uuid()) @db.Uuid
+  studentId          String        @db.Uuid
+  mentorId           String        @db.Uuid
   type               SessionType
-  status             SessionStatus  @default(SCHEDULED)
+  status             SessionStatus @default(SCHEDULED)
   scheduledAt        DateTime
   startedAt          DateTime?
   endedAt            DateTime?
@@ -241,19 +268,19 @@ model Session {
   mentorEarning      Int
   meetingLink        String?
   meetingRoomId      String?
-  cancelledBy        String?        @db.Uuid
-  cancellationReason String?        @db.Text
+  cancelledBy        String?       @db.Uuid
+  cancellationReason String?       @db.Text
   cancelledAt        DateTime?
-  studentJoined      Boolean        @default(false)
-  mentorJoined       Boolean        @default(false)
+  studentJoined      Boolean       @default(false)
+  mentorJoined       Boolean       @default(false)
   studentJoinedAt    DateTime?
   mentorJoinedAt     DateTime?
-  aiSummary          String?        @db.Text
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-  student            User           @relation("StudentSessions", fields: [studentId], references: [id], onDelete: Cascade)
-  mentor             User           @relation("MentorSessions", fields: [mentorId], references: [id], onDelete: Cascade)
-  cancelledByUser    User?          @relation("CancelledBy", fields: [cancelledBy], references: [id], onDelete: SetNull)
+  aiSummary          String?       @db.Text
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  student            User          @relation("StudentSessions", fields: [studentId], references: [id], onDelete: Cascade)
+  mentor             User          @relation("MentorSessions", fields: [mentorId], references: [id], onDelete: Cascade)
+  cancelledByUser    User?         @relation("CancelledBy", fields: [cancelledBy], references: [id], onDelete: SetNull)
   review             Review?
   payment            Payment?
   payout             Payout?
@@ -294,23 +321,23 @@ model Review {
 }
 
 model Payment {
-  id                String        @id @default(uuid()) @db.Uuid
-  sessionId         String        @unique @db.Uuid
-  userId            String        @db.Uuid
-  razorpayOrderId   String        @unique
-  razorpayPaymentId String?       @unique
+  id                String         @id @default(uuid()) @db.Uuid
+  sessionId         String         @unique @db.Uuid
+  userId            String         @db.Uuid
+  razorpayOrderId   String         @unique
+  razorpayPaymentId String?        @unique
   amount            Int
-  currency          String        @default("INR")
-  status            PaymentStatus @default(PENDING)
+  currency          String         @default("INR")
+  status            PaymentStatus  @default(PENDING)
   refundId          String?
   refundAmount      Int?
   refundStatus      PaymentStatus?
   paidAt            DateTime?
   refundedAt        DateTime?
   metadata          Json?
-  createdAt         DateTime      @default(now())
-  session           Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime       @default(now())
+  session           Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status, createdAt])
@@ -473,4 +500,118 @@ model AuditLog {
   @@index([action, createdAt])
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+model MarketingHeroStat {
+  id        String   @id @default(uuid()) @db.Uuid
+  label     String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model MarketingMentor {
+  id              String                    @id @default(uuid()) @db.Uuid
+  placement       MarketingMentorPlacement
+  initials        String
+  displayName     String
+  collegeBadge    String?
+  collegeLine     String?
+  laneCopy        String?
+  avatarTone      MarketingMentorAvatarTone @default(TEAL)
+  tags            String[]                  @default([])
+  rating          Float
+  sessionsCount   Int
+  pricePerSession Int
+  ctaLabel        String                    @default("Book Free Intro")
+  availability    String                    @default("Online")
+  sortOrder       Int                       @default(0)
+  isActive        Boolean                   @default(true)
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  @@index([placement, isActive, sortOrder])
+}
+
+model MarketingProblemStat {
+  id        String   @id @default(uuid()) @db.Uuid
+  value     Int
+  suffix    String
+  ariaLabel String
+  copy      String   @db.Text
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model MarketingTestimonial {
+  id            String   @id @default(uuid()) @db.Uuid
+  quote         String   @db.Text
+  studentName   String
+  studentDetail String
+  mentorMention String
+  ratingDisplay String
+  sortOrder     Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model MarketingPricingTier {
+  id          String                 @id @default(uuid()) @db.Uuid
+  tierKey     String                 @unique
+  name        String
+  priceRange  String
+  collegeLine String
+  fitLine     String
+  features    String[]               @default([])
+  accent      MarketingPricingAccent
+  badge       String?
+  sortOrder   Int                    @default(0)
+  isActive    Boolean                @default(true)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model MarketingMentorBenefit {
+  id        String   @id @default(uuid()) @db.Uuid
+  iconKey   String
+  title     String
+  body      String   @db.Text
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model MarketingNavLink {
+  id        String                @id @default(uuid()) @db.Uuid
+  placement MarketingNavPlacement
+  label     String
+  href      String
+  sortOrder Int                   @default(0)
+  isActive  Boolean               @default(true)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  @@index([placement, isActive, sortOrder])
+}
+
+model MarketingSiteSetting {
+  key         String   @id
+  value       String   @db.Text
+  description String?
+  updatedAt   DateTime @updatedAt
 }

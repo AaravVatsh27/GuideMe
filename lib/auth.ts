@@ -1,6 +1,8 @@
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 
+import { routes } from "@/lib/routes";
+
 const AUTH_ROLES = ["STUDENT", "MENTOR", "ADMIN"] as const;
 
 type AuthRole = (typeof AUTH_ROLES)[number];
@@ -20,8 +22,8 @@ export const authConfig = {
     strategy: "jwt",
   },
   pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
+    signIn: routes.signIn,
+    error: routes.signInError,
   },
   callbacks: {
     async jwt({ token, user }) {

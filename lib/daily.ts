@@ -1,3 +1,9 @@
+import {
+  DAILY_ROOM_BUFFER_MINUTES,
+  DAILY_ROOM_NAME_MAX_LENGTH,
+  DAILY_ROOM_NAME_PREFIX,
+} from "@/lib/constants";
+
 const DAILY_API_BASE_URL = "https://api.daily.co/v1";
 
 type CreateDailyRoomInput = {
@@ -32,7 +38,7 @@ function getDailyDomain() {
 }
 
 function buildRoomName(sessionId: string) {
-  return `guideme-${sessionId.replaceAll("-", "").slice(0, 24)}`;
+  return `${DAILY_ROOM_NAME_PREFIX}${sessionId.replaceAll("-", "").slice(0, DAILY_ROOM_NAME_MAX_LENGTH)}`;
 }
 
 export async function createDailyRoom({
@@ -41,7 +47,9 @@ export async function createDailyRoom({
   durationMinutes,
 }: CreateDailyRoomInput) {
   const roomName = buildRoomName(sessionId);
-  const roomExpiresAt = new Date(startsAt.getTime() + (durationMinutes + 60) * 60 * 1000);
+  const roomExpiresAt = new Date(
+    startsAt.getTime() + (durationMinutes + DAILY_ROOM_BUFFER_MINUTES) * 60 * 1000,
+  );
 
   const response = await fetch(`${DAILY_API_BASE_URL}/rooms`, {
     method: "POST",

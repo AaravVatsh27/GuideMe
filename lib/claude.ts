@@ -1,3 +1,9 @@
+import {
+  AI_SUMMARY_HIGHLIGHTS_LIMIT,
+  AI_SUMMARY_MAX_TOKENS,
+} from "@/lib/constants";
+import { aiSummary } from "@/lib/messages";
+
 type SessionSummaryContext = {
   sessionId: string;
   sessionType: string;
@@ -30,6 +36,7 @@ type OpenAIResponsesApiResponse = {
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
+const ANTHROPIC_VERSION = "2023-06-01";
 const OPENAI_RESPONSES_API_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5-mini";
 
@@ -41,16 +48,20 @@ function buildFallbackSummary(context: SessionSummaryContext) {
   ]
     .map((line) => line?.trim() ?? "")
     .filter(Boolean)
-    .slice(0, 4);
+    .slice(0, AI_SUMMARY_HIGHLIGHTS_LIMIT);
+
+  const header = aiSummary.fallbackHeader(
+    context.studentName,
+    context.durationMinutes,
+    context.sessionType,
+    context.mentorName,
+  );
 
   if (highlights.length === 0) {
-    return `${context.studentName} completed a ${context.durationMinutes}-minute ${context.sessionType.toLowerCase()} session with ${context.mentorName}. No transcript or notes were captured, so this summary is limited to attendance metadata.`;
+    return `${header} ${aiSummary.fallbackNoTranscriptSuffix}`;
   }
 
-  return [
-    `${context.studentName} completed a ${context.durationMinutes}-minute ${context.sessionType.toLowerCase()} session with ${context.mentorName}.`,
-    `Key discussion points: ${highlights.join(" ")}`,
-  ].join(" ");
+  return [header, `${aiSummary.fallbackHighlightsLabel}: ${highlights.join(" ")}`].join(" ");
 }
 
 function getAnthropicApiKey() {
@@ -63,21 +74,21 @@ function getOpenAiApiKey() {
 
 function buildPrompt(context: SessionSummaryContext) {
   const transcriptBlock = context.transcript?.trim()
-    ? `Transcript:\n${context.transcript.trim()}`
-    : "Transcript:\nNo transcript provided.";
+    ? `${aiSummary.transcriptHeader}\n${context.transcript.trim()}`
+    : `${aiSummary.transcriptHeader}\n${aiSummary.transcriptEmpty}`;
   const notesBlock =
     context.noteLines && context.noteLines.length > 0
-      ? `Session notes:\n- ${context.noteLines.join("\n- ")}`
-      : "Session notes:\n- No notes captured.";
+      ? `${aiSummary.notesHeader}\n- ${context.noteLines.join("\n- ")}`
+      : `${aiSummary.notesHeader}\n- ${aiSummary.notesEmpty}`;
   const messagesBlock =
     context.messageLines && context.messageLines.length > 0
-      ? `Session chat:\n- ${context.messageLines.join("\n- ")}`
-      : "Session chat:\n- No chat messages captured.";
+      ? `${aiSummary.chatHeader}\n- ${context.messageLines.join("\n- ")}`
+      : `${aiSummary.chatHeader}\n- ${aiSummary.chatEmpty}`;
 
   return [
-    `Summarize this GuideMe mentoring session in 2 short paragraphs.`,
-    `Focus on student goals, mentor guidance, and concrete next steps.`,
-    `Do not use markdown bullets or headings.`,
+    aiSummary.promptIntro,
+    aiSummary.promptFocus,
+    aiSummary.promptFormat,
     `Session ID: ${context.sessionId}`,
     `Type: ${context.sessionType}`,
     `Student: ${context.studentName}`,
@@ -104,10 +115,9 @@ export async function generateClaudeSessionSummary(context: SessionSummaryContex
       },
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL?.trim() || DEFAULT_OPENAI_MODEL,
-        instructions:
-          "You summarize student mentoring sessions for a product database. Stay concise, specific, and action-oriented.",
+        instructions: aiSummary.systemPrompt,
         input: buildPrompt(context),
-        max_output_tokens: 320,
+        max_output_tokens: AI_SUMMARY_MAX_TOKENS,
       }),
     });
 
@@ -143,13 +153,12 @@ export async function generateClaudeSessionSummary(context: SessionSummaryContex
     headers: {
       "Content-Type": "application/json",
       "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
+      "anthropic-version": ANTHROPIC_VERSION,
     },
     body: JSON.stringify({
       model: process.env.ANTHROPIC_MODEL?.trim() || DEFAULT_ANTHROPIC_MODEL,
-      max_tokens: 320,
-      system:
-        "You summarize student mentoring sessions for a product database. Stay concise, specific, and action-oriented.",
+      max_tokens: AI_SUMMARY_MAX_TOKENS,
+      system: aiSummary.systemPrompt,
       messages: [
         {
           role: "user",

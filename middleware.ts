@@ -2,13 +2,12 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authConfig } from "@/lib/auth";
+import {
+  getOnboardingPathForRole,
+  routes,
+} from "@/lib/routes";
 
 const { auth } = NextAuth(authConfig);
-
-function getOnboardingPath(role?: string | null) {
-  const normalizedRole = typeof role === "string" ? role.toLowerCase() : "student";
-  return `/onboarding/${normalizedRole}`;
-}
 
 function redirectTo(url: URL, pathname: string) {
   return NextResponse.redirect(new URL(pathname, url));
@@ -21,12 +20,12 @@ export default auth((request) => {
   const user = session?.user;
 
   if (!user) {
-    const signInUrl = new URL("/auth/signin", nextUrl);
+    const signInUrl = new URL(routes.signIn, nextUrl);
     signInUrl.searchParams.set("callbackUrl", `${pathname}${search}`);
     return NextResponse.redirect(signInUrl);
   }
 
-  const onboardingPath = getOnboardingPath(user.role);
+  const onboardingPath = getOnboardingPathForRole(user.role);
   const isOnboardingPath =
     pathname === onboardingPath || pathname.startsWith(`${onboardingPath}/`);
 
@@ -34,18 +33,18 @@ export default auth((request) => {
     return redirectTo(nextUrl, onboardingPath);
   }
 
-  if (pathname.startsWith("/dashboard") && user.role === "ADMIN") {
-    return redirectTo(nextUrl, "/admin");
+  if (pathname.startsWith(routes.dashboard) && user.role === "ADMIN") {
+    return redirectTo(nextUrl, routes.admin);
   }
 
-  if (pathname.startsWith("/admin") && user.role !== "ADMIN") {
+  if (pathname.startsWith(routes.admin) && user.role !== "ADMIN") {
     return redirectTo(
       nextUrl,
-      user.onboardingComplete ? "/dashboard" : onboardingPath,
+      user.onboardingComplete ? routes.dashboard : onboardingPath,
     );
   }
 
-  if (pathname.startsWith("/onboarding") && !isOnboardingPath) {
+  if (pathname.startsWith(routes.onboarding) && !isOnboardingPath) {
     return redirectTo(nextUrl, onboardingPath);
   }
 
@@ -53,5 +52,10 @@ export default auth((request) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/session/:path*", "/admin/:path*", "/onboarding/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/session/:path*",
+    "/admin/:path*",
+    "/onboarding/:path*",
+  ],
 };

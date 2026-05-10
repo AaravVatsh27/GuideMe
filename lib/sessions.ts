@@ -11,9 +11,32 @@ import {
 import { addMinutes } from "date-fns";
 
 import { generateClaudeSessionSummary } from "@/lib/claude";
-import { DEFAULT_CURRENCY, PLATFORM_CUT } from "@/lib/constants";
+import {
+  CANCELLATION_FULL_REFUND_HOURS,
+  CANCELLATION_FULL_REFUND_PERCENT,
+  CANCELLATION_HOUR_IN_MS,
+  CANCELLATION_NO_REFUND_PERCENT,
+  CANCELLATION_PARTIAL_REFUND_HOURS,
+  CANCELLATION_PARTIAL_REFUND_PERCENT,
+  DEFAULT_APP_URL,
+  DEFAULT_CURRENCY,
+  PLATFORM_CUT,
+  RECENT_MESSAGES_LIMIT,
+  REVIEW_LINK_QUERY,
+  SESSION_CONFLICT_LOOKBACK_MINUTES,
+  SESSION_RECEIPT_MAX_LENGTH,
+  SESSION_RECEIPT_PREFIX,
+  SHORT_SESSION_DURATION,
+  SUMMARY_MESSAGE_LINES_LIMIT,
+  SUMMARY_NOTE_LINES_LIMIT,
+} from "@/lib/constants";
 import { createDailyRoom } from "@/lib/daily";
 import { db } from "@/lib/db";
+import {
+  bookingMessages,
+  cancellationTitles,
+  completionMessages,
+} from "@/lib/messages";
 import { createOrder, createRefund } from "@/lib/razorpay";
 import {
   sendBookingConfirmation,
@@ -21,6 +44,7 @@ import {
   sendSessionCancellationEmails,
   sendSessionCompletionEmails,
 } from "@/lib/resend";
+import { getSessionPath } from "@/lib/routes";
 import type { CreateSessionInput } from "@/lib/validations/session";
 
 type CreateSessionBookingInput = {
@@ -172,7 +196,7 @@ export const sessionDetailsInclude = Prisma.validator<Prisma.SessionInclude>()({
     orderBy: {
       createdAt: "asc",
     },
-    take: 20,
+    take: RECENT_MESSAGES_LIMIT,
     select: {
       id: true,
       content: true,
@@ -322,14 +346,14 @@ function calculateSessionAmounts(type: SessionType, price: number) {
 }
 
 function buildSessionReceipt(sessionId: string) {
-  return `gm-${sessionId.replaceAll("-", "").slice(0, 18)}`;
+  return `${SESSION_RECEIPT_PREFIX}${sessionId.replaceAll("-", "").slice(0, SESSION_RECEIPT_MAX_LENGTH)}`;
 }
 
 function buildAbsoluteUrl(pathname: string) {
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     process.env.AUTH_URL?.trim() ||
-    "http://localhost:3000";
+    DEFAULT_APP_URL;
 
   return new URL(pathname, baseUrl).toString();
 }
@@ -367,7 +391,7 @@ async function ensureNoConflict(
       in: [...ACTIVE_SESSION_STATUSES],
     },
     scheduledAt: {
-      gte: addMinutes(requested.scheduledAt, -180),
+      gte: addMinutes(requested.scheduledAt, -SESSION_CONFLICT_LOOKBACK_MINUTES),
       lt: addMinutes(requested.scheduledAt, requested.durationMinutes),
     },
   };
@@ -437,16 +461,16 @@ async function createBookingNotifications(
       {
         userId: studentId,
         type: NotificationType.SESSION_BOOKED,
-        title: "Session confirmed",
-        body: "Your intro session has been confirmed.",
-        link: `/session/${sessionId}`,
+        title: bookingMessages.student.title,
+        body: bookingMessages.student.body,
+        link: getSessionPath(sessionId),
       },
       {
         userId: mentorId,
         type: NotificationType.SESSION_BOOKED,
-        title: "New intro booking",
-        body: "A student booked an intro session with you.",
-        link: `/session/${sessionId}`,
+        title: bookingMessages.mentor.title,
+        body: bookingMessages.mentor.body,
+        link: getSessionPath(sessionId),
       },
     ],
   });
@@ -461,7 +485,9 @@ async function createCancellationNotifications(
   status: SessionStatus,
 ) {
   const title =
-    status === SessionStatus.NO_SHOW ? "Mentor no-show recorded" : "Session cancelled";
+    status === SessionStatus.NO_SHOW
+      ? cancellationTitles.noShow
+      : cancellationTitles.default;
 
   await tx.notification.createMany({
     data: [
@@ -470,14 +496,14 @@ async function createCancellationNotifications(
         type: NotificationType.SYSTEM,
         title,
         body: reason,
-        link: `/session/${sessionId}`,
+        link: getSessionPath(sessionId),
       },
       {
         userId: mentorId,
         type: NotificationType.SYSTEM,
         title,
         body: reason,
-        link: `/session/${sessionId}`,
+        link: getSessionPath(sessionId),
       },
     ],
   });
@@ -494,16 +520,16 @@ async function createCompletionNotifications(
       {
         userId: studentId,
         type: NotificationType.SESSION_COMPLETED,
-        title: "Session completed",
-        body: "Your session is complete. Please leave a review for your mentor.",
-        link: `/session/${sessionId}`,
+        title: completionMessages.student.title,
+        body: completionMessages.student.body,
+        link: getSessionPath(sessionId),
       },
       {
         userId: mentorId,
         type: NotificationType.SESSION_COMPLETED,
-        title: "Session completed",
-        body: "Your session has been marked complete and the payout is queued.",
-        link: `/session/${sessionId}`,
+        title: completionMessages.mentor.title,
+        body: completionMessages.mentor.body,
+        link: getSessionPath(sessionId),
       },
     ],
   });
@@ -536,7 +562,7 @@ function calculateCancellationOutcome(
 ): CancellationOutcome {
   if (session.type === SessionType.INTRO || session.price === 0) {
     return {
-      refundPercent: 0,
+      refundPercent: CANCELLATION_NO_REFUND_PERCENT,
       refundAmount: 0,
       status: noShow ? SessionStatus.NO_SHOW : SessionStatus.CANCELLED,
     };
@@ -544,7 +570,7 @@ function calculateCancellationOutcome(
 
   if (noShow) {
     return {
-      refundPercent: 100,
+      refundPercent: CANCELLATION_FULL_REFUND_PERCENT,
       refundAmount: session.price,
       status: SessionStatus.NO_SHOW,
     };
@@ -552,33 +578,35 @@ function calculateCancellationOutcome(
 
   if (actorId === session.mentorId) {
     return {
-      refundPercent: 100,
+      refundPercent: CANCELLATION_FULL_REFUND_PERCENT,
       refundAmount: session.price,
       status: SessionStatus.CANCELLED,
     };
   }
 
   const millisecondsUntilSession = session.scheduledAt.getTime() - Date.now();
-  const hoursUntilSession = millisecondsUntilSession / (60 * 60 * 1000);
+  const hoursUntilSession = millisecondsUntilSession / CANCELLATION_HOUR_IN_MS;
 
-  if (hoursUntilSession > 24) {
+  if (hoursUntilSession > CANCELLATION_FULL_REFUND_HOURS) {
     return {
-      refundPercent: 100,
+      refundPercent: CANCELLATION_FULL_REFUND_PERCENT,
       refundAmount: session.price,
       status: SessionStatus.CANCELLED,
     };
   }
 
-  if (hoursUntilSession >= 12) {
+  if (hoursUntilSession >= CANCELLATION_PARTIAL_REFUND_HOURS) {
+    const partialRatio = CANCELLATION_PARTIAL_REFUND_PERCENT / 100;
+
     return {
-      refundPercent: 50,
-      refundAmount: Math.round(session.price * 0.5),
+      refundPercent: CANCELLATION_PARTIAL_REFUND_PERCENT,
+      refundAmount: Math.round(session.price * partialRatio),
       status: SessionStatus.CANCELLED,
     };
   }
 
   return {
-    refundPercent: 0,
+    refundPercent: CANCELLATION_NO_REFUND_PERCENT,
     refundAmount: 0,
     status: SessionStatus.CANCELLED,
   };
@@ -638,7 +666,7 @@ export async function createSessionBooking({
 
   if (input.type === SessionType.PAID) {
     const expectedPrice =
-      input.durationMinutes === 30
+      input.durationMinutes === SHORT_SESSION_DURATION
         ? mentor.mentorProfile.priceMin
         : mentor.mentorProfile.priceMax;
 
@@ -832,10 +860,10 @@ export async function cancelSessionById({
       refundAmount: session.payment?.refundAmount ?? 0,
       refundPercent:
         session.payment?.refundStatus === PaymentStatus.REFUNDED
-          ? 100
+          ? CANCELLATION_FULL_REFUND_PERCENT
           : session.payment?.refundStatus === PaymentStatus.PARTIALLY_REFUNDED
-            ? 50
-            : 0,
+            ? CANCELLATION_PARTIAL_REFUND_PERCENT
+            : CANCELLATION_NO_REFUND_PERCENT,
       refundId: session.payment?.refundId ?? null,
     };
   }
@@ -885,11 +913,11 @@ export async function cancelSessionById({
         paymentUpdate.refundAmount = outcome.refundAmount;
         paymentUpdate.refundedAt = now;
         paymentUpdate.refundStatus =
-          outcome.refundPercent === 100
+          outcome.refundPercent === CANCELLATION_FULL_REFUND_PERCENT
             ? PaymentStatus.REFUNDED
             : PaymentStatus.PARTIALLY_REFUNDED;
         paymentUpdate.status =
-          outcome.refundPercent === 100
+          outcome.refundPercent === CANCELLATION_FULL_REFUND_PERCENT
             ? PaymentStatus.REFUNDED
             : PaymentStatus.PARTIALLY_REFUNDED;
       } else if (session.payment.status === PaymentStatus.PENDING) {
@@ -1021,7 +1049,7 @@ export async function completeSessionById({
     throw new SessionApiError("Paid sessions can only complete after payment is captured", 409);
   }
 
-  const reviewLink = buildAbsoluteUrl(`/session/${sessionId}?review=1`);
+  const reviewLink = buildAbsoluteUrl(`${getSessionPath(sessionId)}${REVIEW_LINK_QUERY}`);
   const summary =
     session.aiSummary ??
     (await generateClaudeSessionSummary({
@@ -1035,11 +1063,11 @@ export async function completeSessionById({
       noteLines: session.notes
         .map((note) => note.content.trim())
         .filter(Boolean)
-        .slice(0, 8),
+        .slice(0, SUMMARY_NOTE_LINES_LIMIT),
       messageLines: session.messages
         .map((message) => `${message.sender.name}: ${message.content.trim()}`)
         .filter(Boolean)
-        .slice(-12),
+        .slice(-SUMMARY_MESSAGE_LINES_LIMIT),
     }));
   const completedAt = endedAt ?? new Date();
   const sessionWasAlreadyCompleted = session.status === SessionStatus.COMPLETED;
