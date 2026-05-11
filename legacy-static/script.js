@@ -3,6 +3,11 @@ const siteHeader = document.querySelector(".site-header");
 const menuToggle = document.querySelector(".menu-toggle");
 const menuOverlay = document.querySelector(".menu-overlay");
 const mobileMenuLinks = document.querySelectorAll(".mobile-nav a, .mobile-actions a");
+const sectionSidebar = document.querySelector(".section-sidebar");
+const sectionNavToggle = document.querySelector(".section-nav-toggle");
+const sectionNav = document.querySelector(".section-nav");
+const sectionNavBackdrop = document.querySelector(".section-nav-backdrop");
+const sectionNavLinks = document.querySelectorAll(".section-nav-links a, .section-nav-signup");
 const heroCanvas = document.querySelector(".hero-network-canvas");
 const counterElements = document.querySelectorAll("[data-counter]");
 const mentorCarousel = document.querySelector("[data-mentor-carousel]");
@@ -15,6 +20,21 @@ const sessionsOutput = document.querySelector("[data-sessions-output]");
 const priceOutput = document.querySelector("[data-price-output]");
 const monthlyEarningsOutput = document.querySelector("[data-monthly-earnings]");
 const scrollRevealElements = document.querySelectorAll("[data-scroll-reveal]");
+const liveHeroStudents = document.querySelector("[data-live-total-students]");
+const liveHeroMentors = document.querySelector("[data-live-total-mentors]");
+const liveHeroAveragePrice = document.querySelector("[data-live-average-price]");
+const liveSiteIntro = document.querySelector("[data-live-intro-copy]");
+const liveSiteFloorPrice = document.querySelector("[data-live-floor-price]");
+const liveTypicalPrice = document.querySelector("[data-live-typical-price]");
+const livePriceBand = document.querySelector("[data-live-price-band]");
+const liveIncomeRange = document.querySelector("[data-live-income-range]");
+const liveRevenueNote = document.querySelector("[data-live-revenue-note]");
+const liveCounterElements = {
+  students: document.querySelector("[data-live-counter='students']"),
+  mentors: document.querySelector("[data-live-counter='mentors']"),
+  sessions: document.querySelector("[data-live-counter='sessions']"),
+  reviews: document.querySelector("[data-live-counter='reviews']"),
+};
 const interactiveSelector =
   "a, button, input, select, textarea, label, [role='button'], .interactive";
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -24,9 +44,153 @@ const supportsCustomCursor =
   cursor &&
   window.matchMedia("(pointer: fine)").matches &&
   !prefersReducedMotion.matches;
+const landingDataEndpoint = "/api/public/landing";
+const authDocumentLinks = document.querySelectorAll(
+  'a[href^="/auth/signup"], a[href^="/auth/signin"]'
+);
+let syncMobileMenuState = null;
+let syncSectionNavState = null;
+const prefetchedDocuments = new Set();
+
+const formatInteger = (value) => Math.max(0, Number(value || 0)).toLocaleString("en-IN");
+const formatCurrencyAmount = (value) =>
+  `₹${Math.round(Math.max(0, Number(value || 0))).toLocaleString("en-IN")}`;
+const buildIntroCopy = (introMinutes) => `Free ${introMinutes}-min intro call`;
+const buildAverageSessionCopy = (snapshot) =>
+  snapshot.averagePaidSessionPrice > 0
+    ? `${formatCurrencyAmount(snapshot.averagePaidSessionPrice)} avg session`
+    : `Free ${snapshot.introMinutes}-min intro`;
+const buildFloorPriceCopy = (snapshot) =>
+  snapshot.minPrice > 0 ? `${formatCurrencyAmount(snapshot.minPrice)} onwards` : "Profiles opening now";
+const buildTypicalPriceMarkup = (snapshot) =>
+  snapshot.averagePaidSessionPrice > 0
+    ? `${formatCurrencyAmount(snapshot.averagePaidSessionPrice)} <span>/ session</span>`
+    : "Awaiting live bookings";
+const buildPriceBandMarkup = (snapshot) =>
+  snapshot.minPrice > 0 && snapshot.maxPrice > 0
+    ? `${formatCurrencyAmount(snapshot.minPrice)} - ${formatCurrencyAmount(snapshot.maxPrice)} <span>/ current range</span>`
+    : "Mentor pricing unlocks as live profiles go active";
+const estimateMonthlyEarnings = (sessionsPerWeek, averagePrice) =>
+  Math.round(Number(sessionsPerWeek) * Number(averagePrice) * 4.33 * 3);
+const buildIncomeRangeCopy = (snapshot) => {
+  const basePrice = snapshot.averagePaidSessionPrice || snapshot.maxPrice || snapshot.minPrice;
+
+  if (basePrice > 0) {
+    const low = estimateMonthlyEarnings(3, basePrice);
+    const high = estimateMonthlyEarnings(5, basePrice);
+    return `Earn around ${formatCurrencyAmount(low)}-${formatCurrencyAmount(high)}/month`;
+  }
+
+  return "Earnings move with live mentor pricing";
+};
+const buildRevenueNoteCopy = (snapshot) => {
+  const basePrice = snapshot.averagePaidSessionPrice || snapshot.maxPrice || snapshot.minPrice;
+
+  if (basePrice > 0) {
+    return `At the current booking value, 4 sessions/week can generate about ${formatCurrencyAmount(
+      estimateMonthlyEarnings(4, basePrice)
+    )}/month.`;
+  }
+
+  return "Mentor payouts update automatically as live booking prices grow.";
+};
+const setCounterText = (element, value) => {
+  if (!element) {
+    return;
+  }
+
+  const safeValue = Math.max(0, Number(value || 0));
+  element.dataset.value = String(safeValue);
+  element.dataset.suffix = "+";
+  element.textContent = `${formatInteger(safeValue)}+`;
+};
+const applyLiveSnapshot = (snapshot) => {
+  if (!snapshot || typeof snapshot !== "object") {
+    return;
+  }
+
+  if (liveHeroStudents) {
+    liveHeroStudents.textContent = formatInteger(snapshot.totalStudents);
+  }
+
+  if (liveHeroMentors) {
+    liveHeroMentors.textContent = formatInteger(snapshot.totalMentors);
+  }
+
+  if (liveHeroAveragePrice) {
+    liveHeroAveragePrice.textContent = buildAverageSessionCopy(snapshot);
+  }
+
+  if (liveSiteIntro) {
+    liveSiteIntro.textContent = buildIntroCopy(snapshot.introMinutes);
+  }
+
+  if (liveSiteFloorPrice) {
+    liveSiteFloorPrice.textContent = buildFloorPriceCopy(snapshot);
+  }
+
+  if (liveTypicalPrice) {
+    liveTypicalPrice.innerHTML = buildTypicalPriceMarkup(snapshot);
+  }
+
+  if (livePriceBand) {
+    livePriceBand.innerHTML = buildPriceBandMarkup(snapshot);
+  }
+
+  if (liveIncomeRange) {
+    liveIncomeRange.textContent = buildIncomeRangeCopy(snapshot);
+  }
+
+  if (liveRevenueNote) {
+    liveRevenueNote.textContent = buildRevenueNoteCopy(snapshot);
+  }
+
+  setCounterText(liveCounterElements.students, snapshot.totalStudents);
+  setCounterText(liveCounterElements.mentors, snapshot.totalMentors);
+  setCounterText(liveCounterElements.sessions, snapshot.completedSessions);
+  setCounterText(liveCounterElements.reviews, snapshot.totalReviews);
+};
 
 const markPageReady = () => {
   document.body.classList.add("page-ready");
+};
+
+const prefetchDocument = (href) => {
+  if (!href) {
+    return;
+  }
+
+  try {
+    const url = new URL(href, window.location.origin);
+
+    if (url.origin !== window.location.origin) {
+      return;
+    }
+
+    const requestPath = `${url.pathname}${url.search}`;
+
+    if (prefetchedDocuments.has(requestPath)) {
+      return;
+    }
+
+    prefetchedDocuments.add(requestPath);
+
+    fetch(requestPath, {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "force-cache",
+    }).catch(() => {
+      prefetchedDocuments.delete(requestPath);
+    });
+  } catch (_error) {
+    // Ignore malformed URLs on progressively enhanced static links.
+  }
+};
+
+const warmAuthRoutes = () => {
+  prefetchDocument("/auth/signup");
+  prefetchDocument("/auth/signup?role=MENTOR");
+  prefetchDocument("/auth/signin");
 };
 
 if (document.readyState === "complete") {
@@ -34,6 +198,76 @@ if (document.readyState === "complete") {
 } else {
   window.addEventListener("load", () => {
     window.requestAnimationFrame(markPageReady);
+  });
+}
+
+if (typeof window.requestIdleCallback === "function") {
+  window.requestIdleCallback(() => {
+    warmAuthRoutes();
+  }, { timeout: 2200 });
+} else {
+  window.setTimeout(warmAuthRoutes, 1400);
+}
+
+authDocumentLinks.forEach((link) => {
+  const href = link.getAttribute("href");
+
+  link.addEventListener("pointerenter", () => {
+    prefetchDocument(href);
+  }, { passive: true });
+
+  link.addEventListener("focus", () => {
+    prefetchDocument(href);
+  });
+});
+
+if (
+  liveHeroStudents ||
+  liveHeroMentors ||
+  liveHeroAveragePrice ||
+  liveSiteFloorPrice ||
+  liveTypicalPrice ||
+  livePriceBand ||
+  liveIncomeRange ||
+  liveRevenueNote
+) {
+  let isPolling = false;
+  const pollLiveSnapshot = async () => {
+    if (isPolling || document.hidden) {
+      return;
+    }
+
+    isPolling = true;
+
+    try {
+      const response = await fetch(`${landingDataEndpoint}?ts=${Date.now()}`, {
+        cache: "no-store",
+        headers: {
+          accept: "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const snapshot = await response.json();
+        applyLiveSnapshot(snapshot);
+      }
+    } catch (_error) {
+      // Ignore transient polling failures on the public landing page.
+    } finally {
+      isPolling = false;
+    }
+  };
+
+  const pollTimer = window.setInterval(pollLiveSnapshot, 15000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      pollLiveSnapshot();
+    }
+  });
+
+  window.addEventListener("pagehide", () => {
+    window.clearInterval(pollTimer);
   });
 }
 
@@ -48,6 +282,10 @@ if (siteHeader) {
 
 if (menuToggle && menuOverlay) {
   const toggleMenu = (isOpen) => {
+    if (isOpen && typeof syncSectionNavState === "function") {
+      syncSectionNavState(false);
+    }
+
     document.body.classList.toggle("menu-open", isOpen);
     menuToggle.classList.toggle("is-open", isOpen);
     menuToggle.setAttribute("aria-expanded", String(isOpen));
@@ -55,6 +293,8 @@ if (menuToggle && menuOverlay) {
     menuOverlay.classList.toggle("is-open", isOpen);
     menuOverlay.setAttribute("aria-hidden", String(!isOpen));
   };
+
+  syncMobileMenuState = toggleMenu;
 
   menuToggle.addEventListener("click", () => {
     const isOpen = menuToggle.getAttribute("aria-expanded") === "true";
@@ -82,6 +322,69 @@ if (menuToggle && menuOverlay) {
   window.addEventListener("resize", () => {
     if (window.innerWidth > 1040) {
       toggleMenu(false);
+    }
+  });
+}
+
+if (sectionSidebar && sectionNavToggle && sectionNav && sectionNavBackdrop) {
+  const firstSectionLink = sectionNav.querySelector("a");
+
+  const toggleSectionNav = (isOpen, options = {}) => {
+    const { returnFocus = true } = options;
+
+    if (isOpen && typeof syncMobileMenuState === "function") {
+      syncMobileMenuState(false);
+    }
+
+    document.body.classList.toggle("section-nav-open", isOpen);
+    sectionSidebar.classList.toggle("is-open", isOpen);
+    sectionNavToggle.classList.toggle("is-open", isOpen);
+    sectionNavToggle.setAttribute("aria-expanded", String(isOpen));
+    sectionNavToggle.setAttribute(
+      "aria-label",
+      isOpen ? "Close section navigation" : "Open section navigation"
+    );
+    sectionNav.setAttribute("aria-hidden", String(!isOpen));
+    sectionNavBackdrop.setAttribute("aria-hidden", String(!isOpen));
+
+    if (isOpen) {
+      window.requestAnimationFrame(() => {
+        firstSectionLink?.focus({ preventScroll: true });
+      });
+      return;
+    }
+
+    if (returnFocus) {
+      sectionNavToggle.focus({ preventScroll: true });
+    }
+  };
+
+  syncSectionNavState = toggleSectionNav;
+
+  sectionNavToggle.addEventListener("click", () => {
+    const isOpen = sectionNavToggle.getAttribute("aria-expanded") === "true";
+    toggleSectionNav(!isOpen);
+  });
+
+  sectionNavBackdrop.addEventListener("click", () => {
+    toggleSectionNav(false);
+  });
+
+  sectionNavLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      toggleSectionNav(false, { returnFocus: false });
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      toggleSectionNav(false);
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth <= 1040) {
+      toggleSectionNav(false, { returnFocus: false });
     }
   });
 }
@@ -230,7 +533,8 @@ if (heroCanvas) {
 }
 
 if (counterElements.length > 0) {
-  const formatCounterValue = (value, suffix) => `${value.toLocaleString("en-IN")}${suffix}`;
+  const formatCounterValue = (value, suffix, prefix = "") =>
+    `${prefix}${value.toLocaleString("en-IN")}${suffix}`;
 
   const animateCounter = (element) => {
     if (element.dataset.counted === "true") {
@@ -239,10 +543,11 @@ if (counterElements.length > 0) {
 
     const targetValue = Number(element.dataset.value || "0");
     const suffix = element.dataset.suffix || "";
+    const prefix = element.dataset.prefix || "";
     element.dataset.counted = "true";
 
     if (prefersReducedMotion.matches) {
-      element.textContent = formatCounterValue(targetValue, suffix);
+      element.textContent = formatCounterValue(targetValue, suffix, prefix);
       return;
     }
 
@@ -254,12 +559,12 @@ if (counterElements.length > 0) {
       const easedProgress = 1 - Math.pow(1 - progress, 3);
       const currentValue = Math.round(targetValue * easedProgress);
 
-      element.textContent = formatCounterValue(currentValue, suffix);
+      element.textContent = formatCounterValue(currentValue, suffix, prefix);
 
       if (progress < 1) {
         window.requestAnimationFrame(tick);
       } else {
-        element.textContent = formatCounterValue(targetValue, suffix);
+        element.textContent = formatCounterValue(targetValue, suffix, prefix);
       }
     };
 

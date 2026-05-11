@@ -1,13 +1,15 @@
+import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/auth";
+import { withApiErrorHandling } from "@/lib/api-helpers";
 import { db } from "@/server/db";
+import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/lib/cache";
 import {
   cancelSessionById,
   completeSessionById,
   markSessionStarted,
-  SessionApiError,
   sessionDetailsInclude,
 } from "@/server/sessions";
 
@@ -28,23 +30,31 @@ const sessionPatchSchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-function handleSessionError(error: unknown) {
-  if (error instanceof SessionApiError) {
-    return NextResponse.json({ error: error.message, details: error.details }, { status: error.status });
-  }
+type SessionDetailsResponse = Prisma.SessionGetPayload<{
+  include: typeof sessionDetailsInclude;
+}>;
 
-  console.error(error);
-  return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-}
-
-export async function GET(
+export const GET = withApiErrorHandling(async (
   _request: Request,
   context: { params: { sessionId: string } },
-) {
+  metadata,
+) => {
   const session = await auth();
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  metadata.setUserId(session.user.id);
+
+  const cacheKey = cacheKeys.session(context.params.sessionId);
+  const cached = await cacheGet<SessionDetailsResponse>(cacheKey);
+
+  if (cached) {
+    if (cached.studentId !== session.user.id && cached.mentorId !== session.user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    return NextResponse.json(cached);
   }
 
   const record = await db.session.findUnique({
@@ -62,18 +72,23 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  return NextResponse.json(record);
-}
+  cacheSet(cacheKey, record, cacheTtl.sessionDetails).catch(() => {});
 
-export async function PATCH(
+  return NextResponse.json(record);
+}, "/api/sessions/[sessionId]");
+
+export const PATCH = withApiErrorHandling(async (
   request: Request,
   context: { params: { sessionId: string } },
-) {
+  metadata,
+) => {
   const session = await auth();
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  metadata.setUserId(session.user.id);
 
   const payload = await request.json().catch(() => null);
   const parsedBody = sessionPatchSchema.safeParse(payload);
@@ -88,39 +103,35 @@ export async function PATCH(
     );
   }
 
-  try {
-    switch (parsedBody.data.action) {
-      case "cancel": {
-        const result = await cancelSessionById({
-          sessionId: context.params.sessionId,
-          actorId: session.user.id,
-          reason: parsedBody.data.reason,
-          noShow: parsedBody.data.noShow,
-        });
+  switch (parsedBody.data.action) {
+    case "cancel": {
+      const result = await cancelSessionById({
+        sessionId: context.params.sessionId,
+        actorId: session.user.id,
+        reason: parsedBody.data.reason,
+        noShow: parsedBody.data.noShow,
+      });
 
-        return NextResponse.json(result);
-      }
-      case "start": {
-        const updatedSession = await markSessionStarted({
-          sessionId: context.params.sessionId,
-          actorId: session.user.id,
-          startedAt: parsedBody.data.startedAt,
-        });
-
-        return NextResponse.json(updatedSession);
-      }
-      case "complete": {
-        const updatedSession = await completeSessionById({
-          sessionId: context.params.sessionId,
-          actorId: session.user.id,
-          transcript: parsedBody.data.transcript,
-          endedAt: parsedBody.data.endedAt,
-        });
-
-        return NextResponse.json(updatedSession);
-      }
+      return NextResponse.json(result);
     }
-  } catch (error) {
-    return handleSessionError(error);
+    case "start": {
+      const updatedSession = await markSessionStarted({
+        sessionId: context.params.sessionId,
+        actorId: session.user.id,
+        startedAt: parsedBody.data.startedAt,
+      });
+
+      return NextResponse.json(updatedSession);
+    }
+    case "complete": {
+      const updatedSession = await completeSessionById({
+        sessionId: context.params.sessionId,
+        actorId: session.user.id,
+        transcript: parsedBody.data.transcript,
+        endedAt: parsedBody.data.endedAt,
+      });
+
+      return NextResponse.json(updatedSession);
+    }
   }
-}
+}, "/api/sessions/[sessionId]");

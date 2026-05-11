@@ -3,8 +3,8 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 
 const f = createUploadthing();
 
-export const uploadRouter = {
-  mentorAvatar: f({
+function createAvatarUploader() {
+  return f({
     image: {
       maxFileSize: "4MB",
       maxFileCount: 1,
@@ -26,7 +26,12 @@ export const uploadRouter = {
         userId: metadata.userId,
         ufsUrl: file.ufsUrl,
       };
-    }),
+    });
+}
+
+export const uploadRouter = {
+  mentorAvatar: createAvatarUploader(),
+  studentAvatar: createAvatarUploader(),
 } satisfies FileRouter;
 
 export type AppFileRouter = typeof uploadRouter;

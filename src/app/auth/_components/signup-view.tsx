@@ -90,23 +90,51 @@ export function SignupView({
     return path as Route;
   }
 
+  const urlConsumedRef = useRef(false);
+
   useEffect(() => {
+    if (urlConsumedRef.current) return;
+    urlConsumedRef.current = true;
+
+    const urlRole = signupRoleSchema.safeParse(
+      new URLSearchParams(window.location.search).get("role")
+    );
+
+    if (urlRole.success) {
+      setSelectedRole(urlRole.data);
+      window.sessionStorage.setItem(SIGNUP_ROLE_STORAGE_KEY, urlRole.data);
+      setStep(2);
+      return;
+    }
+
+    if (!isCompletingOAuth) {
+      window.sessionStorage.removeItem(SIGNUP_ROLE_STORAGE_KEY);
+      setSelectedRole(null);
+      setStep(1);
+      return;
+    }
+
     const storedRole = signupRoleSchema.safeParse(
-      typeof window === "undefined" ? null : window.sessionStorage.getItem(SIGNUP_ROLE_STORAGE_KEY),
+      window.sessionStorage.getItem(SIGNUP_ROLE_STORAGE_KEY),
     );
 
     if (storedRole.success) {
       setSelectedRole(storedRole.data);
       setStep(2);
+      return;
     }
-  }, []);
+
+    window.sessionStorage.removeItem(SIGNUP_ROLE_STORAGE_KEY);
+  }, [isCompletingOAuth]);
 
   useEffect(() => {
     if (status !== "authenticated" || !session?.user || hasCompletedRef.current) {
       return;
     }
 
-    if (!isCompletingOAuth) {
+    const urlRole = new URLSearchParams(window.location.search).get("role");
+
+    if (!isCompletingOAuth && !selectedRole && !urlRole) {
       router.replace(
         session.user.onboardingComplete
           ? toRoute(callbackUrl || AUTH_DEFAULT_REDIRECT)
@@ -158,7 +186,7 @@ export function SignupView({
       window.sessionStorage.removeItem(SIGNUP_ROLE_STORAGE_KEY);
       router.replace(toRoute(payload.onboardingPath));
     })();
-  }, [callbackUrl, isCompletingOAuth, router, session, status, update]);
+  }, [callbackUrl, isCompletingOAuth, router, selectedRole, session, status, update]);
 
   function handleRoleSelect(role: "STUDENT" | "MENTOR") {
     window.sessionStorage.setItem(SIGNUP_ROLE_STORAGE_KEY, role);

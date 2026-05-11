@@ -1,8 +1,18 @@
-import { NotificationType, PaymentStatus, PayoutStatus, SessionStatus } from "@prisma/client";
+import {
+  NotificationType,
+  PaymentStatus,
+  PayoutStatus,
+  SessionStatus,
+  SessionType,
+} from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/auth";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
+import { cacheDel, cacheKeys } from "@/lib/cache";
+import { log } from "@/lib/logger";
+import { paymentLimiter } from "@/lib/ratelimit";
 import { PLATFORM_CUT } from "@/server/constants";
 import { db } from "@/server/db";
 import { verifyPaymentSignature } from "@/server/razorpay";
@@ -15,12 +25,17 @@ const verifyPaymentSchema = z.object({
   sessionId: z.string().uuid(),
 });
 
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
   const session = await auth();
+
+  const denied = await applyRateLimit(paymentLimiter, getRateLimitId(request, session?.user?.id));
+  if (denied) return denied;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  metadata.setUserId(session.user.id);
 
   if (session.user.role !== "STUDENT") {
     return NextResponse.json({ error: "Only students can verify payments" }, { status: 403 });
@@ -41,9 +56,11 @@ export async function POST(request: Request) {
   const isValid = verifyPaymentSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
 
   if (!isValid) {
-    console.warn("[payment/verify] Invalid signature attempt", {
+    log.warn("Invalid payment signature attempt", {
+      requestId: metadata.requestId,
+      route: "/api/payment/verify",
+      userId: metadata.userId,
       sessionId,
-      userId: session.user.id,
       razorpayOrderId,
     });
 
@@ -60,110 +77,157 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Payment verification failed" }, { status: 400 });
   }
 
-  try {
-    const bookingSession = await db.session.findUnique({
-      where: { id: sessionId },
-      include: {
-        payment: true,
-        student: { select: { id: true, name: true, email: true } },
-        mentor: { select: { id: true, name: true, email: true } },
+  const bookingSession = await db.session.findUnique({
+    where: { id: sessionId },
+    include: {
+      payment: true,
+      student: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          studentProfile: {
+            select: {
+              class: true,
+              confusionType: true,
+              confusionTypes: true,
+            },
+          },
+        },
+      },
+      mentor: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          mentorProfile: {
+            select: {
+              college: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!bookingSession) {
+    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+  }
+
+  if (bookingSession.studentId !== session.user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (!bookingSession.payment) {
+    return NextResponse.json({ error: "Payment record not found" }, { status: 404 });
+  }
+
+  if (bookingSession.type !== SessionType.PAID) {
+    return NextResponse.json({ error: "Only paid sessions can be verified" }, { status: 400 });
+  }
+
+  if (
+    bookingSession.status === SessionStatus.CANCELLED ||
+    bookingSession.status === SessionStatus.NO_SHOW ||
+    bookingSession.status === SessionStatus.COMPLETED
+  ) {
+    return NextResponse.json(
+      { error: `Cannot verify payment for a ${bookingSession.status.toLowerCase()} session` },
+      { status: 409 },
+    );
+  }
+
+  if (bookingSession.payment.razorpayOrderId !== razorpayOrderId) {
+    return NextResponse.json({ error: "Order does not match payment record" }, { status: 409 });
+  }
+
+  // Already captured — idempotent response
+  if (bookingSession.payment.status === PaymentStatus.CAPTURED) {
+    return NextResponse.json({ success: true, sessionId });
+  }
+
+  const platformCut = Math.round(bookingSession.price * PLATFORM_CUT);
+  const mentorEarning = bookingSession.price - platformCut;
+  const now = new Date();
+
+  await db.$transaction(async (tx) => {
+    await tx.payment.update({
+      where: { sessionId },
+      data: {
+        razorpayPaymentId,
+        status: PaymentStatus.CAPTURED,
+        paidAt: now,
       },
     });
 
-    if (!bookingSession) {
-      return NextResponse.json({ error: "Session not found" }, { status: 404 });
-    }
-
-    if (bookingSession.studentId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    if (!bookingSession.payment) {
-      return NextResponse.json({ error: "Payment record not found" }, { status: 404 });
-    }
-
-    // Already captured — idempotent response
-    if (bookingSession.payment.status === PaymentStatus.CAPTURED) {
-      return NextResponse.json({ success: true, sessionId });
-    }
-
-    const platformCut = Math.round(bookingSession.price * PLATFORM_CUT);
-    const mentorEarning = bookingSession.price - platformCut;
-    const now = new Date();
-
-    await db.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { sessionId },
-        data: {
-          razorpayPaymentId,
-          status: PaymentStatus.CAPTURED,
-          paidAt: now,
-        },
-      });
-
-      await tx.session.update({
-        where: { id: sessionId },
-        data: {
-          status: SessionStatus.SCHEDULED,
-          platformCut,
-          mentorEarning,
-        },
-      });
-
-      // Create pending payout for mentor
-      await tx.payout.upsert({
-        where: { sessionId },
-        create: {
-          mentorId: bookingSession.mentorId,
-          sessionId,
-          amount: mentorEarning,
-          status: PayoutStatus.PENDING,
-          scheduledAt: bookingSession.scheduledAt,
-        },
-        update: {},
-      });
-
-      // Notify both participants
-      await tx.notification.createMany({
-        data: [
-          {
-            userId: bookingSession.studentId,
-            type: NotificationType.PAYMENT_RECEIVED,
-            title: "Payment confirmed",
-            body: `Your session with ${bookingSession.mentor.name} is confirmed.`,
-            link: `/session/${sessionId}`,
-          },
-          {
-            userId: bookingSession.mentorId,
-            type: NotificationType.SESSION_BOOKED,
-            title: "New booking",
-            body: `${bookingSession.student.name} has booked and paid for a session with you.`,
-            link: `/session/${sessionId}`,
-          },
-        ],
-      });
-
-      await tx.auditLog.create({
-        data: {
-          userId: session.user.id,
-          action: "PAYMENT_CAPTURED",
-          entityType: "Payment",
-          entityId: sessionId,
-          metadata: { razorpayOrderId, razorpayPaymentId, amount: bookingSession.price },
-        },
-      });
+    await tx.session.update({
+      where: { id: sessionId },
+      data: {
+        status: SessionStatus.SCHEDULED,
+        platformCut,
+        mentorEarning,
+      },
     });
 
-    // Send booking confirmation email (fire-and-forget)
-    sendBookingConfirmation(
-      bookingSession,
-      bookingSession.student,
-      bookingSession.mentor,
-    ).catch((err) => console.error("[payment/verify] email error", err));
+    await tx.payout.upsert({
+      where: { sessionId },
+      create: {
+        mentorId: bookingSession.mentorId,
+        sessionId,
+        amount: mentorEarning,
+        status: PayoutStatus.PENDING,
+        scheduledAt: bookingSession.scheduledAt,
+      },
+      update: {
+        amount: mentorEarning,
+      },
+    });
 
-    return NextResponse.json({ success: true, sessionId });
-  } catch (error) {
-    console.error("[payment/verify]", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+    // Notify both participants
+    await tx.notification.createMany({
+      data: [
+        {
+          userId: bookingSession.studentId,
+          type: NotificationType.PAYMENT_RECEIVED,
+          title: "Payment confirmed",
+          body: `Your session with ${bookingSession.mentor.name} is confirmed.`,
+          link: `/session/${sessionId}`,
+        },
+        {
+          userId: bookingSession.mentorId,
+          type: NotificationType.SESSION_BOOKED,
+          title: "New booking",
+          body: `${bookingSession.student.name} has booked and paid for a session with you.`,
+          link: `/session/${sessionId}`,
+        },
+      ],
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "PAYMENT_CAPTURED",
+        entityType: "Payment",
+        entityId: sessionId,
+        metadata: { razorpayOrderId, razorpayPaymentId, amount: bookingSession.price },
+      },
+    });
+  });
+
+  // Send booking confirmation email (fire-and-forget)
+  sendBookingConfirmation(
+    bookingSession,
+    bookingSession.student,
+    bookingSession.mentor,
+  ).catch((err) =>
+    log.error("Booking confirmation email failed", err, {
+      requestId: metadata.requestId,
+      route: "/api/payment/verify",
+      userId: metadata.userId,
+      sessionId,
+    }),
+  );
+  cacheDel(cacheKeys.session(sessionId)).catch(() => {});
+
+  return NextResponse.json({ success: true, sessionId });
+}, "/api/payment/verify");

@@ -1,3 +1,4 @@
+import { sanitizeText } from "@/lib/sanitize";
 import { z } from "zod";
 
 import {
@@ -38,7 +39,8 @@ const citySchema = z
   .string()
   .trim()
   .min(2, "Enter your city")
-  .max(80, "City is too long");
+  .max(80, "City is too long")
+  .transform(sanitizeText);
 const optionalTextSchema = z
   .union([z.string().trim().max(80), z.literal(""), z.null()])
   .transform((value) => value || undefined);

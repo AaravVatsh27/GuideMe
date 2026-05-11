@@ -2,7 +2,8 @@ import { Prisma, type MentorTier } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { auth, updateSession } from "@/auth";
+import { withApiErrorHandling } from "@/lib/api-helpers";
 import { DEFAULT_TIMEZONE } from "@/server/constants";
 import { db } from "@/server/db";
 import { invalidateAllMatchingCaches } from "@/server/matching";
@@ -164,12 +165,14 @@ function getValidatedStepData(step: number, data: Record<string, unknown>) {
   }
 }
 
-export async function PATCH(request: Request) {
+export const PATCH = withApiErrorHandling(async (request: Request, _context, metadata) => {
   const session = await auth();
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  metadata.setUserId(session.user.id);
 
   if (session.user.role !== "MENTOR") {
     return NextResponse.json(
@@ -464,6 +467,15 @@ export async function PATCH(request: Request) {
 
   await invalidateAllMatchingCaches();
 
+  if (parsedRequest.data.submit) {
+    await updateSession({
+      user: {
+        role: session.user.role,
+        onboardingComplete: true,
+      },
+    });
+  }
+
   return NextResponse.json({
     savedStep: saved.onboardingStep,
     tier: saved.tier,
@@ -471,4 +483,4 @@ export async function PATCH(request: Request) {
     status: parsedRequest.data.submit ? "PENDING" : "DRAFT",
     redirectTo: parsedRequest.data.submit ? MENTOR_DASHBOARD_PATH : null,
   });
-}
+}, "/api/onboarding/mentor");

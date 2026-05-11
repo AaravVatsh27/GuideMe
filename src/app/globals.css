@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "../legacy-static/styles.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -138,7 +137,7 @@
     min-height: 100vh;
   }
 
-  body:not(:has(.guideme-landing)) {
+  body {
     @apply bg-background text-foreground;
   }
 }

@@ -17,16 +17,18 @@ import {
   CardTitle,
 } from "@/client/components/ui/card";
 import { getAuthErrorCopy } from "@/server/auth-flow";
+import { getAuthShellContent } from "@/server/public-data";
 import { cn } from "@/server/utils";
 
 type AuthErrorPageProps = {
   searchParams?: AuthPageSearchParams;
 };
 
-export default function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
+export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
   const callbackUrl = getAuthCallbackUrl(searchParams);
   const errorCode = getFirstSearchParam(searchParams?.error);
   const errorCopy = getAuthErrorCopy(errorCode) ?? getAuthErrorCopy("Default");
+  const shellContent = await getAuthShellContent();
   const signInHref = {
     pathname: "/auth/signin",
     query: { callbackUrl },
@@ -41,7 +43,7 @@ export default function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
   }
 
   return (
-    <AuthShell>
+    <AuthShell {...shellContent}>
       <Card className="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/92 py-0 shadow-card backdrop-blur">
         <CardHeader className="gap-4 border-b border-slate-200/80 px-6 py-7 sm:px-7">
           <div className="flex size-14 items-center justify-center rounded-full bg-red-50 text-red-600">

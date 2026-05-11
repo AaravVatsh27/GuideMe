@@ -22,6 +22,8 @@ import {
   sendSessionCompletionEmails,
 } from "@/server/resend";
 import type { CreateSessionInput } from "@/server/validations/session";
+import { cacheDel, cacheDelPattern, cacheKeys } from "@/lib/cache";
+import { log } from "@/lib/logger";
 
 type CreateSessionBookingInput = {
   studentId: string;
@@ -58,6 +60,16 @@ type AvailabilityRecord = {
   isRecurring: boolean;
 };
 
+function invalidateSessionCaches(sessionId: string, mentorId?: string) {
+  const invalidations: Promise<unknown>[] = [cacheDel(cacheKeys.session(sessionId))];
+
+  if (mentorId) {
+    invalidations.push(cacheDelPattern(cacheKeys.availabilityPattern(mentorId)));
+  }
+
+  Promise.allSettled(invalidations).catch(() => {});
+}
+
 type CancellationOutcome = {
   refundPercent: number;
   refundAmount: number;
@@ -65,6 +77,7 @@ type CancellationOutcome = {
 };
 
 const ACTIVE_SESSION_STATUSES = [SessionStatus.SCHEDULED, SessionStatus.ONGOING] as const;
+const SESSION_START_EARLY_WINDOW_MINUTES = 30;
 const DAY_OF_WEEK_BY_LABEL: Record<string, number> = {
   Sun: 0,
   Mon: 1,
@@ -338,6 +351,52 @@ function isParticipant(session: { studentId: string; mentorId: string }, userId:
   return session.studentId === userId || session.mentorId === userId;
 }
 
+function ensureMentorControlsSession(
+  session: { mentorId: string },
+  actorId: string | undefined,
+  action: "start" | "complete",
+) {
+  if (!actorId) {
+    return;
+  }
+
+  if (actorId !== session.mentorId) {
+    throw new SessionApiError(`Only the mentor can ${action} this session`, 403);
+  }
+}
+
+function ensureSessionCanStartAt(
+  session: { scheduledAt: Date },
+  startedAt?: Date,
+) {
+  const effectiveStart = startedAt ?? new Date();
+  const earliestAllowedStart = addMinutes(
+    session.scheduledAt,
+    -SESSION_START_EARLY_WINDOW_MINUTES,
+  );
+
+  if (effectiveStart < earliestAllowedStart) {
+    throw new SessionApiError(
+      "Sessions can only be started shortly before the scheduled time",
+      409,
+      {
+        earliestAllowedStart,
+      },
+    );
+  }
+}
+
+function ensureSessionCanCompleteAt(
+  session: { scheduledAt: Date },
+  endedAt?: Date,
+) {
+  const effectiveEnd = endedAt ?? new Date();
+
+  if (effectiveEnd < session.scheduledAt) {
+    throw new SessionApiError("Sessions cannot be completed before they begin", 409);
+  }
+}
+
 async function findSessionDetailsOrThrow(sessionId: string) {
   const session = await db.session.findUnique({
     where: {
@@ -513,15 +572,15 @@ async function safelySend<T>(promise: Promise<T>) {
   try {
     await promise;
   } catch (error) {
-    console.error(error);
+    log.error("Session side-effect delivery failed", error, {
+      requestId: "system",
+      route: "sessions",
+    });
   }
 }
 
-function asEmailParticipant(participant: { name: string; email: string }) {
-  return {
-    name: participant.name,
-    email: participant.email,
-  };
+function asEmailParticipant<T extends { name: string; email: string }>(participant: T) {
+  return participant;
 }
 
 function calculateCancellationOutcome(
@@ -593,14 +652,21 @@ export async function createSessionBooking({
       where: {
         id: studentId,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        role: true,
-      },
-    }),
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          studentProfile: {
+            select: {
+              class: true,
+              confusionType: true,
+              confusionTypes: true,
+            },
+          },
+        },
+      }),
     db.user.findUnique({
       where: {
         id: input.mentorId,
@@ -612,16 +678,17 @@ export async function createSessionBooking({
         image: true,
         role: true,
         isActive: true,
-        mentorProfile: {
-          select: {
-            isAvailable: true,
-            isActive: true,
-            priceMin: true,
-            priceMax: true,
+          mentorProfile: {
+            select: {
+              isAvailable: true,
+              isActive: true,
+              priceMin: true,
+              priceMax: true,
+              college: true,
+            },
           },
         },
-      },
-    }),
+      }),
   ]);
 
   if (!student || student.role !== "STUDENT") {
@@ -786,6 +853,7 @@ export async function createSessionBooking({
   });
 
   const session = await findSessionDetailsOrThrow(sessionId);
+  invalidateSessionCaches(sessionId, mentor.id);
 
   if (input.type === SessionType.INTRO) {
     await safelySend(
@@ -803,7 +871,7 @@ export async function createSessionBooking({
     paymentOrder: order
       ? {
           orderId: order.id,
-          amount: input.price,
+          amount: order.amount,
           currency: DEFAULT_CURRENCY,
         }
       : null,
@@ -877,6 +945,15 @@ export async function cancelSessionById({
       },
     });
 
+    await tx.payout.deleteMany({
+      where: {
+        sessionId,
+        status: {
+          in: [PayoutStatus.PENDING, PayoutStatus.PROCESSING],
+        },
+      },
+    });
+
     if (session.payment) {
       const paymentUpdate: Prisma.PaymentUncheckedUpdateInput = {};
 
@@ -929,6 +1006,7 @@ export async function cancelSessionById({
     });
   });
 
+  invalidateSessionCaches(sessionId, session.mentorId);
   const updatedSession = await findSessionDetailsOrThrow(sessionId);
   const canceller =
     actorId === session.mentorId ? session.mentor : session.student;
@@ -962,9 +1040,7 @@ export async function markSessionStarted({
 }: StartSessionInput) {
   const session = await findSessionDetailsOrThrow(sessionId);
 
-  if (actorId && !isParticipant(session, actorId)) {
-    throw new SessionApiError("You do not have access to this session", 403);
-  }
+  ensureMentorControlsSession(session, actorId, "start");
 
   if (
     session.status === SessionStatus.CANCELLED ||
@@ -985,6 +1061,8 @@ export async function markSessionStarted({
     return session;
   }
 
+  ensureSessionCanStartAt(session, startedAt);
+
   await db.session.update({
     where: {
       id: sessionId,
@@ -995,6 +1073,7 @@ export async function markSessionStarted({
     },
   });
 
+  invalidateSessionCaches(sessionId);
   return findSessionDetailsOrThrow(sessionId);
 }
 
@@ -1006,8 +1085,10 @@ export async function completeSessionById({
 }: CompleteSessionInput) {
   const session = await findSessionDetailsOrThrow(sessionId);
 
-  if (actorId && !isParticipant(session, actorId)) {
-    throw new SessionApiError("You do not have access to this session", 403);
+  ensureMentorControlsSession(session, actorId, "complete");
+
+  if (session.status === SessionStatus.COMPLETED) {
+    return session;
   }
 
   if (session.status === SessionStatus.CANCELLED || session.status === SessionStatus.NO_SHOW) {
@@ -1020,6 +1101,8 @@ export async function completeSessionById({
   ) {
     throw new SessionApiError("Paid sessions can only complete after payment is captured", 409);
   }
+
+  ensureSessionCanCompleteAt(session, endedAt);
 
   const reviewLink = buildAbsoluteUrl(`/session/${sessionId}?review=1`);
   const summary =
@@ -1042,7 +1125,6 @@ export async function completeSessionById({
         .slice(-12),
     }));
   const completedAt = endedAt ?? new Date();
-  const sessionWasAlreadyCompleted = session.status === SessionStatus.COMPLETED;
 
   await db.$transaction(async (tx) => {
     await tx.session.update({
@@ -1075,52 +1157,49 @@ export async function completeSessionById({
       });
     }
 
-    if (!sessionWasAlreadyCompleted) {
-      await tx.mentorProfile.updateMany({
-        where: {
-          userId: session.mentorId,
+    await tx.mentorProfile.updateMany({
+      where: {
+        userId: session.mentorId,
+      },
+      data: {
+        totalSessions: {
+          increment: 1,
         },
-        data: {
-          totalSessions: {
-            increment: 1,
-          },
-        },
-      });
-      await createCompletionNotifications(tx, sessionId, session.studentId, session.mentorId);
+      },
+    });
+    await createCompletionNotifications(tx, sessionId, session.studentId, session.mentorId);
 
-      await tx.auditLog.create({
-        data: {
-          userId: actorId ?? session.mentorId,
-          action: "SESSION_COMPLETED",
-          entityType: "Session",
-          entityId: sessionId,
-        },
-      });
-    }
+    await tx.auditLog.create({
+      data: {
+        userId: actorId ?? session.mentorId,
+        action: "SESSION_COMPLETED",
+        entityType: "Session",
+        entityId: sessionId,
+      },
+    });
   });
 
+  invalidateSessionCaches(sessionId);
   const updatedSession = await findSessionDetailsOrThrow(sessionId);
 
-  if (!sessionWasAlreadyCompleted) {
-    await Promise.allSettled([
-      safelySend(
-        sendSessionCompletionEmails(
-          updatedSession,
-          asEmailParticipant(session.student),
-          asEmailParticipant(session.mentor),
-          summary,
-        ),
+  await Promise.allSettled([
+    safelySend(
+      sendSessionCompletionEmails(
+        updatedSession,
+        asEmailParticipant(session.student),
+        asEmailParticipant(session.mentor),
+        summary,
       ),
-      safelySend(
-        sendReviewRequestEmail(
-          updatedSession,
-          asEmailParticipant(session.student),
-          asEmailParticipant(session.mentor),
-          reviewLink,
-        ),
+    ),
+    safelySend(
+      sendReviewRequestEmail(
+        updatedSession,
+        asEmailParticipant(session.student),
+        asEmailParticipant(session.mentor),
+        reviewLink,
       ),
-    ]);
-  }
+    ),
+  ]);
 
   return updatedSession;
 }

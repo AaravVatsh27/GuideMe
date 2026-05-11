@@ -113,8 +113,13 @@ export async function generateClaudeSessionSummary(context: SessionSummaryContex
 
     if (!response.ok) {
       const details = await response.text().catch(() => "");
-      console.error(
+      log.error(
         `OpenAI session summary failed with status ${response.status}${details ? `: ${details}` : ""}`,
+        new Error("OpenAI session summary request failed"),
+        {
+          requestId: "system",
+          route: "claude-summary",
+        },
       );
     } else {
       const payload = (await response.json()) as OpenAIResponsesApiResponse;
@@ -161,8 +166,13 @@ export async function generateClaudeSessionSummary(context: SessionSummaryContex
 
   if (!response.ok) {
     const details = await response.text().catch(() => "");
-    console.error(
+    log.error(
       `Anthropic session summary failed with status ${response.status}${details ? `: ${details}` : ""}`,
+      new Error("Anthropic session summary request failed"),
+      {
+        requestId: "system",
+        route: "claude-summary",
+      },
     );
     return fallbackSummary;
   }
@@ -177,3 +187,4 @@ export async function generateClaudeSessionSummary(context: SessionSummaryContex
 
   return summary || fallbackSummary;
 }
+import { log } from "@/lib/logger";

@@ -2,14 +2,38 @@ import type { Payout, Session, User } from "@prisma/client";
 import { format } from "date-fns";
 import { Resend, type CreateEmailResponse } from "resend";
 
+import {
+  BookingConfirmation,
+  MentorSessionAlert,
+  PayoutConfirmation,
+  WelcomeMentor,
+  renderEmailTemplate,
+} from "@emails";
 import { DEFAULT_CURRENCY, PLATFORM_NAME } from "@/server/constants";
 
-type EmailUser = Pick<User, "name" | "email">;
+type EmailUser = Pick<User, "name" | "email"> & {
+  role?: User["role"];
+  mentorProfile?: {
+    college?: string | null;
+  } | null;
+  studentProfile?: {
+    class?: string | null;
+    confusionType?: string | null;
+    confusionTypes?: string[];
+  } | null;
+};
 type EmailSession = Pick<
   Session,
   "id" | "type" | "scheduledAt" | "durationMinutes" | "price" | "meetingLink"
 >;
-type EmailPayout = Pick<Payout, "id" | "amount" | "status" | "processedAt" | "transactionId">;
+type EmailPayout = Pick<
+  Payout,
+  "id" | "amount" | "status" | "processedAt" | "transactionId" | "upiId" | "createdAt"
+> & {
+  sessionCount?: number;
+  periodStart?: Date | null;
+  periodEnd?: Date | null;
+};
 type EmailTemplate = {
   html: string;
   text: string;
@@ -40,6 +64,10 @@ function getEmailFromAddress() {
   }
 
   return from;
+}
+
+function getAppUrl() {
+  return process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.AUTH_URL?.trim() || "http://localhost:3000";
 }
 
 function formatMoney(amount: number) {
@@ -147,32 +175,41 @@ export async function sendBookingConfirmation(
   student: EmailUser,
   mentor: EmailUser,
 ) {
-  return sendEmail(
-    [student.email, mentor.email],
-    "Your GuideMe session is confirmed",
-    buildEmailShell({
-      preview: "Your mentoring session is booked.",
-      title: "Session booked",
-      body: [
-        `${student.name}, your session with ${mentor.name} is scheduled for ${format(
-          session.scheduledAt,
-          "EEE, d MMM yyyy 'at' h:mm a",
-        )}.`,
-        `Session ID: ${session.id}`,
-        `Type: ${session.type}`,
-        `Duration: ${session.durationMinutes} minutes`,
-        `Price: ${formatMoney(session.price)}`,
-      ],
-      cta: session.meetingLink
-        ? {
-            label: "Open session room",
-            href: session.meetingLink,
-            background: "#f59e0b",
-            color: "#020617",
-          }
-        : undefined,
-    }),
-  );
+  const meetingLink = session.meetingLink ?? `${getAppUrl()}/dashboard/student/sessions`;
+  const [studentTemplate, mentorTemplate] = await Promise.all([
+    renderEmailTemplate(
+      BookingConfirmation({
+        studentName: student.name,
+        mentorName: mentor.name,
+        mentorCollege: mentor.mentorProfile?.college ?? "GuideMe mentor network",
+        sessionType: session.type,
+        scheduledAt: session.scheduledAt,
+        durationMinutes: session.durationMinutes,
+        meetingLink,
+        sessionId: session.id,
+      }),
+    ),
+    renderEmailTemplate(
+      MentorSessionAlert({
+        mentorName: mentor.name,
+        studentName: student.name,
+        studentClass: student.studentProfile?.class ?? "Student",
+        studentConfusionType:
+          student.studentProfile?.confusionTypes?.[0] ??
+          student.studentProfile?.confusionType ??
+          "CAREER_DIRECTION",
+        scheduledAt: session.scheduledAt,
+        durationMinutes: session.durationMinutes,
+        sessionId: session.id,
+        meetingLink,
+      }),
+    ),
+  ]);
+
+  return Promise.all([
+    sendEmail(student.email, "Your GuideMe session is confirmed", studentTemplate),
+    sendEmail(mentor.email, "New GuideMe session on your calendar", mentorTemplate),
+  ]);
 }
 
 export async function sendSessionReminder(
@@ -301,23 +338,104 @@ export async function sendPayoutConfirmation(
   payout: EmailPayout,
   mentor: EmailUser,
 ) {
+  const rendered = await renderEmailTemplate(
+    PayoutConfirmation({
+      mentorName: mentor.name,
+      amount: payout.amount,
+      sessionCount: payout.sessionCount ?? 1,
+      upiId: payout.upiId ?? "UPI not recorded",
+      transactionId: payout.transactionId ?? "Pending",
+      periodStart: payout.periodStart ?? payout.processedAt ?? payout.createdAt ?? new Date(),
+      periodEnd: payout.periodEnd ?? payout.processedAt ?? payout.createdAt ?? new Date(),
+    }),
+  );
+
   return sendEmail(
     mentor.email,
     "Your GuideMe payout has been processed",
+    rendered,
+  );
+}
+
+export async function sendRefundConfirmationEmail(params: {
+  student: EmailUser;
+  sessionId: string;
+  refundAmount: number;
+  reason?: string;
+}) {
+  const { student, sessionId, refundAmount, reason } = params;
+
+  return sendEmail(
+    student.email,
+    "Your GuideMe refund has been initiated",
     buildEmailShell({
-      preview: "A mentor payout has been processed.",
-      title: "Payout processed",
+      preview: "Your refund is being processed.",
+      title: "Refund initiated",
       body: [
-        `${mentor.name}, your payout of ${formatMoney(payout.amount)} is now ${payout.status.toLowerCase()}.`,
-        `Payout ID: ${payout.id}`,
-        `Processed at: ${
-          payout.processedAt
-            ? format(payout.processedAt, "EEE, d MMM yyyy 'at' h:mm a")
-            : "Pending"
-        }`,
-        `Transaction ID: ${payout.transactionId ?? "Will be added once available"}`,
+        `${student.name}, your refund request has been processed for session ${sessionId}.`,
+        `Refund amount: ${formatMoney(refundAmount)}`,
+        reason ? `Reason: ${reason}` : "Reason: Not specified",
       ],
-      footer: "Reply to this email if you need payout support.",
+      footer: "If you need help, reply to this email and our support team will assist you.",
+    }),
+  );
+}
+
+export async function sendPaymentFailureEmail(params: {
+  student: EmailUser;
+  sessionId: string;
+}) {
+  const { student, sessionId } = params;
+
+  return sendEmail(
+    student.email,
+    "Payment attempt failed for your GuideMe booking",
+    buildEmailShell({
+      preview: "Your payment attempt did not go through.",
+      title: "Payment failed",
+      body: [
+        `${student.name}, we could not complete the payment for your booking (${sessionId}).`,
+        "Please retry from your dashboard. If money was deducted, it is usually auto-reversed by your bank.",
+      ],
+      footer: "Need support? Reply to this email and mention your session ID.",
+    }),
+  );
+}
+
+export async function sendWelcomeMentorEmail(params: {
+  mentor: EmailUser;
+  college: string;
+  tier: string;
+  profileUrl: string;
+}) {
+  const rendered = await renderEmailTemplate(
+    WelcomeMentor({
+      mentorName: params.mentor.name,
+      college: params.college,
+      tier: params.tier,
+      profileUrl: params.profileUrl,
+    }),
+  );
+
+  return sendEmail(params.mentor.email, "Your GuideMe mentor profile is live", rendered);
+}
+
+export async function sendMentorVerificationRejectedEmail(params: {
+  mentor: EmailUser;
+  reason: string;
+}) {
+  return sendEmail(
+    params.mentor.email,
+    "Your GuideMe mentor verification needs updates",
+    buildEmailShell({
+      preview: "Your mentor verification needs a few updates before approval.",
+      title: "Verification update required",
+      body: [
+        `${params.mentor.name}, we reviewed your GuideMe mentor application and need a few changes before approval.`,
+        `Reason: ${params.reason}`,
+        "Update the relevant profile details and resubmit when you are ready. The review queue will pick it up again automatically.",
+      ],
+      footer: "If you need help, reply to this email and the GuideMe team will assist you.",
     }),
   );
 }

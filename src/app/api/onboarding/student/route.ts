@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
+import { auth, updateSession } from "@/auth";
+import { withApiErrorHandling } from "@/lib/api-helpers";
 import { db } from "@/server/db";
 import { invalidateMatchingCacheForStudent } from "@/server/matching";
 import { studentOnboardingSchema } from "@/server/validations/student";
 
 const STUDENT_DASHBOARD_PATH = "/dashboard/student";
 
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
   const session = await auth();
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  metadata.setUserId(session.user.id);
 
   if (session.user.role !== "STUDENT") {
     return NextResponse.json({ error: "Only students can complete this onboarding flow" }, { status: 403 });
@@ -84,9 +87,16 @@ export async function POST(request: Request) {
 
   await invalidateMatchingCacheForStudent(session.user.id);
 
+  await updateSession({
+    user: {
+      role: session.user.role,
+      onboardingComplete: true,
+    },
+  });
+
   return NextResponse.json({
     onboardingComplete: true,
     redirectTo: STUDENT_DASHBOARD_PATH,
     profile: result,
   });
-}
+}, "/api/onboarding/student");

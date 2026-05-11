@@ -1,20 +1,28 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { getOnboardingPath } from "@/server/auth-flow";
+import { auth, updateSession } from "@/auth";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
+import { authLimiter } from "@/lib/ratelimit";
+import { AUTH_DEFAULT_REDIRECT, getOnboardingPath } from "@/server/auth-flow";
 import { db } from "@/server/db";
 
 const completeSignupSchema = z.object({
   role: z.enum(["STUDENT", "MENTOR"]),
 });
 
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
   const session = await auth();
+  const userId = session?.user?.id;
 
-  if (!session?.user?.id) {
+  const denied = await applyRateLimit(authLimiter, getRateLimitId(request, userId));
+  if (denied) return denied;
+
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  metadata.setUserId(userId);
 
   const payload = await request.json().catch(() => null);
   const parsed = completeSignupSchema.safeParse(payload);
@@ -24,7 +32,7 @@ export async function POST(request: Request) {
   }
 
   const user = await db.user.update({
-    where: { id: session.user.id },
+    where: { id: userId },
     data: { role: parsed.data.role },
     select: {
       role: true,
@@ -32,9 +40,16 @@ export async function POST(request: Request) {
     },
   });
 
+  await updateSession({
+    user: {
+      role: user.role,
+      onboardingComplete: user.onboardingComplete,
+    },
+  });
+
   return NextResponse.json({
     role: user.role,
     onboardingComplete: user.onboardingComplete,
-    onboardingPath: getOnboardingPath(user.role),
+    onboardingPath: user.onboardingComplete ? AUTH_DEFAULT_REDIRECT : getOnboardingPath(user.role),
   });
-}
+}, "/api/auth/complete-signup");

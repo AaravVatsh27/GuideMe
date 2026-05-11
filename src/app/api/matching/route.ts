@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
+import { withApiErrorHandling } from "@/lib/api-helpers";
 import { getStudentMentorMatches } from "@/server/matching";
 
-export async function POST() {
+export const POST = withApiErrorHandling(async (_request: Request, _context, metadata) => {
   const session = await auth();
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  metadata.setUserId(session.user.id);
 
   if (session.user.role !== "STUDENT") {
     return NextResponse.json(
@@ -27,4 +30,4 @@ export async function POST() {
   }
 
   return NextResponse.json(matches);
-}
+}, "/api/matching");

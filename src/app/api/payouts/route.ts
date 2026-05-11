@@ -3,20 +3,29 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/auth";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
+import { generalLimiter } from "@/lib/ratelimit";
 import { db } from "@/server/db";
 
 const listPayoutsQuerySchema = z.object({
   status: z.nativeEnum(PayoutStatus).optional(),
+  mentorId: z.string().uuid().optional(),
+  sessionId: z.string().uuid().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 
-export async function GET(request: Request) {
+export const GET = withApiErrorHandling(async (request: Request, _context, metadata) => {
   const session = await auth();
+
+  const denied = await applyRateLimit(generalLimiter, getRateLimitId(request, session?.user?.id));
+  if (denied) return denied;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  metadata.setUserId(session.user.id);
 
   if (session.user.role !== "MENTOR" && session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Only mentors and admins can view payouts" }, { status: 403 });
@@ -32,10 +41,12 @@ export async function GET(request: Request) {
     );
   }
 
-  const { status, page, limit } = parsed.data;
+  const { status, mentorId, sessionId, page, limit } = parsed.data;
 
   const where: Prisma.PayoutWhereInput = {
     ...(status ? { status } : {}),
+    ...(session.user.role === "ADMIN" && mentorId ? { mentorId } : {}),
+    ...(session.user.role === "ADMIN" && sessionId ? { sessionId } : {}),
     ...(session.user.role === "MENTOR" ? { mentorId: session.user.id } : {}),
   };
 
@@ -69,4 +80,4 @@ export async function GET(request: Request) {
     total,
     totalPages: Math.max(1, Math.ceil(total / limit)),
   });
-}
+}, "/api/payouts");

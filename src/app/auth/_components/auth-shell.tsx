@@ -1,18 +1,25 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Compass, Sparkles, Star, TrendingUp, Users } from "lucide-react";
+import { Compass, Quote, Sparkles, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 
 type AuthShellProps = {
   children: ReactNode;
+  stats: Array<{
+    value: string;
+    label: string;
+  }>;
+  summaryCards: Array<{
+    label: string;
+    value: string;
+    copy: string;
+  }>;
+  spotlight: {
+    quote: string;
+    attribution: string;
+  };
 };
-
-const stats = [
-  { value: "12k+", label: "students matched" },
-  { value: "2.5k+", label: "mentors onboarded" },
-  { value: "93%", label: "clarity after first call" },
-];
 
 const panelMotion = {
   initial: { opacity: 0, y: 28 },
@@ -20,7 +27,12 @@ const panelMotion = {
   transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as const },
 };
 
-export function AuthShell({ children }: AuthShellProps) {
+export function AuthShell({
+  children,
+  stats,
+  summaryCards,
+  spotlight,
+}: AuthShellProps) {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.12),_transparent_32%),linear-gradient(135deg,_#f8fafc_0%,_#eef4ff_48%,_#ffffff_100%)] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-7xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/80 shadow-[0_32px_120px_-48px_rgba(15,23,42,0.45)] backdrop-blur xl:grid-cols-[1.04fr_minmax(420px,520px)]">
@@ -45,14 +57,14 @@ export function AuthShell({ children }: AuthShellProps) {
 
               <div className="max-w-xl space-y-4">
                 <p className="text-sm font-medium uppercase tracking-[0.28em] text-teal-200/90">
-                  Career clarity for ambitious students
+                  Live platform snapshot
                 </p>
                 <h1 className="font-display text-4xl leading-[0.95] font-bold text-white sm:text-5xl lg:text-6xl">
-                  Real guidance from mentors who have already done it.
+                  Sign in to the current mentor network, not a static mockup.
                 </h1>
                 <p className="max-w-lg text-base leading-7 text-slate-300 sm:text-lg">
-                  Move from confusion to confident action with mentor-led roadmaps, honest
-                  insights, and structured next steps across exams, streams, and careers.
+                  The numbers on this panel now come from the same data source that powers mentor
+                  discovery, public reviews, and session activity across GuideMe.
                 </p>
               </div>
 
@@ -74,44 +86,33 @@ export function AuthShell({ children }: AuthShellProps) {
 
             <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="rounded-[1.75rem] border border-white/12 bg-white/8 p-5 backdrop-blur">
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-teal-100 uppercase">
-                  <Star className="size-3.5" />
-                  Student momentum
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-teal-100">
+                  <Quote className="size-3.5" />
+                  Recent proof
                 </div>
                 <p className="text-base leading-7 text-slate-100">
-                  “GuideMe turns scattered advice into one clear path. Students know what to do
-                  next, and mentors know exactly where to help.”
+                  “{spotlight.quote}”
                 </p>
+                <p className="mt-4 text-sm font-medium text-teal-100">{spotlight.attribution}</p>
               </div>
 
               <div className="grid gap-3">
-                <div className="rounded-2xl border border-white/12 bg-slate-950/30 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-100">
-                    <Users className="size-4 text-teal-200" />
-                    Mentor fit
+                {summaryCards.map((card, index) => (
+                  <div key={card.label} className="rounded-2xl border border-white/12 bg-slate-950/30 p-4">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-100">
+                      {index === 0 ? (
+                        <TrendingUp className="size-4 text-teal-200" />
+                      ) : index === 1 ? (
+                        <Sparkles className="size-4 text-amber-300" />
+                      ) : (
+                        <Compass className="size-4 text-cyan-200" />
+                      )}
+                      {card.label}
+                    </div>
+                    <p className="text-lg font-semibold text-white">{card.value}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">{card.copy}</p>
                   </div>
-                  <p className="text-sm leading-6 text-slate-300">
-                    Match students with people who have already crossed the same milestone.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/12 bg-slate-950/30 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-100">
-                    <TrendingUp className="size-4 text-amber-300" />
-                    Outcome-driven
-                  </div>
-                  <p className="text-sm leading-6 text-slate-300">
-                    Every conversation is designed to reduce uncertainty and speed up decisions.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/12 bg-slate-950/30 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-100">
-                    <Sparkles className="size-4 text-cyan-200" />
-                    Calm, modern experience
-                  </div>
-                  <p className="text-sm leading-6 text-slate-300">
-                    Built for serious students who want clarity without the usual noise.
-                  </p>
-                </div>
+                ))}
               </div>
             </div>
           </div>

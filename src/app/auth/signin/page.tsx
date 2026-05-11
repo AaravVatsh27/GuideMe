@@ -10,6 +10,7 @@ import {
 } from "@/app/auth/_lib/search-params";
 import { isEmailAuthEnabled } from "@/server/auth";
 import { getOnboardingPath } from "@/server/auth-flow";
+import { getAuthShellContent } from "@/server/public-data";
 
 type SignInPageProps = {
   searchParams?: AuthPageSearchParams;
@@ -26,8 +27,10 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     );
   }
 
+  const shellContent = await getAuthShellContent();
+
   return (
-    <AuthShell>
+    <AuthShell {...shellContent}>
       <SignInView
         callbackUrl={callbackUrl}
         errorCode={errorCode}

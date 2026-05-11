@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/auth";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
+import { bookingLimiter, generalLimiter } from "@/lib/ratelimit";
 import { db } from "@/server/db";
 import {
   createSessionBooking,
-  SessionApiError,
   sessionListInclude,
 } from "@/server/sessions";
 import { createSessionSchema } from "@/server/validations/session";
@@ -18,21 +19,17 @@ const listSessionsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(10).default(10),
 });
 
-function handleSessionError(error: unknown) {
-  if (error instanceof SessionApiError) {
-    return NextResponse.json({ error: error.message, details: error.details }, { status: error.status });
-  }
-
-  console.error(error);
-  return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-}
-
-export async function GET(request: Request) {
+export const GET = withApiErrorHandling(async (request: Request, _context, metadata) => {
   const session = await auth();
+
+  const denied = await applyRateLimit(generalLimiter, getRateLimitId(request, session?.user?.id));
+  if (denied) return denied;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  metadata.setUserId(session.user.id);
 
   if (session.user.role !== "STUDENT" && session.user.role !== "MENTOR") {
     return NextResponse.json({ error: "Only students and mentors can access sessions" }, { status: 403 });
@@ -80,14 +77,19 @@ export async function GET(request: Request) {
     total,
     totalPages: Math.max(1, Math.ceil(total / limit)),
   });
-}
+}, "/api/sessions");
 
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
   const session = await auth();
+
+  const denied = await applyRateLimit(bookingLimiter, getRateLimitId(request, session?.user?.id));
+  if (denied) return denied;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  metadata.setUserId(session.user.id);
 
   if (session.user.role !== "STUDENT") {
     return NextResponse.json({ error: "Only students can book sessions" }, { status: 403 });
@@ -106,27 +108,23 @@ export async function POST(request: Request) {
     );
   }
 
-  try {
-    const result = await createSessionBooking({
-      studentId: session.user.id,
-      input: parsedBody.data,
-    });
+  const result = await createSessionBooking({
+    studentId: session.user.id,
+    input: parsedBody.data,
+  });
 
-    return NextResponse.json(
-      result.requiresPayment
-        ? {
-            sessionId: result.session.id,
-            requiresPayment: true,
-            payment: result.paymentOrder,
-            session: result.session,
-          }
-        : {
-            confirmed: true,
-            session: result.session,
-          },
-      { status: 201 },
-    );
-  } catch (error) {
-    return handleSessionError(error);
-  }
-}
+  return NextResponse.json(
+    result.requiresPayment
+      ? {
+          sessionId: result.session.id,
+          requiresPayment: true,
+          payment: result.paymentOrder,
+          session: result.session,
+        }
+      : {
+          confirmed: true,
+          session: result.session,
+        },
+    { status: 201 },
+  );
+}, "/api/sessions");

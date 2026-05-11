@@ -9,11 +9,9 @@ import type {
 
 import { db } from "@/server/db";
 import { getExamLabel, getHelpTopicLabel } from "@/server/mentor-onboarding";
-import { getRedis, deleteRedisKeysByPattern } from "@/server/redis";
 import { isSchoolClass, isUGClass } from "@/server/student-onboarding";
+import { cacheDel, cacheDelPattern, cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/lib/cache";
 
-const MATCHING_CACHE_PREFIX = "matching";
-const MATCHING_CACHE_TTL_SECONDS = 60 * 60 * 24;
 const MIN_MATCH_SCORE = 30;
 const MAX_MATCHES = 15;
 
@@ -311,7 +309,7 @@ const CONFUSION_SPECIALISATION_MAP: Record<ConfusionType, string[]> = {
 };
 
 function getMatchingCacheKey(studentId: string) {
-  return `${MATCHING_CACHE_PREFIX}:${studentId}`;
+  return cacheKeys.matching(studentId);
 }
 
 function roundScore(value: number) {
@@ -795,20 +793,15 @@ export async function getStudentMentorMatches(
   },
 ) {
   const cacheKey = getMatchingCacheKey(studentId);
-  const redis = getRedis();
 
-  if (!options?.forceRefresh && redis) {
-    try {
-      const cached = await redis.get<MatchingResponse>(cacheKey);
+  if (!options?.forceRefresh) {
+    const cached = await cacheGet<MatchingResponse>(cacheKey);
 
-      if (cached) {
-        return {
-          ...cached,
-          cached: true,
-        } satisfies MatchingResponse;
-      }
-    } catch (error) {
-      console.error("Failed to read mentor matching cache", error);
+    if (cached) {
+      return {
+        ...cached,
+        cached: true,
+      } satisfies MatchingResponse;
     }
   }
 
@@ -818,39 +811,17 @@ export async function getStudentMentorMatches(
     return null;
   }
 
-  if (redis) {
-    try {
-      await redis.set(cacheKey, fresh, {
-        ex: MATCHING_CACHE_TTL_SECONDS,
-      });
-    } catch (error) {
-      console.error("Failed to write mentor matching cache", error);
-    }
-  }
+  cacheSet(cacheKey, fresh, cacheTtl.matchingResults).catch(() => {});
 
   return fresh;
 }
 
 export async function invalidateMatchingCacheForStudent(studentId: string) {
-  const redis = getRedis();
-
-  if (!redis) {
-    return 0;
-  }
-
-  try {
-    return await redis.del(getMatchingCacheKey(studentId));
-  } catch (error) {
-    console.error("Failed to invalidate mentor matching cache for student", error);
-    return 0;
-  }
+  await cacheDel(getMatchingCacheKey(studentId));
+  return 1;
 }
 
 export async function invalidateAllMatchingCaches() {
-  try {
-    return await deleteRedisKeysByPattern(`${MATCHING_CACHE_PREFIX}:*`);
-  } catch (error) {
-    console.error("Failed to invalidate mentor matching cache", error);
-    return 0;
-  }
+  await cacheDelPattern(cacheKeys.matchingPattern);
+  return 1;
 }

@@ -79,7 +79,10 @@ export async function generateClaudeSessionSummary(context: SessionSummaryContex
   const apiKey = getOpenAiApiKey();
 
   if (!apiKey) {
-    console.warn("OPENAI_API_KEY is not set — using fallback session summary.");
+    log.warn("OPENAI_API_KEY is not set — using fallback session summary.", {
+      requestId: "system",
+      route: "openai-summary",
+    });
     return fallbackSummary;
   }
 
@@ -109,8 +112,13 @@ export async function generateClaudeSessionSummary(context: SessionSummaryContex
 
     if (!response.ok) {
       const details = await response.text().catch(() => "");
-      console.error(
+      log.error(
         `OpenAI session summary failed with status ${response.status}${details ? `: ${details}` : ""}`,
+        new Error("OpenAI session summary request failed"),
+        {
+          requestId: "system",
+          route: "openai-summary",
+        },
       );
       return fallbackSummary;
     }
@@ -120,7 +128,11 @@ export async function generateClaudeSessionSummary(context: SessionSummaryContex
 
     return summary || fallbackSummary;
   } catch (error) {
-    console.error("OpenAI session summary threw an error:", error);
+    log.error("OpenAI session summary threw an error", error, {
+      requestId: "system",
+      route: "openai-summary",
+    });
     return fallbackSummary;
   }
 }
+import { log } from "@/lib/logger";

@@ -1,16 +1,23 @@
-import { PaymentStatus, PayoutStatus } from "@prisma/client";
+import {
+  NotificationType,
+  PaymentStatus,
+  PayoutStatus,
+  SessionStatus,
+} from "@prisma/client";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
+import { withApiErrorHandling } from "@/lib/api-helpers";
+import { cacheDel, cacheDelPattern, cacheKeys } from "@/lib/cache";
+import { log } from "@/lib/logger";
 import { PLATFORM_CUT } from "@/server/constants";
 import { db } from "@/server/db";
-import { sendBookingConfirmation } from "@/server/resend";
+import { sendBookingConfirmation, sendPaymentFailureEmail, sendRefundConfirmationEmail } from "@/server/resend";
 
 function verifyWebhookSignature(body: string, signature: string): boolean {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
   if (!secret) {
-    console.warn("[webhook/razorpay] RAZORPAY_WEBHOOK_SECRET not set — skipping verification");
     return false;
   }
 
@@ -23,7 +30,7 @@ function verifyWebhookSignature(body: string, signature: string): boolean {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handlePaymentCaptured(payload: any) {
+async function handlePaymentCaptured(payload: any, requestId: string) {
   const paymentId: string = payload.payment?.entity?.id;
   const orderId: string = payload.payment?.entity?.order_id;
   const amountPaise: number = payload.payment?.entity?.amount;
@@ -35,14 +42,46 @@ async function handlePaymentCaptured(payload: any) {
     include: {
       session: {
         include: {
-          student: { select: { id: true, name: true, email: true } },
-          mentor: { select: { id: true, name: true, email: true } },
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              studentProfile: {
+                select: {
+                  class: true,
+                  confusionType: true,
+                  confusionTypes: true,
+                },
+              },
+            },
+          },
+          mentor: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              mentorProfile: {
+                select: {
+                  college: true,
+                },
+              },
+            },
+          },
         },
       },
     },
   });
 
   if (!payment || payment.status === PaymentStatus.CAPTURED) return;
+
+  if (
+    payment.session.status === SessionStatus.CANCELLED ||
+    payment.session.status === SessionStatus.NO_SHOW ||
+    payment.session.status === SessionStatus.COMPLETED
+  ) {
+    return;
+  }
 
   const platformCut = Math.round(payment.amount * PLATFORM_CUT);
   const mentorEarning = payment.amount - platformCut;
@@ -64,7 +103,7 @@ async function handlePaymentCaptured(payload: any) {
 
     await tx.session.update({
       where: { id: payment.sessionId },
-      data: { platformCut, mentorEarning },
+      data: { status: SessionStatus.SCHEDULED, platformCut, mentorEarning },
     });
 
     await tx.payout.upsert({
@@ -76,7 +115,9 @@ async function handlePaymentCaptured(payload: any) {
         status: PayoutStatus.PENDING,
         scheduledAt: payment.session.scheduledAt,
       },
-      update: {},
+      update: {
+        amount: mentorEarning,
+      },
     });
 
     await tx.auditLog.create({
@@ -93,30 +134,70 @@ async function handlePaymentCaptured(payload: any) {
     payment.session,
     payment.session.student,
     payment.session.mentor,
-  ).catch((err) => console.error("[webhook/razorpay] email error", err));
+  ).catch((err) =>
+    log.error("Razorpay booking confirmation email failed", err, {
+      requestId,
+      route: "/api/webhooks/razorpay",
+      paymentId,
+      sessionId: payment.sessionId,
+    }),
+  );
+  cacheDel(cacheKeys.session(payment.sessionId)).catch(() => {});
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handlePaymentFailed(payload: any) {
+async function handlePaymentFailed(payload: any, requestId: string) {
   const orderId: string = payload.payment?.entity?.order_id;
   if (!orderId) return;
 
-  const payment = await db.payment.findFirst({ where: { razorpayOrderId: orderId } });
-  if (!payment || payment.status !== PaymentStatus.PENDING) return;
-
-  await db.payment.update({
-    where: { id: payment.id },
-    data: { status: PaymentStatus.FAILED },
-  });
-
-  await db.auditLog.create({
-    data: {
-      action: "PAYMENT_FAILED_WEBHOOK",
-      entityType: "Payment",
-      entityId: payment.id,
-      metadata: { orderId },
+  const payment = await db.payment.findFirst({
+    where: { razorpayOrderId: orderId },
+    include: {
+      session: {
+        include: { student: { select: { id: true, name: true, email: true } } },
+      },
     },
   });
+  if (!payment || payment.status !== PaymentStatus.PENDING) return;
+
+  await db.$transaction(async (tx) => {
+    await tx.payment.update({
+      where: { id: payment.id },
+      data: { status: PaymentStatus.FAILED },
+    });
+
+    await tx.notification.create({
+      data: {
+        userId: payment.session.studentId,
+        type: NotificationType.SYSTEM,
+        title: "Payment failed",
+        body: "Your payment could not be completed. Please retry your booking payment.",
+        link: `/session/${payment.sessionId}`,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        action: "PAYMENT_FAILED_WEBHOOK",
+        entityType: "Payment",
+        entityId: payment.id,
+        metadata: { orderId },
+      },
+    });
+  });
+
+  sendPaymentFailureEmail({
+    student: payment.session.student,
+    sessionId: payment.sessionId,
+  }).catch((err) =>
+    log.error("Razorpay payment failure email failed", err, {
+      requestId,
+      route: "/api/webhooks/razorpay",
+      orderId,
+      sessionId: payment.sessionId,
+    }),
+  );
+  cacheDel(cacheKeys.session(payment.sessionId)).catch(() => {});
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,73 +219,122 @@ async function handleRefundCreated(payload: any) {
       refundStatus: PaymentStatus.PARTIALLY_REFUNDED,
     },
   });
+
+  cacheDel(cacheKeys.session(payment.sessionId)).catch(() => {});
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handleRefundProcessed(payload: any) {
+async function handleRefundProcessed(payload: any, requestId: string) {
   const refundId: string = payload.refund?.entity?.id;
   const paymentId: string = payload.refund?.entity?.payment_id;
   const amountPaise: number = payload.refund?.entity?.amount;
 
   if (!refundId || !paymentId) return;
 
-  const payment = await db.payment.findFirst({ where: { razorpayPaymentId: paymentId } });
+  const payment = await db.payment.findFirst({
+    where: { razorpayPaymentId: paymentId },
+    include: {
+      session: {
+        select: {
+          studentId: true,
+          mentorId: true,
+          student: { select: { id: true, name: true, email: true } },
+        },
+      },
+    },
+  });
   if (!payment) return;
 
   const isFullRefund = Math.round(amountPaise / 100) >= payment.amount;
 
-  await db.payment.update({
-    where: { id: payment.id },
-    data: {
-      refundId,
-      refundAmount: Math.round(amountPaise / 100),
-      refundedAt: new Date(),
-      refundStatus: isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED,
-      status: isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED,
-    },
+  const refundAmount = Math.round(amountPaise / 100);
+
+  await db.$transaction(async (tx) => {
+    await tx.payment.update({
+      where: { id: payment.id },
+      data: {
+        refundId,
+        refundAmount,
+        refundedAt: new Date(),
+        refundStatus: isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED,
+        status: isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED,
+      },
+    });
+
+    if (isFullRefund) {
+      await tx.payout.deleteMany({
+        where: {
+          sessionId: payment.sessionId,
+          status: {
+            in: [PayoutStatus.PENDING, PayoutStatus.PROCESSING],
+          },
+        },
+      });
+    }
+
+    await tx.notification.create({
+      data: {
+        userId: payment.session.studentId,
+        type: NotificationType.SYSTEM,
+        title: "Refund processed",
+        body: `Your refund of INR ${refundAmount} has been processed.`,
+        link: `/session/${payment.sessionId}`,
+      },
+    });
   });
+
+  sendRefundConfirmationEmail({
+    student: payment.session.student,
+    sessionId: payment.sessionId,
+    refundAmount,
+  }).catch((err) =>
+    log.error("Razorpay refund email failed", err, {
+      requestId,
+      route: "/api/webhooks/razorpay",
+      refundId,
+      sessionId: payment.sessionId,
+    }),
+  );
+  Promise.allSettled([
+    cacheDel(cacheKeys.session(payment.sessionId)),
+    cacheDelPattern(cacheKeys.availabilityPattern(payment.session.mentorId)),
+  ]).catch(() => {});
 }
 
-export async function POST(request: Request) {
-  const signature = request.headers.get("x-razorpay-signature") ?? "";
+export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
+  const signature =
+    request.headers.get("x-razorpay-signature") ??
+    request.headers.get("Razorpay-Signature") ??
+    "";
   const body = await request.text();
 
   if (!verifyWebhookSignature(body, signature)) {
-    console.warn("[webhook/razorpay] Invalid webhook signature");
+    log.warn("Razorpay webhook signature verification failed", {
+      requestId: metadata.requestId,
+      route: "/api/webhooks/razorpay",
+    });
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  let event: { event: string; payload: unknown };
+  const event = JSON.parse(body) as { event: string; payload: unknown };
 
-  try {
-    event = JSON.parse(body);
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  try {
-    switch (event.event) {
-      case "payment.captured":
-        await handlePaymentCaptured(event.payload);
-        break;
-      case "payment.failed":
-        await handlePaymentFailed(event.payload);
-        break;
-      case "refund.created":
-        await handleRefundCreated(event.payload);
-        break;
-      case "refund.processed":
-        await handleRefundProcessed(event.payload);
-        break;
-      default:
-        // Unhandled event — acknowledge silently
-        break;
-    }
-  } catch (error) {
-    console.error("[webhook/razorpay] Handler error", error);
-    // Return 200 so Razorpay doesn't retry — log to fix later
-    return NextResponse.json({ received: true, error: "Handler failed" });
+  switch (event.event) {
+    case "payment.captured":
+      await handlePaymentCaptured(event.payload, metadata.requestId);
+      break;
+    case "payment.failed":
+      await handlePaymentFailed(event.payload, metadata.requestId);
+      break;
+    case "refund.created":
+      await handleRefundCreated(event.payload);
+      break;
+    case "refund.processed":
+      await handleRefundProcessed(event.payload, metadata.requestId);
+      break;
+    default:
+      // Unhandled event — acknowledge silently
+      break;
   }
 
   return NextResponse.json({ received: true });
-}
+}, "/api/webhooks/razorpay");

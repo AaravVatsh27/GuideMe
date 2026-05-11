@@ -3,6 +3,7 @@ import { DM_Sans, Syne } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AppProviders } from "@/app/providers";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -28,6 +29,11 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+      process.env.AUTH_URL?.trim() ||
+      "http://localhost:3000",
+  ),
   title: {
     default: "GuideMe",
     template: "%s | GuideMe",
@@ -47,7 +53,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${dmSans.variable} ${syne.variable}`}
     >
       <body className="antialiased">
-        <AppProviders>{children}</AppProviders>
+        <ErrorBoundary>
+          <AppProviders>{children}</AppProviders>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -92,20 +92,16 @@ export default async function MentorOnboardingPage() {
     redirect("/auth/signin?callbackUrl=%2Fonboarding%2Fmentor");
   }
 
-  if (session.user.role !== "MENTOR") {
-    redirect("/onboarding/student");
-  }
-
-  if (session.user.onboardingComplete) {
-    redirect("/dashboard/mentor");
-  }
-
+  // If session says student, double check DB to avoid stale session redirect
+  // especially right after a role change in complete-signup
   const user = await db.user.findUnique({
     where: {
       id: session.user.id,
     },
     select: {
+      role: true,
       image: true,
+      onboardingComplete: true,
       onboardingStep: true,
       mentorProfile: {
         select: {
@@ -143,6 +139,14 @@ export default async function MentorOnboardingPage() {
 
   if (!user) {
     redirect("/auth/signin?callbackUrl=%2Fonboarding%2Fmentor");
+  }
+
+  if (user.role !== "MENTOR") {
+    redirect("/onboarding/student");
+  }
+
+  if (user.onboardingComplete) {
+    redirect("/dashboard/mentor");
   }
 
   return (

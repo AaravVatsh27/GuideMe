@@ -64,6 +64,16 @@ type MentorOnboardingWizardProps = {
 };
 
 type SaveState = "idle" | "saving" | "saved" | "error";
+type StepPersistIssues = {
+  fieldErrors?: Record<string, string[] | undefined>;
+  formErrors?: string[];
+};
+type StepPersistResponse = {
+  error?: string;
+  issues?: StepPersistIssues;
+  savedStep?: number;
+  redirectTo?: string | null;
+};
 
 const TOTAL_STEPS = 7;
 const MAX_HELP_TOPICS = 5;
@@ -387,17 +397,24 @@ export function MentorOnboardingWizard({
       }),
     });
 
-    const payload = (await response.json().catch(() => null)) as
-      | {
-          error?: string;
-          savedStep?: number;
-          redirectTo?: string | null;
-        }
-      | null;
+    const payload = (await response.json().catch(() => null)) as StepPersistResponse | null;
 
     if (!response.ok) {
       setSaveState("error");
-      throw new Error(payload?.error ?? "We could not save this step.");
+      const errorMsg = payload?.error ?? "We could not save this step.";
+      const issues = payload?.issues;
+
+      if (issues && typeof issues === "object") {
+        const fieldErrors = issues.fieldErrors;
+        if (fieldErrors) {
+          const firstError = Object.values(fieldErrors).flatMap((messages) => messages ?? [])[0];
+          if (firstError) {
+            throw new Error(String(firstError));
+          }
+        }
+      }
+
+      throw new Error(errorMsg);
     }
 
     setLastSavedStep(payload?.savedStep ?? step);

@@ -10,6 +10,7 @@ import {
   isTruthySearchParam,
 } from "@/app/auth/_lib/search-params";
 import { getOnboardingPath } from "@/server/auth-flow";
+import { getAuthShellContent } from "@/server/public-data";
 
 type SignUpPageProps = {
   searchParams?: AuthPageSearchParams;
@@ -21,14 +22,18 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   const isCompletingOAuth = isTruthySearchParam(searchParams?.complete);
   const session = await auth();
 
-  if (session?.user && !isCompletingOAuth) {
+  const isForcingRole = !!searchParams?.role;
+
+  if (session?.user && !isCompletingOAuth && !isForcingRole) {
     redirect(
       session.user.onboardingComplete ? callbackUrl : getOnboardingPath(session.user.role),
     );
   }
 
+  const shellContent = await getAuthShellContent();
+
   return (
-    <AuthShell>
+    <AuthShell {...shellContent}>
       <SignupView
         callbackUrl={callbackUrl}
         errorCode={errorCode}

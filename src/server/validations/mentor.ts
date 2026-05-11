@@ -8,6 +8,7 @@ import {
   PRICING_POINTS,
   YEAR_OF_STUDY_VALUES,
 } from "@/server/mentor-onboarding";
+import { sanitizeText } from "@/lib/sanitize";
 import { z } from "zod";
 
 const currentYear = new Date().getFullYear();
@@ -50,13 +51,13 @@ const availabilitySlotSchema = z
   });
 
 export const mentorInstitutionStepSchema = z.object({
-  college: z.string().trim().min(2, "College name is too short").max(120),
+  college: z.string().trim().min(2, "College name is too short").max(120).transform(sanitizeText),
   tier: mentorTierSchema,
 });
 
 export const mentorCourseStepSchema = z.object({
   degree: degreeSchema,
-  branch: z.string().trim().min(2, "Branch is too short").max(120),
+  branch: z.string().trim().min(2, "Branch is too short").max(120).transform(sanitizeText),
   yearOfStudy: yearOfStudySchema,
   expectedGraduationYear: z.number().int().min(currentYear).max(currentYear + 10),
 });
@@ -104,8 +105,8 @@ export const mentorPricingStepSchema = z
   });
 
 export const mentorProfileStepSchema = z.object({
-  headline: z.string().trim().min(10).max(80),
-  bio: z.string().trim().min(150).max(400),
+  headline: z.string().trim().min(10).max(80).transform(sanitizeText),
+  bio: z.string().trim().min(150).max(400).transform(sanitizeText),
   avatarUrl: z.string().trim().url("Upload an avatar before continuing"),
   linkedinUrl: optionalUrlSchema.optional(),
 });
@@ -148,9 +149,10 @@ export const mentorProfileUpdateSchema = z
     specialisations: z.array(helpTopicSchema).max(5).optional(),
     priceMin: z.number().int().min(MIN_PRICE).max(MAX_PRICE).optional(),
     priceMax: z.number().int().min(MIN_PRICE).max(999).optional(),
-    headline: z.string().trim().min(10).max(80).optional(),
-    bio: z.string().trim().min(150).max(400).optional(),
+    headline: z.string().trim().min(10).max(80).transform(sanitizeText).optional(),
+    bio: z.string().trim().min(150).max(400).transform(sanitizeText).optional(),
     avatarUrl: z.string().trim().url().optional(),
+    introVideoUrl: optionalUrlSchema.optional(),
     linkedinUrl: optionalUrlSchema.optional(),
     timezone: z.string().trim().min(3).max(64).optional(),
     availabilitySlots: z.array(availabilitySlotSchema).min(5).max(98).optional(),
