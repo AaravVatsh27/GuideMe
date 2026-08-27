@@ -1,6 +1,11 @@
 import { DEFAULT_TIMEZONE, PLATFORM_CUT } from "@/server/constants";
 
-export const MENTOR_TIER_VALUES = ["RISING", "VERIFIED", "ELITE"] as const;
+export const MENTOR_TIER_VALUES = [
+  "RISING",
+  "VERIFIED",
+  "ELITE",
+] as const;
+
 export const DEGREE_VALUES = [
   "B.TECH",
   "B.SC",
@@ -16,7 +21,9 @@ export const DEGREE_VALUES = [
   "PHD",
   "OTHER",
 ] as const;
+
 export const YEAR_OF_STUDY_VALUES = [1, 2, 3, 4, 5, 6] as const;
+
 export const EXAM_VALUES = [
   "JEE_MAINS",
   "JEE_ADVANCED",
@@ -33,6 +40,7 @@ export const EXAM_VALUES = [
   "NDA",
   "CUET",
 ] as const;
+
 export const HELP_TOPIC_VALUES = [
   "STREAM_SELECTION",
   "JEE_PREP_STRATEGY",
@@ -50,7 +58,19 @@ export const HELP_TOPIC_VALUES = [
   "COACHING_SELECTION",
   "SUBJECT_COMBINATIONS",
 ] as const;
-export const PRICING_POINTS = [99, 149, 199, 249, 299, 349, 399, 499, 599] as const;
+
+export const PRICING_POINTS = [
+  99,
+  149,
+  199,
+  249,
+  299,
+  349,
+  399,
+  499,
+  599,
+] as const;
+
 export const AVAILABILITY_DAYS = [
   { value: 0, label: "Sun", fullLabel: "Sunday" },
   { value: 1, label: "Mon", fullLabel: "Monday" },
@@ -61,12 +81,23 @@ export const AVAILABILITY_DAYS = [
   { value: 6, label: "Sat", fullLabel: "Saturday" },
 ] as const;
 
-export type MentorTierValue = (typeof MENTOR_TIER_VALUES)[number];
-export type DegreeValue = (typeof DEGREE_VALUES)[number];
-export type YearOfStudyValue = (typeof YEAR_OF_STUDY_VALUES)[number];
-export type MentorExamValue = (typeof EXAM_VALUES)[number];
-export type MentorHelpTopicValue = (typeof HELP_TOPIC_VALUES)[number];
-export type MentorOnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type MentorTierValue =
+  (typeof MENTOR_TIER_VALUES)[number];
+
+export type DegreeValue =
+  (typeof DEGREE_VALUES)[number];
+
+export type YearOfStudyValue =
+  (typeof YEAR_OF_STUDY_VALUES)[number];
+
+export type MentorExamValue =
+  (typeof EXAM_VALUES)[number];
+
+export type MentorHelpTopicValue =
+  (typeof HELP_TOPIC_VALUES)[number];
+
+export type MentorOnboardingStep =
+  1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export type MentorExamEntry = {
   exam: MentorExamValue;
@@ -80,88 +111,54 @@ export type MentorAvailabilitySlot = {
 };
 
 export type MentorOnboardingDraft = {
+  /**
+   * New authoritative institution reference.
+   */
+  institutionId?: string;
+
+  /**
+   * Legacy fields kept temporarily for compatibility.
+   */
   college?: string;
   tier?: MentorTierValue;
+
   degree?: DegreeValue;
   branch?: string;
   yearOfStudy?: YearOfStudyValue;
   expectedGraduationYear?: number;
+
   exams: MentorExamEntry[];
   specialisations: MentorHelpTopicValue[];
+
   priceMin: number;
   priceMax: number;
+
   headline?: string;
   bio?: string;
   avatarUrl?: string;
   linkedinUrl?: string;
+
   timezone: string;
   availabilitySlots: MentorAvailabilitySlot[];
 };
 
+/**
+ * Institution result used by mentor onboarding.
+ *
+ * This represents an actual Institution database record,
+ * not a hardcoded benchmark entry.
+ */
 export type MentorCollegeOption = {
+  id: string;
   name: string;
-  tier: MentorTierValue;
+  shortName: string | null;
+  slug: string;
+  city: string | null;
+  state: string | null;
+  academicCategory: string;
+  institutionClassification: string;
+  institutionTier: string;
 };
-
-export const TOP_INDIAN_COLLEGES: readonly MentorCollegeOption[] = [
-  { name: "IIT Bombay", tier: "ELITE" },
-  { name: "IIT Delhi", tier: "ELITE" },
-  { name: "IIT Madras", tier: "ELITE" },
-  { name: "IIT Kanpur", tier: "ELITE" },
-  { name: "IIT Kharagpur", tier: "ELITE" },
-  { name: "IIT Roorkee", tier: "ELITE" },
-  { name: "IIT Guwahati", tier: "ELITE" },
-  { name: "IIT Hyderabad", tier: "ELITE" },
-  { name: "IIT BHU", tier: "ELITE" },
-  { name: "IIT Indore", tier: "ELITE" },
-  { name: "IIT Ropar", tier: "ELITE" },
-  { name: "IIT Mandi", tier: "ELITE" },
-  { name: "IIT Patna", tier: "ELITE" },
-  { name: "BITS Pilani", tier: "VERIFIED" },
-  { name: "BITS Goa", tier: "VERIFIED" },
-  { name: "BITS Hyderabad", tier: "VERIFIED" },
-  { name: "NIT Trichy", tier: "VERIFIED" },
-  { name: "NIT Surathkal", tier: "VERIFIED" },
-  { name: "NIT Warangal", tier: "VERIFIED" },
-  { name: "NIT Rourkela", tier: "VERIFIED" },
-  { name: "NIT Calicut", tier: "VERIFIED" },
-  { name: "NIT Allahabad", tier: "VERIFIED" },
-  { name: "IIIT Hyderabad", tier: "VERIFIED" },
-  { name: "IIIT Bangalore", tier: "VERIFIED" },
-  { name: "Delhi Technological University", tier: "VERIFIED" },
-  { name: "NSUT Delhi", tier: "VERIFIED" },
-  { name: "Jadavpur University", tier: "VERIFIED" },
-  { name: "Anna University", tier: "VERIFIED" },
-  { name: "VIT Vellore", tier: "VERIFIED" },
-  { name: "Manipal Institute of Technology", tier: "VERIFIED" },
-  { name: "IIM Ahmedabad", tier: "ELITE" },
-  { name: "IIM Bangalore", tier: "ELITE" },
-  { name: "IIM Calcutta", tier: "ELITE" },
-  { name: "IIM Lucknow", tier: "VERIFIED" },
-  { name: "IIM Kozhikode", tier: "VERIFIED" },
-  { name: "IIM Indore", tier: "VERIFIED" },
-  { name: "FMS Delhi", tier: "VERIFIED" },
-  { name: "XLRI Jamshedpur", tier: "VERIFIED" },
-  { name: "AIIMS New Delhi", tier: "ELITE" },
-  { name: "AIIMS Jodhpur", tier: "VERIFIED" },
-  { name: "AIIMS Bhopal", tier: "VERIFIED" },
-  { name: "CMC Vellore", tier: "VERIFIED" },
-  { name: "JIPMER Puducherry", tier: "VERIFIED" },
-  { name: "NLSIU Bangalore", tier: "ELITE" },
-  { name: "NLU Delhi", tier: "ELITE" },
-  { name: "NALSAR Hyderabad", tier: "VERIFIED" },
-  { name: "WBNUJS Kolkata", tier: "VERIFIED" },
-  { name: "NLIU Bhopal", tier: "VERIFIED" },
-  { name: "SRCC Delhi", tier: "VERIFIED" },
-  { name: "St. Stephen's College", tier: "VERIFIED" },
-  { name: "Hindu College", tier: "VERIFIED" },
-  { name: "Loyola College Chennai", tier: "VERIFIED" },
-  { name: "Presidency University Kolkata", tier: "VERIFIED" },
-  { name: "Osmania University", tier: "RISING" },
-  { name: "Savitribai Phule Pune University", tier: "RISING" },
-  { name: "University of Mumbai", tier: "RISING" },
-  { name: "University of Calcutta", tier: "RISING" },
-] as const;
 
 export const DEGREE_OPTIONS = [
   { value: "B.TECH", label: "B.Tech" },
@@ -229,21 +226,66 @@ export const EXAM_OPTIONS = [
 ] as const;
 
 export const HELP_TOPIC_OPTIONS = [
-  { value: "STREAM_SELECTION", label: "Stream selection" },
-  { value: "JEE_PREP_STRATEGY", label: "JEE prep strategy" },
-  { value: "NEET_PREP_STRATEGY", label: "NEET prep strategy" },
-  { value: "CA_COMMERCE_PATH", label: "CA/Commerce path" },
-  { value: "COLLEGE_SELECTION", label: "College selection" },
-  { value: "HOSTEL_COLLEGE_LIFE", label: "Hostel & college life" },
-  { value: "ENGINEERING_BRANCH_SELECTION", label: "Engineering branch selection" },
-  { value: "MBA_PREPARATION", label: "MBA preparation" },
-  { value: "MS_ABROAD", label: "MS abroad" },
-  { value: "INTERNSHIP_GUIDANCE", label: "Internship guidance" },
-  { value: "PLACEMENT_PREPARATION", label: "Placement preparation" },
-  { value: "CAREER_SWITCHING", label: "Career switching" },
-  { value: "STUDY_PLANNING", label: "Study planning" },
-  { value: "COACHING_SELECTION", label: "Coaching selection" },
-  { value: "SUBJECT_COMBINATIONS", label: "Subject combinations" },
+  {
+    value: "STREAM_SELECTION",
+    label: "Stream selection",
+  },
+  {
+    value: "JEE_PREP_STRATEGY",
+    label: "JEE prep strategy",
+  },
+  {
+    value: "NEET_PREP_STRATEGY",
+    label: "NEET prep strategy",
+  },
+  {
+    value: "CA_COMMERCE_PATH",
+    label: "CA/Commerce path",
+  },
+  {
+    value: "COLLEGE_SELECTION",
+    label: "College selection",
+  },
+  {
+    value: "HOSTEL_COLLEGE_LIFE",
+    label: "Hostel & college life",
+  },
+  {
+    value: "ENGINEERING_BRANCH_SELECTION",
+    label: "Engineering branch selection",
+  },
+  {
+    value: "MBA_PREPARATION",
+    label: "MBA preparation",
+  },
+  {
+    value: "MS_ABROAD",
+    label: "MS abroad",
+  },
+  {
+    value: "INTERNSHIP_GUIDANCE",
+    label: "Internship guidance",
+  },
+  {
+    value: "PLACEMENT_PREPARATION",
+    label: "Placement preparation",
+  },
+  {
+    value: "CAREER_SWITCHING",
+    label: "Career switching",
+  },
+  {
+    value: "STUDY_PLANNING",
+    label: "Study planning",
+  },
+  {
+    value: "COACHING_SELECTION",
+    label: "Coaching selection",
+  },
+  {
+    value: "SUBJECT_COMBINATIONS",
+    label: "Subject combinations",
+  },
 ] as const;
 
 export const EMPTY_MENTOR_DRAFT: MentorOnboardingDraft = {
@@ -255,16 +297,19 @@ export const EMPTY_MENTOR_DRAFT: MentorOnboardingDraft = {
   availabilitySlots: [],
 };
 
-export const AVAILABILITY_SLOTS = Array.from({ length: 14 }, (_, index) => {
-  const hour = index + 8;
-  const nextHour = hour + 1;
+export const AVAILABILITY_SLOTS = Array.from(
+  { length: 14 },
+  (_, index) => {
+    const hour = index + 8;
+    const nextHour = hour + 1;
 
-  return {
-    value: `${String(hour).padStart(2, "0")}:00`,
-    endValue: `${String(nextHour).padStart(2, "0")}:00`,
-    label: formatHour(hour),
-  };
-});
+    return {
+      value: `${String(hour).padStart(2, "0")}:00`,
+      endValue: `${String(nextHour).padStart(2, "0")}:00`,
+      label: formatHour(hour),
+    };
+  },
+);
 
 const ELITE_MATCHERS = [
   /(^|\s)iit(\s|$)/i,
@@ -304,91 +349,158 @@ const VERIFIED_MATCHERS = [
 
 function formatHour(hour: number) {
   const suffix = hour >= 12 ? "pm" : "am";
-  const normalized = hour % 12 === 0 ? 12 : hour % 12;
+  const normalized =
+    hour % 12 === 0 ? 12 : hour % 12;
+
   return `${normalized}${suffix}`;
 }
 
-export function calculateFortyFiveMinutePrice(price30: number) {
+export function calculateFortyFiveMinutePrice(
+  price30: number,
+) {
   return Math.round(price30 * 1.4);
 }
 
-export function calculateEstimatedMonthlyEarnings(price30: number) {
+export function calculateEstimatedMonthlyEarnings(
+  price30: number,
+) {
   const sessionsPerMonth = 12;
   const mentorShare = 1 - PLATFORM_CUT;
 
-  return Math.round(price30 * sessionsPerMonth * mentorShare);
+  return Math.round(
+    price30 *
+    sessionsPerMonth *
+    mentorShare,
+  );
 }
 
-export function buildGraduationYearOptions(baseYear = new Date().getFullYear()) {
-  return Array.from({ length: 8 }, (_, index) => baseYear + index);
+export function buildGraduationYearOptions(
+  baseYear = new Date().getFullYear(),
+) {
+  return Array.from(
+    { length: 8 },
+    (_, index) => baseYear + index,
+  );
 }
 
-export function getDegreeLabel(value: string | null | undefined) {
-  return DEGREE_OPTIONS.find((option) => option.value === value)?.label ?? value ?? "Not set";
+export function getDegreeLabel(
+  value: string | null | undefined,
+) {
+  return (
+    DEGREE_OPTIONS.find(
+      (option) => option.value === value,
+    )?.label ??
+    value ??
+    "Not set"
+  );
 }
 
-export function getYearOfStudyLabel(value: number | null | undefined) {
-  return YEAR_OF_STUDY_OPTIONS.find((option) => option.value === value)?.label ?? "Not set";
+export function getYearOfStudyLabel(
+  value: number | null | undefined,
+) {
+  return (
+    YEAR_OF_STUDY_OPTIONS.find(
+      (option) => option.value === value,
+    )?.label ?? "Not set"
+  );
 }
 
-export function getExamLabel(value: string | null | undefined) {
-  return EXAM_OPTIONS.find((option) => option.value === value)?.label ?? value ?? "Unknown exam";
+export function getExamLabel(
+  value: string | null | undefined,
+) {
+  return (
+    EXAM_OPTIONS.find(
+      (option) => option.value === value,
+    )?.label ??
+    value ??
+    "Unknown exam"
+  );
 }
 
-export function getHelpTopicLabel(value: string | null | undefined) {
-  return HELP_TOPIC_OPTIONS.find((option) => option.value === value)?.label ?? value ?? "Unknown topic";
+export function getHelpTopicLabel(
+  value: string | null | undefined,
+) {
+  return (
+    HELP_TOPIC_OPTIONS.find(
+      (option) => option.value === value,
+    )?.label ??
+    value ??
+    "Unknown topic"
+  );
 }
 
-export function normalizeCollegeName(value: string) {
+export function normalizeCollegeName(
+  value: string,
+) {
   return value.trim().replace(/\s+/g, " ");
 }
 
-export function detectMentorTier(collegeName: string) {
-  const normalized = normalizeCollegeName(collegeName);
-  const matchedCollege = TOP_INDIAN_COLLEGES.find(
-    (college) => college.name.toLowerCase() === normalized.toLowerCase(),
-  );
+/**
+ * Legacy compatibility helper.
+ *
+ * IMPORTANT:
+ * This is no longer the source of truth for institution
+ * classification.
+ *
+ * New onboarding code should use the Institution record's
+ * `institutionTier`.
+ *
+ * This function remains temporarily because existing code
+ * may still import it.
+ */
+export function detectMentorTier(
+  collegeName: string,
+): {
+  tier: MentorTierValue;
+  explanation: string;
+} {
+  const normalized =
+    normalizeCollegeName(collegeName);
 
-  if (matchedCollege) {
+  if (
+    ELITE_MATCHERS.some((matcher) =>
+      matcher.test(normalized),
+    )
+  ) {
     return {
-      tier: matchedCollege.tier,
+      tier: "ELITE",
       explanation:
-        matchedCollege.tier === "ELITE"
-          ? "Detected as ELITE based on a top national institution with very high student demand."
-          : matchedCollege.tier === "VERIFIED"
-            ? "Detected as VERIFIED based on a strong recognized institution with high trust value."
-            : "Detected as RISING because the college is not in the top-tier verification list yet.",
+        "Legacy compatibility classification. Use the selected Institution's institutionTier for the authoritative institution classification.",
     };
   }
 
-  if (ELITE_MATCHERS.some((matcher) => matcher.test(normalized))) {
+  if (
+    VERIFIED_MATCHERS.some((matcher) =>
+      matcher.test(normalized),
+    )
+  ) {
     return {
-      tier: "ELITE" as const,
+      tier: "VERIFIED",
       explanation:
-        "Detected as ELITE because the institution matches top IIT, IIM, AIIMS, or flagship NLU patterns.",
-    };
-  }
-
-  if (VERIFIED_MATCHERS.some((matcher) => matcher.test(normalized))) {
-    return {
-      tier: "VERIFIED" as const,
-      explanation:
-        "Detected as VERIFIED because the institution matches a widely recognized national or high-signal campus.",
+        "Legacy compatibility classification. Use the selected Institution's institutionTier for the authoritative institution classification.",
     };
   }
 
   return {
-    tier: "RISING" as const,
+    tier: "RISING",
     explanation:
-      "Detected as RISING because the institution does not match the current elite or verified benchmark list.",
+      "Legacy compatibility classification. Use the selected Institution's institutionTier for the authoritative institution classification.",
   };
 }
 
-export function createAvailabilityKey(slot: MentorAvailabilitySlot) {
+export function createAvailabilityKey(
+  slot: MentorAvailabilitySlot,
+) {
   return `${slot.dayOfWeek}-${slot.startTime}-${slot.endTime}`;
 }
 
-export function formatAvailabilityLabel(slot: MentorAvailabilitySlot) {
-  const day = AVAILABILITY_DAYS.find((item) => item.value === slot.dayOfWeek)?.label ?? "Day";
+export function formatAvailabilityLabel(
+  slot: MentorAvailabilitySlot,
+) {
+  const day =
+    AVAILABILITY_DAYS.find(
+      (item) => item.value === slot.dayOfWeek,
+    )?.label ?? "Day";
+
   return `${day} ${slot.startTime}-${slot.endTime}`;
 }
