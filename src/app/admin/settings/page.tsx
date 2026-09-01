@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/client/components/ui/card";
-import { getAdminSettingsData } from "@/server/admin";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
+import { getAdminSettingsData } from "@/Backend/server/admin";
 
 export default async function AdminSettingsPage() {
   const settings = await getAdminSettingsData();

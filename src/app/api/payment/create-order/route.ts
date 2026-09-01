@@ -2,13 +2,13 @@ import { PaymentStatus, SessionStatus, SessionType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
-import { cacheDel, cacheKeys } from "@/lib/cache";
-import { paymentLimiter } from "@/lib/ratelimit";
-import { DEFAULT_CURRENCY, PLATFORM_CUT } from "@/server/constants";
-import { db } from "@/server/db";
-import { createOrder } from "@/server/razorpay";
+import { auth } from "@/Backend/auth";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { cacheDel, cacheKeys } from "@/Backend/lib/cache";
+import { paymentLimiter } from "@/Backend/lib/ratelimit";
+import { DEFAULT_CURRENCY, PLATFORM_CUT } from "@/Backend/server/constants";
+import { db } from "@/Backend/server/db";
+import { createOrder } from "@/Backend/server/razorpay";
 
 const createOrderSchema = z.object({
   sessionId: z.string().uuid("sessionId must be a valid UUID"),

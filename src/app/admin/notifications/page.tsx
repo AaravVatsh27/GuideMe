@@ -1,6 +1,6 @@
-import { getAdminNotificationsData } from "@/server/admin";
+import { getAdminNotificationsData } from "@/Backend/server/admin";
 
-import { AdminNotificationsPageClient } from "../_components/admin-notifications-page-client";
+import { AdminNotificationsPageClient } from "@/Frontend/views/admin/admin-notifications-page-client";
 
 export default async function AdminNotificationsPage() {
   const notifications = await getAdminNotificationsData();

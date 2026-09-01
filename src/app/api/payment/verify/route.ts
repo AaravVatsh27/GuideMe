@@ -8,15 +8,15 @@ import {
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
-import { cacheDel, cacheKeys } from "@/lib/cache";
-import { log } from "@/lib/logger";
-import { paymentLimiter } from "@/lib/ratelimit";
-import { PLATFORM_CUT } from "@/server/constants";
-import { db } from "@/server/db";
-import { verifyPaymentSignature } from "@/server/razorpay";
-import { sendBookingConfirmation } from "@/server/resend";
+import { auth } from "@/Backend/auth";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { cacheDel, cacheKeys } from "@/Backend/lib/cache";
+import { log } from "@/Backend/lib/logger";
+import { paymentLimiter } from "@/Backend/lib/ratelimit";
+import { PLATFORM_CUT } from "@/Backend/server/constants";
+import { db } from "@/Backend/server/db";
+import { verifyPaymentSignature } from "@/Backend/server/razorpay";
+import { sendBookingConfirmation } from "@/Backend/server/resend";
 
 const verifyPaymentSchema = z.object({
   razorpayOrderId: z.string().trim().min(1),

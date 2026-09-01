@@ -1,16 +1,16 @@
 import { Prisma, type MentorTier } from "@prisma/client";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
-import { db } from "@/server/db";
+import { auth } from "@/Backend/auth";
+import { db } from "@/Backend/server/db";
 import {
   detectMentorTier,
   EMPTY_MENTOR_DRAFT,
   type MentorExamEntry,
   type MentorOnboardingDraft,
-} from "@/server/mentor-onboarding";
+} from "@/Backend/server/mentor-onboarding";
 
-import { MentorOnboardingWizard } from "./mentor-onboarding-wizard";
+import { MentorOnboardingWizard } from "@/Frontend/views/onboarding/mentor-onboarding-wizard";
 
 function isJsonObject(
   value: Prisma.JsonValue | null | undefined,
@@ -85,6 +85,39 @@ function buildInitialDraft(data: {
   return draft;
 }
 
+function hasValidUploadthingToken(token: string | undefined) {
+  if (!token?.trim()) {
+    return false;
+  }
+
+  try {
+    const normalizedToken = token.trim().replace(/-/g, "+").replace(/_/g, "/");
+    const paddedToken = normalizedToken.padEnd(
+      Math.ceil(normalizedToken.length / 4) * 4,
+      "=",
+    );
+    const decodedToken = Buffer.from(paddedToken, "base64").toString("utf8");
+    const parsedToken = JSON.parse(decodedToken) as {
+      apiKey?: unknown;
+      appId?: unknown;
+      regions?: unknown;
+    };
+
+    return (
+      typeof parsedToken.apiKey === "string" &&
+      parsedToken.apiKey.length > 0 &&
+      typeof parsedToken.appId === "string" &&
+      parsedToken.appId.length > 0 &&
+      Array.isArray(parsedToken.regions) &&
+      parsedToken.regions.every(
+        (region) => typeof region === "string" && region.length > 0,
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default async function MentorOnboardingPage() {
   const session = await auth();
 
@@ -154,6 +187,7 @@ export default async function MentorOnboardingPage() {
       userName={session.user.name ?? "mentor"}
       initialDraft={buildInitialDraft(user)}
       savedStep={Math.max(user.onboardingStep, 0)}
+      avatarUploadsEnabled={hasValidUploadthingToken(process.env.UPLOADTHING_TOKEN)}
     />
   );
 }

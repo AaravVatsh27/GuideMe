@@ -1,6 +1,6 @@
-import { getAdminMentorVerificationQueueData } from "@/server/admin";
+import { getAdminMentorVerificationQueueData } from "@/Backend/server/admin";
 
-import { AdminMentorVerificationPageClient } from "../../_components/admin-mentor-verification-page-client";
+import { AdminMentorVerificationPageClient } from "@/Frontend/views/admin/admin-mentor-verification-page-client";
 
 export default async function AdminMentorVerificationPage() {
   const queue = await getAdminMentorVerificationQueueData();

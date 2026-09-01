@@ -1,8 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { log } from "@/lib/logger";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { log } from "@/Backend/lib/logger";
 
 /**
  * Daily.co sends a HMAC-SHA256 signature in the `Daily-Webhook-Timestamp` and

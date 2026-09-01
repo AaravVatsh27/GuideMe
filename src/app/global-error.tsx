@@ -1,6 +1,6 @@
 "use client";
 
-import "./globals.css";
+import "@/Frontend/styles/globals.css";
 
 import * as React from "react";
 import Link from "next/link";

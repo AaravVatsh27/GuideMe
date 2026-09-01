@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
+import { auth } from "@/Backend/auth";
 
-import { MentorShell } from "./_components/mentor-shell";
+import { MentorShell } from "@/Frontend/views/dashboard/mentor/mentor-shell";
 
 export default async function MentorDashboardLayout({
   children,

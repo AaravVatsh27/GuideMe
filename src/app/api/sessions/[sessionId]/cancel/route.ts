@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { cancelSessionById } from "@/server/sessions";
+import { auth } from "@/Backend/auth";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { cancelSessionById } from "@/Backend/server/sessions";
 
 const cancelSessionRequestSchema = z.object({
   reason: z.string().trim().min(10).max(280),

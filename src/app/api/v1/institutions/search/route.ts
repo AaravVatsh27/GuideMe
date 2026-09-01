@@ -1,4 +1,4 @@
-import { db } from "@/server/db";
+import { db } from "@/Backend/server/db";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {

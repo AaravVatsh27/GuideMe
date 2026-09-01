@@ -5,21 +5,22 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, CalendarClock, Clock3, Compass, Sparkles, Users } from "lucide-react";
+import { ArrowRight, CalendarClock, Clock3, Compass, Heart, RotateCcw, Sparkles, Star, Users } from "lucide-react";
 
-import { MentorAvatar } from "@/components/MentorAvatar";
+import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
 import {
   formatActivityLabel,
   formatCurrency,
   formatDateTime,
+  formatShortDateTime,
   getInitials,
-} from "@/app/dashboard/student/_components/student-dashboard-utils";
-import { Badge } from "@/client/components/ui/badge";
-import { buttonVariants } from "@/client/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/client/components/ui/card";
-import { Skeleton } from "@/client/components/ui/skeleton";
-import { queryKeys } from "@/lib/react-query";
-import { cn } from "@/server/utils";
+} from "@/Frontend/views/dashboard/student/student-dashboard-utils";
+import { Badge } from "@/Frontend/components/ui/badge";
+import { buttonVariants } from "@/Frontend/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
+import { Skeleton } from "@/Frontend/components/ui/skeleton";
+import { queryKeys } from "@/Frontend/lib/react-query";
+import { cn } from "@/Backend/server/utils";
 
 type DashboardResponse = {
   greetingName: string;
@@ -78,6 +79,40 @@ type MatchingResponse = {
   matches: MentorMatch[];
 };
 
+type SavedMentor = {
+  id: string;
+  mentorId: string;
+  createdAt: string;
+  mentor: {
+    name: string;
+    image?: string | null;
+    mentorProfile?: {
+      headline?: string | null;
+      college?: string | null;
+      tier?: string | null;
+      avgRating?: number | null;
+      priceMin?: number | null;
+    } | null;
+  };
+};
+
+type PastSessionItem = {
+  id: string;
+  mentorId: string;
+  scheduledAt: string;
+  type: "INTRO" | "PAID";
+  aiSummary?: string | null;
+  mentor: {
+    name: string;
+    image?: string | null;
+    mentorProfile?: {
+      headline?: string | null;
+      college?: string | null;
+    } | null;
+  };
+  review?: { rating: number } | null;
+};
+
 async function getDashboard() {
   const res = await fetch("/api/student/dashboard");
   if (!res.ok) throw new Error("Failed to load dashboard");
@@ -88,6 +123,20 @@ async function getMatches() {
   const res = await fetch("/api/matching", { method: "POST" });
   if (!res.ok) throw new Error("Failed to load mentor matches");
   return (await res.json()) as MatchingResponse;
+}
+
+async function getSavedMentors() {
+  const res = await fetch("/api/student/saved-mentors");
+  if (!res.ok) throw new Error("Failed to load saved mentors");
+  const json = (await res.json()) as { data: SavedMentor[] };
+  return json.data;
+}
+
+async function getPastSessions() {
+  const res = await fetch("/api/sessions?status=COMPLETED&limit=3&page=1");
+  if (!res.ok) throw new Error("Failed to load past sessions");
+  const json = (await res.json()) as { data: PastSessionItem[] };
+  return json.data;
 }
 
 function useCountdown(targetDate?: string | null) {
@@ -132,6 +181,23 @@ export default function StudentDashboardPage() {
   const { data: matchesData, isLoading: matchesLoading, isError: matchesError } = useQuery({
     queryKey: queryKeys.student.matching,
     queryFn: getMatches,
+  });
+  const {
+    data: savedMentors = [],
+    isLoading: savedMentorsLoading,
+    isError: savedMentorsError,
+  } = useQuery({
+    queryKey: queryKeys.student.savedMentors,
+    queryFn: getSavedMentors,
+    select: (items: SavedMentor[]) => items.slice(0, 3),
+  });
+  const {
+    data: pastSessions = [],
+    isLoading: pastSessionsLoading,
+    isError: pastSessionsError,
+  } = useQuery({
+    queryKey: queryKeys.student.dashboardPastSessions,
+    queryFn: getPastSessions,
   });
 
   const countdown = useCountdown(data?.upcomingSession?.scheduledAt);
@@ -323,6 +389,179 @@ export default function StudentDashboardPage() {
             </CardContent>
           </Card>
         ))}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+        <Card className="rounded-[1.75rem] border-slate-200 bg-white">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
+                <Heart className="size-5 text-rose-600" />
+                Saved mentors
+              </CardTitle>
+              <p className="mt-1 text-sm text-slate-500">Your shortlist stays visible here for faster rebooking.</p>
+            </div>
+            <Link href="/dashboard/student/saved" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              View all
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {savedMentorsLoading ? (
+              Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-32 rounded-[1.25rem]" />)
+            ) : savedMentorsError ? (
+              <div className="rounded-[1.25rem] border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+                Saved mentors are unavailable right now.
+              </div>
+            ) : savedMentors.length === 0 ? (
+              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5">
+                <p className="font-medium text-slate-900">No saved mentors yet.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Build a shortlist while browsing mentor matches so the next booking starts with real options.
+                </p>
+                <Link href="/dashboard/student/find-mentor" className={cn(buttonVariants({ variant: "outline" }), "mt-4")}>
+                  Find mentors
+                </Link>
+              </div>
+            ) : (
+              savedMentors.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <MentorAvatar
+                        src={item.mentor.image}
+                        alt={item.mentor.name}
+                        fallback={getInitials(item.mentor.name)}
+                        className="size-11"
+                      />
+                      <div>
+                        <p className="font-semibold text-slate-950">{item.mentor.name}</p>
+                        <p className="text-sm text-slate-600">
+                          {item.mentor.mentorProfile?.headline ?? item.mentor.mentorProfile?.college ?? "Mentor"}
+                        </p>
+                      </div>
+                    </div>
+                    {item.mentor.mentorProfile?.tier ? (
+                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                        {item.mentor.mentorProfile.tier}
+                      </Badge>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-xl border border-slate-200 bg-white p-3">
+                      <p className="text-slate-500">Rating</p>
+                      <p className="mt-1 font-semibold text-slate-950">
+                        {item.mentor.mentorProfile?.avgRating?.toFixed(1) ?? "0.0"} / 5
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-3">
+                      <p className="text-slate-500">Starting price</p>
+                      <p className="mt-1 font-semibold text-slate-950">
+                        {formatCurrency(item.mentor.mentorProfile?.priceMin)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <p className="text-xs text-slate-500">
+                      Saved {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                    </p>
+                    <Link
+                      href={getMentorDiscoveryHref(item.mentorId)}
+                      className={buttonVariants({ variant: "secondary", size: "sm" })}
+                    >
+                      Quick book
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[1.75rem] border-slate-200 bg-white">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
+                <RotateCcw className="size-5 text-sky-700" />
+                Past sessions to rebook
+              </CardTitle>
+              <p className="mt-1 text-sm text-slate-500">
+                Revisit AI summaries from finished sessions and go straight back to the same mentor.
+              </p>
+            </div>
+            <Link href="/dashboard/student/sessions" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Open history
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {pastSessionsLoading ? (
+              Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-36 rounded-[1.25rem]" />)
+            ) : pastSessionsError ? (
+              <div className="rounded-[1.25rem] border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+                Past sessions are unavailable right now.
+              </div>
+            ) : pastSessions.length === 0 ? (
+              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+                No completed sessions yet. Once a session finishes, its summary and rebook option will appear here.
+              </div>
+            ) : (
+              pastSessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <MentorAvatar
+                        src={session.mentor.image}
+                        alt={session.mentor.name}
+                        fallback={getInitials(session.mentor.name)}
+                        className="size-11"
+                      />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-950">{session.mentor.name}</p>
+                        <p className="text-sm text-slate-600">
+                          {session.mentor.mentorProfile?.headline ?? session.mentor.mentorProfile?.college ?? "Mentor"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">{formatShortDateTime(session.scheduledAt)}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                        {session.type}
+                      </Badge>
+                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                        <Star className="mr-1 size-3.5 text-amber-500" />
+                        {session.review?.rating ? `${session.review.rating} / 5` : "No rating"}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-[1rem] border border-slate-200 bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">AI summary</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      {session.aiSummary?.slice(0, 180) ?? "Summary is still being generated for this session."}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex justify-end">
+                    <Link
+                      href={getMentorDiscoveryHref(session.mentorId)}
+                      className={buttonVariants({ variant: "secondary", size: "sm" })}
+                    >
+                      <RotateCcw className="size-3.5" />
+                      Rebook mentor
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">

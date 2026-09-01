@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { getStudentMentorMatches } from "@/server/matching";
+import { auth } from "@/Backend/auth";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { getStudentMentorMatches } from "@/Backend/server/matching";
 
 export const POST = withApiErrorHandling(async (_request: Request, _context, metadata) => {
   const session = await auth();

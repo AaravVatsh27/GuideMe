@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { completeSessionById } from "@/server/sessions";
+import { auth } from "@/Backend/auth";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { completeSessionById } from "@/Backend/server/sessions";
 
 const completeSessionRequestSchema = z.object({
   transcript: z.string().trim().max(12000).optional(),

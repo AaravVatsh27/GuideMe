@@ -1,13 +1,39 @@
+import type { Route } from "next";
 import Link from "next/link";
-import { CalendarClock, Clock3, IndianRupee, ShieldAlert, Sparkles, Star, Trophy, Users } from "lucide-react";
+import {
+  CalendarClock,
+  CalendarRange,
+  Clock3,
+  FileText,
+  Globe,
+  IndianRupee,
+  MapPin,
+  ShieldAlert,
+  Sparkles,
+  Star,
+  Trophy,
+  Users,
+} from "lucide-react";
 
-import { Badge } from "@/client/components/ui/badge";
-import { buttonVariants } from "@/client/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/client/components/ui/card";
-import { cn } from "@/server/utils";
+import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
+import { Badge } from "@/Frontend/components/ui/badge";
+import { buttonVariants } from "@/Frontend/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
+import { cn } from "@/Backend/server/utils";
+import { getMentorDashboardData } from "@/Frontend/views/dashboard/mentor/mentor-dashboard-data";
+import {
+  formatCurrency,
+  formatResponseRate,
+  formatShortDateTime,
+  formatTrend,
+  getInitials,
+} from "@/Frontend/views/dashboard/mentor/mentor-dashboard-utils";
 
-import { getMentorDashboardData } from "./_components/mentor-dashboard-data";
-import { formatCurrency, formatShortDateTime, formatTrend, formatResponseRate } from "./_components/mentor-dashboard-utils";
+function getSlotCount(startTime: string, endTime: string) {
+  const startHour = Number.parseInt(startTime.split(":")[0] ?? "0", 10);
+  const endHour = Number.parseInt(endTime.split(":")[0] ?? "0", 10);
+  return Math.max(0, endHour - startHour);
+}
 
 export default async function MentorDashboardPage() {
   const data = await getMentorDashboardData();
@@ -46,6 +72,25 @@ export default async function MentorDashboardPage() {
       icon: Trophy,
     },
   ];
+  const upcomingPreview = data.sessions.upcoming.slice(0, 3);
+  const availabilityByDay = data.availability.days.map((day) => {
+    const openSlots = data.availability.recurringSlots
+      .filter((slot) => slot.dayOfWeek === day.value)
+      .reduce((sum, slot) => sum + getSlotCount(slot.startTime, slot.endTime), 0);
+    const bookedSlots = data.availability.bookedSlotKeys.filter((key) => key.startsWith(`${day.value}-`)).length;
+
+    return {
+      ...day,
+      openSlots,
+      bookedSlots,
+    };
+  });
+  const totalOpenSlots = availabilityByDay.reduce((sum, day) => sum + day.openSlots, 0);
+  const totalBookedSlots = availabilityByDay.reduce((sum, day) => sum + day.bookedSlots, 0);
+  const payoutPreview = data.earnings.payouts.slice(0, 4);
+  const publicProfileHref = data.mentor.profile.username
+    ? (`/mentor/${data.mentor.profile.username}` as Route)
+    : null;
 
   return (
     <div className="space-y-5">
@@ -148,27 +193,44 @@ export default async function MentorDashboardPage() {
         <Card className="rounded-[1.75rem] border-slate-200 bg-white">
           <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
             <div>
-              <CardTitle className="text-lg text-slate-950">Upcoming sessions today</CardTitle>
-              <p className="mt-1 text-sm text-slate-500">Every session due before midnight in your current queue.</p>
+              <CardTitle className="text-lg text-slate-950">Upcoming sessions with student context</CardTitle>
+              <p className="mt-1 text-sm text-slate-500">The next calls in your queue, with enough context to prep fast.</p>
             </div>
             <Link href="/dashboard/mentor/sessions" className={buttonVariants({ variant: "outline", size: "sm" })}>
               View all
             </Link>
           </CardHeader>
           <CardContent className="space-y-3">
-            {data.overview.upcomingToday.length === 0 ? (
+            {upcomingPreview.length === 0 ? (
               <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-                No sessions scheduled for today.
+                No upcoming sessions are scheduled yet.
               </div>
             ) : (
-              data.overview.upcomingToday.map((session) => (
+              upcomingPreview.map((session) => (
                 <div
                   key={session.id}
-                  className="flex flex-col gap-4 rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-4 rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-start sm:justify-between"
                 >
-                  <div className="min-w-0">
-                    <p className="font-medium text-slate-950">{session.studentName}</p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-slate-950">{session.student.name}</p>
+                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                        {session.type === "INTRO" ? "Free intro" : "Paid session"}
+                      </Badge>
+                    </div>
                     <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                      {session.student.classLabel ? (
+                        <span className="flex items-center gap-2">
+                          <FileText className="size-4 text-slate-500" />
+                          {session.student.classLabel}
+                        </span>
+                      ) : null}
+                      {session.student.city ? (
+                        <span className="flex items-center gap-2">
+                          <MapPin className="size-4 text-slate-500" />
+                          {session.student.city}
+                        </span>
+                      ) : null}
                       <span className="flex items-center gap-2">
                         <CalendarClock className="size-4 text-slate-500" />
                         {formatShortDateTime(session.scheduledAt)}
@@ -177,6 +239,13 @@ export default async function MentorDashboardPage() {
                         <Clock3 className="size-4 text-slate-500" />
                         {session.durationMinutes} min
                       </span>
+                    </div>
+
+                    <div className="mt-3 rounded-[1rem] border border-slate-200 bg-white p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Prep tip</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        {session.prepTips[0] ?? "Start with the student's immediate decision, then close with one clear next step."}
+                      </p>
                     </div>
                   </div>
                   {session.meetingLink ? (
@@ -244,6 +313,218 @@ export default async function MentorDashboardPage() {
             </CardContent>
           </Card>
         ))}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+        <Card className="rounded-[1.75rem] border-slate-200 bg-white">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
+                <CalendarRange className="size-5 text-teal-700" />
+                Availability manager
+              </CardTitle>
+              <p className="mt-1 text-sm text-slate-500">
+                Weekly grid preview from your live recurring schedule in {data.availability.timezone}.
+              </p>
+            </div>
+            <Link href="/dashboard/mentor/availability" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Edit grid
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Open slots</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{totalOpenSlots}</p>
+              </div>
+              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Booked slots</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{totalBookedSlots}</p>
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-7">
+              {availabilityByDay.map((day) => (
+                <div
+                  key={day.value}
+                  className={cn(
+                    "rounded-[1rem] border p-3",
+                    day.openSlots > 0 ? "border-teal-200 bg-teal-50/70" : "border-slate-200 bg-slate-50",
+                  )}
+                >
+                  <p className="text-sm font-semibold text-slate-900">{day.label}</p>
+                  <p className="mt-2 text-xs text-slate-600">{day.openSlots} open</p>
+                  <p className="mt-1 text-xs text-slate-500">{day.bookedSlots} booked</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[1.75rem] border-slate-200 bg-white">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+            <div>
+              <CardTitle className="text-lg text-slate-950">Payout history</CardTitle>
+              <p className="mt-1 text-sm text-slate-500">Latest payout movements and your next transfer target.</p>
+            </div>
+            <Link href="/dashboard/mentor/earnings" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Open desk
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Next payout</p>
+              <p className="mt-2 text-base font-semibold text-slate-950">
+                {data.earnings.nextPayout
+                  ? `${formatCurrency(data.earnings.nextPayout.amount)} • ${formatShortDateTime(data.earnings.nextPayout.date)}`
+                  : "No payout queued"}
+              </p>
+            </div>
+
+            {payoutPreview.length === 0 ? (
+              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
+                No payout history yet.
+              </div>
+            ) : (
+              payoutPreview.map((payout) => (
+                <div
+                  key={payout.id}
+                  className="flex flex-col gap-3 rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-medium text-slate-950">{formatCurrency(payout.amount)}</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {formatShortDateTime(payout.date)} • {payout.studentFirstName}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "border",
+                        payout.status === "PAID"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : payout.status === "PROCESSING"
+                            ? "border-sky-200 bg-sky-50 text-sky-700"
+                            : "border-amber-200 bg-amber-50 text-amber-700",
+                      )}
+                    >
+                      {payout.status}
+                    </Badge>
+                    <span className="text-xs text-slate-500">{payout.transactionId ?? "Pending"}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <Card className="rounded-[1.75rem] border-slate-200 bg-white">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
+                <Globe className="size-5 text-teal-700" />
+                Profile editor with live preview
+              </CardTitle>
+              <p className="mt-1 text-sm text-slate-500">
+                Your public listing snapshot, pulled from the same data students see.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {publicProfileHref ? (
+                <Link href={publicProfileHref} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                  View public page
+                </Link>
+              ) : null}
+              <Link href="/dashboard/mentor/profile" className={buttonVariants({ size: "sm" })}>
+                Edit profile
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] p-5">
+                <div className="flex items-center gap-4">
+                  <MentorAvatar
+                    src={data.mentor.image}
+                    alt={data.mentor.name}
+                    fallback={getInitials(data.mentor.name)}
+                    className="size-16"
+                  />
+                  <div>
+                    <p className="text-xl font-semibold text-slate-950">{data.mentor.name}</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {data.mentor.profile.headline ?? "Add a sharper headline from the profile editor."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                    {data.mentor.profile.tier}
+                  </Badge>
+                  {data.mentor.profile.specialisationLabels.slice(0, 3).map((topic) => (
+                    <Badge key={topic} variant="outline" className="border-slate-300 bg-white text-slate-700">
+                      {topic}
+                    </Badge>
+                  ))}
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Education</p>
+                    <p className="mt-2 text-sm font-medium text-slate-900">
+                      {data.mentor.profile.college ?? "College"} • {data.mentor.profile.degreeLabel}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">{data.mentor.profile.branch ?? "Branch"}</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Pricing</p>
+                    <p className="mt-2 text-sm font-medium text-slate-900">
+                      {formatCurrency(data.mentor.profile.priceMin)} / 30 min
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {formatCurrency(data.mentor.profile.priceMax)} / 45 min
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Public bio</p>
+                  <p className="mt-3 text-sm leading-6 text-slate-700">
+                    {data.mentor.profile.bio ?? "Add a stronger public bio from the profile editor."}
+                  </p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Public rating</p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950">{data.mentor.profile.avgRating.toFixed(1)}</p>
+                  </div>
+                  <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Reviews</p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950">{data.mentor.profile.totalReviews}</p>
+                  </div>
+                  <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Profile views</p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950">{data.mentor.profile.profileViews}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">SEO preview</p>
+                  <p className="mt-2 text-sm text-emerald-700">{data.mentor.seo.url}</p>
+                  <p className="mt-1 text-lg text-sky-700">{data.mentor.seo.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">{data.mentor.seo.description}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

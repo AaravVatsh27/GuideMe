@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
-import { getPendingMentorVerificationCount } from "@/server/admin";
+import { auth } from "@/Backend/auth";
+import { getPendingMentorVerificationCount } from "@/Backend/server/admin";
 
-import { AdminShell } from "./_components/admin-shell";
+import { AdminShell } from "@/Frontend/views/admin/admin-shell";
 
 export default async function AdminLayout({
   children,

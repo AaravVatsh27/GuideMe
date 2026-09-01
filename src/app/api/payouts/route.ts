@@ -2,10 +2,10 @@ import { PayoutStatus, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
-import { generalLimiter } from "@/lib/ratelimit";
-import { db } from "@/server/db";
+import { auth } from "@/Backend/auth";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { generalLimiter } from "@/Backend/lib/ratelimit";
+import { db } from "@/Backend/server/db";
 
 const listPayoutsQuerySchema = z.object({
   status: z.nativeEnum(PayoutStatus).optional(),

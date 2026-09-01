@@ -3,9 +3,9 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { ArrowRight, Search } from "lucide-react";
 
-import { log } from "@/lib/logger";
-import { db } from "@/server/db";
-import { getPublicPlatformSnapshot } from "@/server/public-data";
+import { log } from "@/Backend/lib/logger";
+import { db } from "@/Backend/server/db";
+import { getPublicPlatformSnapshot } from "@/Backend/server/public-data";
 
 type NotFoundLink = {
   href: ComponentProps<typeof Link>["href"];

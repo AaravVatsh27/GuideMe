@@ -1,7 +1,7 @@
-import { Card, CardContent } from "@/client/components/ui/card";
+import { Card, CardContent } from "@/Frontend/components/ui/card";
 
-import { getMentorDashboardData } from "../_components/mentor-dashboard-data";
-import { MentorReviewsPageClient } from "../_components/mentor-reviews-page-client";
+import { getMentorDashboardData } from "@/Frontend/views/dashboard/mentor/mentor-dashboard-data";
+import { MentorReviewsPageClient } from "@/Frontend/views/dashboard/mentor/mentor-reviews-page-client";
 
 export default async function MentorReviewsPage() {
   const data = await getMentorDashboardData();

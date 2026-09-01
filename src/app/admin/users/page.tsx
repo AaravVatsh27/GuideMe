@@ -1,6 +1,6 @@
-import { getAdminUsersData } from "@/server/admin";
+import { getAdminUsersData } from "@/Backend/server/admin";
 
-import { AdminUsersPageClient } from "../_components/admin-users-page-client";
+import { AdminUsersPageClient } from "@/Frontend/views/admin/admin-users-page-client";
 
 export default async function AdminUsersPage() {
   const users = await getAdminUsersData();

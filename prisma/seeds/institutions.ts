@@ -9,7 +9,7 @@ import type {
   InstitutionTier,
 } from "@prisma/client";
 
-import { db } from "../../src/server/db";
+import { db } from "../../src/Backend/server/db";
 
 export interface InstitutionSeed {
   name: string;

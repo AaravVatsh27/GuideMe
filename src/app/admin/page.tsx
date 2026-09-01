@@ -1,6 +1,6 @@
-import { getAdminOverviewData } from "@/server/admin";
+import { getAdminOverviewData } from "@/Backend/server/admin";
 
-import { AdminOverviewClient } from "./_components/admin-overview-client";
+import { AdminOverviewClient } from "@/Frontend/views/admin/admin-overview-client";
 
 export default async function AdminOverviewPage() {
   const data = await getAdminOverviewData();

@@ -10,14 +10,14 @@ import { toast } from "sonner";
 import {
   formatCurrency,
   getInitials,
-} from "@/app/dashboard/student/_components/student-dashboard-utils";
-import { Avatar, AvatarFallback } from "@/client/components/ui/avatar";
-import { Badge } from "@/client/components/ui/badge";
-import { Button } from "@/client/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/client/components/ui/card";
-import { Skeleton } from "@/client/components/ui/skeleton";
-import { queryKeys } from "@/lib/react-query";
-import { cn } from "@/server/utils";
+} from "@/Frontend/views/dashboard/student/student-dashboard-utils";
+import { Avatar, AvatarFallback } from "@/Frontend/components/ui/avatar";
+import { Badge } from "@/Frontend/components/ui/badge";
+import { Button } from "@/Frontend/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
+import { Skeleton } from "@/Frontend/components/ui/skeleton";
+import { queryKeys } from "@/Frontend/lib/react-query";
+import { cn } from "@/Backend/server/utils";
 
 type Mentor = {
   id: string;

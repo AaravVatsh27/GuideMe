@@ -2,11 +2,11 @@ import { MentorTier, VerificationStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { autoAssignMentorTier, extractRequestIp } from "@/server/admin";
-import { db } from "@/server/db";
-import { sendWelcomeMentorEmail } from "@/server/resend";
+import { auth } from "@/Backend/auth";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { autoAssignMentorTier, extractRequestIp } from "@/Backend/server/admin";
+import { db } from "@/Backend/server/db";
+import { sendWelcomeMentorEmail } from "@/Backend/server/resend";
 
 const bulkMentorActionSchema = z.discriminatedUnion("action", [
   z.object({

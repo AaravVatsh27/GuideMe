@@ -2,16 +2,16 @@ import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { db } from "@/server/db";
-import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/lib/cache";
+import { auth } from "@/Backend/auth";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { db } from "@/Backend/server/db";
+import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 import {
   cancelSessionById,
   completeSessionById,
   markSessionStarted,
   sessionDetailsInclude,
-} from "@/server/sessions";
+} from "@/Backend/server/sessions";
 
 const sessionPatchSchema = z.discriminatedUnion("action", [
   z.object({

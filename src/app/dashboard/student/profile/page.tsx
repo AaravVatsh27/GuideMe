@@ -10,22 +10,22 @@ import { toast } from "sonner";
 import {
   formatEnumLabel,
   getInitials,
-} from "@/app/dashboard/student/_components/student-dashboard-utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/client/components/ui/avatar";
-import { Badge } from "@/client/components/ui/badge";
-import { Button, buttonVariants } from "@/client/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/client/components/ui/card";
-import { Input } from "@/client/components/ui/input";
-import { Label } from "@/client/components/ui/label";
-import { Switch } from "@/client/components/ui/switch";
-import { queryKeys } from "@/lib/react-query";
+} from "@/Frontend/views/dashboard/student/student-dashboard-utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/Frontend/components/ui/avatar";
+import { Badge } from "@/Frontend/components/ui/badge";
+import { Button, buttonVariants } from "@/Frontend/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
+import { Input } from "@/Frontend/components/ui/input";
+import { Label } from "@/Frontend/components/ui/label";
+import { Switch } from "@/Frontend/components/ui/switch";
+import { queryKeys } from "@/Frontend/lib/react-query";
 import {
   getBoardOption,
   getClassOption,
   getConfusionOption,
   getStreamOption,
-} from "@/server/student-onboarding";
-import { uploadFiles } from "@/server/uploadthing";
+} from "@/Backend/server/student-onboarding";
+import { uploadFiles } from "@/Backend/server/uploadthing";
 
 type ProfileResponse = {
   user: { name: string; email: string; image?: string | null } | null;

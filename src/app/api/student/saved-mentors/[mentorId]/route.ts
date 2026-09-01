@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { db } from "@/server/db";
+import { auth } from "@/Backend/auth";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { db } from "@/Backend/server/db";
 
 type RouteParams = { params: Promise<{ mentorId: string }> };
 

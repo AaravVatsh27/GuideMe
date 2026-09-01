@@ -2,9 +2,9 @@ import { SessionStatus } from "@prisma/client";
 import { addHours, isAfter, isBefore, subDays } from "date-fns";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { db } from "@/server/db";
+import { auth } from "@/Backend/auth";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { db } from "@/Backend/server/db";
 
 export const GET = withApiErrorHandling(async (_request: Request, _context, metadata) => {
   const session = await auth();

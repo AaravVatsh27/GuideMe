@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 
-import { Badge } from "@/client/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/client/components/ui/card";
-import { getAdminMentorDetailData, getMentorAdminStatus } from "@/server/admin";
+import { Badge } from "@/Frontend/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
+import { getAdminMentorDetailData, getMentorAdminStatus } from "@/Backend/server/admin";
 
-import { AdminStatusBadge } from "../../_components/admin-status-badge";
-import { formatCurrency, formatDateOnly, formatDateTime, formatEnumLabel } from "../../_components/admin-utils";
+import { AdminStatusBadge } from "@/Frontend/views/admin/admin-status-badge";
+import { formatCurrency, formatDateOnly, formatDateTime, formatEnumLabel } from "@/Frontend/views/admin/admin-utils";
 
 export default async function AdminMentorDetailPage({
   params,

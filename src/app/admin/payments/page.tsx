@@ -1,6 +1,6 @@
-import { getAdminPaymentsData } from "@/server/admin";
+import { getAdminPaymentsData } from "@/Backend/server/admin";
 
-import { AdminPaymentsPageClient } from "../_components/admin-payments-page-client";
+import { AdminPaymentsPageClient } from "@/Frontend/views/admin/admin-payments-page-client";
 
 export default async function AdminPaymentsPage() {
   const data = await getAdminPaymentsData();

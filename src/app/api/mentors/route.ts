@@ -3,16 +3,16 @@ import { MentorTier, Prisma, Stream, TargetExam } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { db } from "@/server/db";
+import { db } from "@/Backend/server/db";
 import {
   EXAM_OPTIONS,
   HELP_TOPIC_OPTIONS,
   getExamLabel,
   getHelpTopicLabel,
-} from "@/server/mentor-onboarding";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
-import { searchLimiter } from "@/lib/ratelimit";
-import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/lib/cache";
+} from "@/Backend/server/mentor-onboarding";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { searchLimiter } from "@/Backend/lib/ratelimit";
+import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 
 const SCHOOL_MENTOR_YEARS = [1, 2] as const;
 const UG_MENTOR_YEARS = [3, 4, 5, 6] as const;

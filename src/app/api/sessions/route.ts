@@ -2,15 +2,15 @@ import { Prisma, SessionStatus, SessionType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
-import { bookingLimiter, generalLimiter } from "@/lib/ratelimit";
-import { db } from "@/server/db";
+import { auth } from "@/Backend/auth";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { bookingLimiter, generalLimiter } from "@/Backend/lib/ratelimit";
+import { db } from "@/Backend/server/db";
 import {
   createSessionBooking,
   sessionListInclude,
-} from "@/server/sessions";
-import { createSessionSchema } from "@/server/validations/session";
+} from "@/Backend/server/sessions";
+import { createSessionSchema } from "@/Backend/validations/session";
 
 const listSessionsQuerySchema = z.object({
   status: z.nativeEnum(SessionStatus).optional(),

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { extractRequestIp } from "@/server/admin";
-import { db } from "@/server/db";
-import { cancelSessionById, completeSessionById } from "@/server/sessions";
+import { auth } from "@/Backend/auth";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { extractRequestIp } from "@/Backend/server/admin";
+import { db } from "@/Backend/server/db";
+import { cancelSessionById, completeSessionById } from "@/Backend/server/sessions";
 
 const adminSessionActionSchema = z.discriminatedUnion("action", [
   z.object({

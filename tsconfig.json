@@ -19,10 +19,12 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
+      "@/Frontend/*": ["./src/Frontend/*"],
+      "@/Backend/*": ["./src/Backend/*"],
       "@emails": ["./emails/index.ts"],
       "@emails/*": ["./emails/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "my-nextjs-app"]
 }

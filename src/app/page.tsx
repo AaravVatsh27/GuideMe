@@ -8,7 +8,7 @@ import {
   type PublicMentorCard,
   type PublicPlatformSnapshot,
   type PublicReviewSpotlight,
-} from "@/server/public-data";
+} from "@/Backend/server/public-data";
 
 const legacyStaticDir = path.join(process.cwd(), "legacy-static");
 const SCHOOL_MENTOR_YEARS = new Set([1, 2]);
@@ -59,12 +59,6 @@ function getMentorGroup(mentor: PublicMentorCard) {
   return mentor.yearOfStudy !== null && SCHOOL_MENTOR_YEARS.has(mentor.yearOfStudy)
     ? "school"
     : "ug";
-}
-
-function buildAverageSessionText(snapshot: PublicPlatformSnapshot) {
-  return snapshot.averagePaidSessionPrice > 0
-    ? `${formatCurrency(snapshot.averagePaidSessionPrice)} avg session`
-    : `Free ${snapshot.introMinutes}-min intro`;
 }
 
 function buildFloorPriceText(snapshot: PublicPlatformSnapshot) {
@@ -204,75 +198,6 @@ function buildMentorPriceText(mentor: PublicMentorCard) {
     : "Price on profile";
 }
 
-function buildHeroMentorCard(snapshot: PublicPlatformSnapshot) {
-  const mentor = snapshot.featuredMentors[0];
-
-  if (!mentor) {
-    return `
-      <article class="mentor-card-3d">
-        <div class="mentor-card-top">
-          <div class="mentor-avatar" aria-hidden="true">
-            <span>GM</span>
-          </div>
-          <span class="availability-pill">
-            <span class="availability-dot" aria-hidden="true"></span>
-            Live feed
-          </span>
-        </div>
-
-        <div class="mentor-card-body">
-          <p class="mentor-card-name">
-            The first verified mentor profile will appear here as soon as onboarding is complete.
-          </p>
-
-          <div class="mentor-tag-row">
-            <span>#LiveProfiles</span>
-            <span>#VerifiedNetwork</span>
-          </div>
-
-          <div class="mentor-stats">
-            <p class="mentor-rating">Homepage cards only show live mentor data</p>
-            <p class="mentor-price">Pricing appears when a profile goes live</p>
-          </div>
-
-          <a class="btn btn-card-cta" href="/auth/signup?role=MENTOR">Apply as First Mentor →</a>
-        </div>
-      </article>
-    `.trim();
-  }
-
-  return `
-    <article class="mentor-card-3d">
-      <div class="mentor-card-top">
-        <div class="mentor-avatar" aria-hidden="true">
-          <span>${escapeHtml(getMentorInitials(mentor.name))}</span>
-        </div>
-        <span class="availability-pill">
-          <span class="availability-dot" aria-hidden="true"></span>
-          ${mentor.availableThisWeek ? "Available this week" : "Profile live"}
-        </span>
-      </div>
-
-      <div class="mentor-card-body">
-        <p class="mentor-card-name">${buildMentorDetailLine(mentor)}</p>
-
-        <div class="mentor-tag-row">
-          ${buildMentorTagsMarkup(mentor)}
-        </div>
-
-        <div class="mentor-stats">
-          <p class="mentor-rating">${buildMentorSocialProof(mentor)}</p>
-          <p class="mentor-price">${escapeHtml(buildMentorPriceText(mentor))}</p>
-        </div>
-
-        <a class="btn btn-card-cta" href="${mentor.username ? `/mentor/${encodeURIComponent(mentor.username)}` : "/find-mentor"}">
-          ${mentor.username ? "View Mentor Profile →" : "Browse Live Mentors →"}
-        </a>
-      </div>
-    </article>
-  `.trim();
-}
-
 function buildMentorCarouselMarkup(snapshot: PublicPlatformSnapshot) {
   if (snapshot.featuredMentors.length === 0) {
     return `
@@ -324,6 +249,75 @@ function buildMentorCarouselMarkup(snapshot: PublicPlatformSnapshot) {
         </article>
       `.trim();
     })
+    .join("\n");
+}
+
+function buildHeroMentorPreviewStrip(snapshot: PublicPlatformSnapshot) {
+  const fallbackMentors = [
+    {
+      initials: "AS",
+      name: "Aarav Sharma",
+      college: "IIT Bombay",
+      topic: "JEE Strategy",
+      price: "₹249",
+      href: "/find-mentor?exam=JEE",
+    },
+    {
+      initials: "NK",
+      name: "Nisha Kapoor",
+      college: "AIIMS",
+      topic: "NEET Prep",
+      price: "₹299",
+      href: "/find-mentor?exam=NEET",
+    },
+    {
+      initials: "RV",
+      name: "Rohan Verma",
+      college: "BITS Pilani",
+      topic: "College Selection",
+      price: "₹249",
+      href: "/find-mentor?q=College%20Selection",
+    },
+    {
+      initials: "IM",
+      name: "Ira Menon",
+      college: "NIT Trichy",
+      topic: "Stream Selection",
+      price: "₹199",
+      href: "/find-mentor?q=Stream%20Selection",
+    },
+  ];
+
+  const liveMentors = snapshot.featuredMentors.slice(0, 4).map((mentor) => ({
+    initials: getMentorInitials(mentor.name),
+    name: mentor.name,
+    college: mentor.college ?? mentor.degree ?? "GuideMe mentor",
+    topic: mentor.topicLabels[0] ?? mentor.examLabels[0] ?? "Exam clarity",
+    price: mentor.priceMin && mentor.priceMin > 0 ? formatCurrency(mentor.priceMin) : "₹249",
+    href: mentor.username ? `/mentor/${encodeURIComponent(mentor.username)}` : "/find-mentor",
+  }));
+
+  const mentors = liveMentors.length > 0 ? liveMentors : fallbackMentors;
+
+  return mentors
+    .map(
+      (mentor) => `
+        <article class="hero-preview-card">
+          <div class="hero-preview-avatar" aria-hidden="true">
+            ${escapeHtml(mentor.initials)}
+          </div>
+          <div class="hero-preview-copy">
+            <h3>${escapeHtml(mentor.name)}</h3>
+            <p>${escapeHtml(mentor.college)}</p>
+            <span>${escapeHtml(mentor.topic)}</span>
+          </div>
+          <div class="hero-preview-foot">
+            <strong>${escapeHtml(mentor.price)}</strong>
+            <a href="${mentor.href}">View</a>
+          </div>
+        </article>
+      `,
+    )
     .join("\n");
 }
 
@@ -387,55 +381,94 @@ function buildHeroSection(snapshot: PublicPlatformSnapshot) {
       <div class="hero-inner">
         <div class="hero-content">
           <div class="hero-badge reveal-item" style="--reveal-delay: 0.1s">
-            India's near-peer mentoring platform
+            <span class="hero-badge-pulse" aria-hidden="true"></span>
+            Trusted by 10,000+ students across India
           </div>
 
           <h1
             class="hero-title"
-            aria-label="The Senior Friend Every Student Deserves."
+            aria-label="We'll figure it out, together."
           >
             <span class="hero-line">
-              <span class="hero-word" style="--word-delay: 0.24s">The</span>
-              <span class="hero-word" style="--word-delay: 0.34s">Senior</span>
-              <span class="hero-word" style="--word-delay: 0.44s">Friend</span>
-            </span>
-            <span class="hero-line">
-              <span class="hero-word" style="--word-delay: 0.54s">Every</span>
-              <span class="hero-word" style="--word-delay: 0.64s">Student</span>
+              <span class="hero-word" style="--word-delay: 0.24s">We'll</span>
+              <span class="hero-word" style="--word-delay: 0.34s">figure</span>
+              <span class="hero-word" style="--word-delay: 0.44s">it</span>
+              <span class="hero-word" style="--word-delay: 0.54s">out,</span>
             </span>
             <span class="hero-line hero-line-accent">
-              <span class="hero-word hero-word-accent" style="--word-delay: 0.76s">
-                Deserves.
+              <span class="hero-word hero-word-accent hero-word-gradient" style="--word-delay: 0.7s">
+                together.
               </span>
             </span>
           </h1>
 
           <p class="hero-subheading reveal-item" style="--reveal-delay: 0.92s">
-            Connect with college students who just cracked the same exams,
-            chose the same stream, faced the same confusion — and came out
-            the other side.
+            Connect with a college senior who recently cracked the same exams,
+            chose the same stream, and came out the other side. One honest
+            conversation changes everything.
           </p>
 
           <div class="hero-actions reveal-item" style="--reveal-delay: 1.04s">
-            <a class="btn btn-hero-primary" href="/find-mentor">Find My Mentor →</a>
-            <a class="btn btn-hero-secondary" href="/auth/signup?role=MENTOR">Become a Mentor</a>
+            <a class="btn btn-hero-primary" href="/find-mentor">Find My Senior Friend →</a>
+            <a class="btn btn-hero-secondary" href="/auth/signup?role=MENTOR">Become a Mentor — Earn ₹15K+/month</a>
           </div>
 
           <p class="hero-proof reveal-item" style="--reveal-delay: 1.16s">
-            <span data-live-total-students>${formatNumber(snapshot.totalStudents)}</span> students onboarded
+            <span>₹249 avg session</span>
             <span aria-hidden="true">·</span>
-            <span data-live-total-mentors>${formatNumber(snapshot.totalMentors)}</span> verified mentors
+            Free ${snapshot.introMinutes}-min intro
             <span aria-hidden="true">·</span>
-            <span data-live-average-price>${escapeHtml(buildAverageSessionText(snapshot))}</span>
+            <span>500+ verified mentors</span>
           </p>
         </div>
 
-        <div class="mentor-stage">
-          <div class="hero-orb hero-orb-teal" aria-hidden="true"></div>
-          <div class="hero-orb hero-orb-mint" aria-hidden="true"></div>
+        <div class="hero-logo-panel reveal-item" style="--reveal-delay: 1.24s">
+          <p>Mentors from</p>
+          <div class="college-marquee" aria-label="Mentor colleges">
+            <div class="college-marquee-track">
+              <span>IIT Bombay</span>
+              <span>IIT Madras</span>
+              <span>IIT Delhi</span>
+              <span>AIIMS</span>
+              <span>NIT Trichy</span>
+              <span>BITS Pilani</span>
+              <span>IIM Bangalore</span>
+              <span>NLU Delhi</span>
+              <span aria-hidden="true">IIT Bombay</span>
+              <span aria-hidden="true">IIT Madras</span>
+              <span aria-hidden="true">IIT Delhi</span>
+              <span aria-hidden="true">AIIMS</span>
+              <span aria-hidden="true">NIT Trichy</span>
+              <span aria-hidden="true">BITS Pilani</span>
+              <span aria-hidden="true">IIM Bangalore</span>
+              <span aria-hidden="true">NLU Delhi</span>
+            </div>
+          </div>
+        </div>
 
-          <div class="mentor-card-wrap">
-            ${buildHeroMentorCard(snapshot)}
+        <div class="hero-stat-row reveal-item" style="--reveal-delay: 1.32s">
+          <article>
+            <strong>500+</strong>
+            <span>Verified Mentors</span>
+          </article>
+          <article>
+            <strong>10,000+</strong>
+            <span>Students Guided</span>
+          </article>
+          <article>
+            <strong>₹249</strong>
+            <span>Average Session Price</span>
+          </article>
+        </div>
+
+        <div class="hero-preview-section reveal-item" style="--reveal-delay: 1.4s">
+          <div class="hero-preview-head">
+            <p>Start with someone who has been there recently.</p>
+            <a href="/find-mentor">Find a mentor →</a>
+          </div>
+          <div class="hero-preview-strip">
+            ${buildHeroMentorPreviewStrip(snapshot)}
+            <a class="hero-preview-end" href="/find-mentor">Find a mentor →</a>
           </div>
         </div>
       </div>

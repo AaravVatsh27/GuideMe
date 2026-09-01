@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
-import { cacheDel, cacheDelPattern, cacheKeys } from "@/lib/cache";
-import { generalLimiter } from "@/lib/ratelimit";
-import { db } from "@/server/db";
-import { calculateFortyFiveMinutePrice } from "@/server/mentor-onboarding";
-import { invalidateAllMatchingCaches } from "@/server/matching";
-import { mentorProfileUpdateSchema } from "@/server/validations/mentor";
+import { auth } from "@/Backend/auth";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
+import { generalLimiter } from "@/Backend/lib/ratelimit";
+import { db } from "@/Backend/server/db";
+import { calculateFortyFiveMinutePrice } from "@/Backend/server/mentor-onboarding";
+import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
+import { mentorProfileUpdateSchema } from "@/Backend/validations/mentor";
 
 export const PATCH = withApiErrorHandling(async (request: Request, _context, metadata) => {
   const session = await auth();

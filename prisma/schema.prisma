@@ -7,42 +7,43 @@ datasource db {
 }
 
 model User {
-  id                   String                 @id @default(uuid()) @db.Uuid
-  email                String                 @unique
-  phone                String?                @unique
-  name                 String
-  image                String?
-  role                 Role                   @default(STUDENT)
-  emailVerified        Boolean                @default(false)
-  phoneVerified        Boolean                @default(false)
-  isActive             Boolean                @default(true)
-  deletedAt            DateTime?
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  lastActiveAt         DateTime?
-  onboardingComplete   Boolean                @default(false)
-  onboardingStep       Int                    @default(0)
-  accounts             Account[]
-  auditLogs            AuditLog[]
-  availabilities       Availability[]         @relation("MentorAvailabilities")
-  mentorProfile        MentorProfile?
-  mentorVerification   MentorVerification?    @relation("MentorVerificationTarget")
-  verificationEvidence VerificationEvidence[] @relation("MentorVerificationEvidence")
-  reviewedVerifiers    MentorVerification[]   @relation("VerificationReviewedBy")
-  receivedMessages     Message[]              @relation("MessageReceiver")
-  sentMessages         Message[]              @relation("MessageSender")
-  notifications        Notification[]
-  payments             Payment[]
-  payouts              Payout[]               @relation("MentorPayouts")
-  reviewsReceived      Review[]               @relation("ReviewMentor")
-  reviewsWritten       Review[]               @relation("ReviewStudent")
-  savedByStudents      SavedMentor[]          @relation("SavedMentorTarget")
-  savedMentors         SavedMentor[]          @relation("SavedByStudent")
-  cancelledSessions    Session[]              @relation("CancelledBy")
-  mentorSessions       Session[]              @relation("MentorSessions")
-  studentSessions      Session[]              @relation("StudentSessions")
-  sessionNotes         SessionNote[]
-  studentProfile       StudentProfile?
+  id                     String                  @id @default(uuid()) @db.Uuid
+  email                  String                  @unique
+  phone                  String?                 @unique
+  name                   String
+  image                  String?
+  role                   Role                    @default(STUDENT)
+  emailVerified          Boolean                 @default(false)
+  phoneVerified          Boolean                 @default(false)
+  isActive               Boolean                 @default(true)
+  deletedAt              DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  lastActiveAt           DateTime?
+  onboardingComplete     Boolean                 @default(false)
+  onboardingStep         Int                     @default(0)
+  accounts               Account[]
+  auditLogs              AuditLog[]
+  availabilities         Availability[]          @relation("MentorAvailabilities")
+  mentorProfile          MentorProfile?
+  mentorVerification     MentorVerification?     @relation("MentorVerificationTarget")
+  verificationEvidence   VerificationEvidence[]  @relation("MentorVerificationEvidence")
+  institutionSuggestions InstitutionSuggestion[] @relation("MentorInstitutionSuggestions")
+  reviewedVerifiers      MentorVerification[]    @relation("VerificationReviewedBy")
+  receivedMessages       Message[]               @relation("MessageReceiver")
+  sentMessages           Message[]               @relation("MessageSender")
+  notifications          Notification[]
+  payments               Payment[]
+  payouts                Payout[]                @relation("MentorPayouts")
+  reviewsReceived        Review[]                @relation("ReviewMentor")
+  reviewsWritten         Review[]                @relation("ReviewStudent")
+  savedByStudents        SavedMentor[]           @relation("SavedMentorTarget")
+  savedMentors           SavedMentor[]           @relation("SavedByStudent")
+  cancelledSessions      Session[]               @relation("CancelledBy")
+  mentorSessions         Session[]               @relation("MentorSessions")
+  studentSessions        Session[]               @relation("StudentSessions")
+  sessionNotes           SessionNote[]
+  studentProfile         StudentProfile?
 
   @@index([role, isActive])
   @@index([deletedAt])
@@ -99,35 +100,39 @@ model StudentProfile {
 }
 
 model MentorProfile {
-  userId                 String     @id @db.Uuid
-  username               String     @unique
+  userId                 String       @id @db.Uuid
+  institutionId          String?      @db.Uuid
+  username               String       @unique
   college                String?
   degree                 String?
   branch                 String?
   yearOfStudy            Int?
   expectedGraduationYear Int?
-  tier                   MentorTier @default(RISING)
+  verifiedCollegeEmail   String?
+  tier                   MentorTier   @default(RISING)
   bio                    String?
   headline               String?
-  examsCleared           String[]   @default([])
+  examsCleared           String[]     @default([])
   examYears              Json?
-  specialisations        String[]   @default([])
+  specialisations        String[]     @default([])
   priceMin               Int?
   priceMax               Int?
-  isAvailable            Boolean    @default(true)
-  isVerified             Boolean    @default(false)
-  isActive               Boolean    @default(true)
-  totalSessions          Int        @default(0)
-  avgRating              Float      @default(0)
-  totalReviews           Int        @default(0)
-  responseRate           Float      @default(0)
+  isAvailable            Boolean      @default(true)
+  isVerified             Boolean      @default(false)
+  isActive               Boolean      @default(true)
+  totalSessions          Int          @default(0)
+  avgRating              Float        @default(0)
+  totalReviews           Int          @default(0)
+  responseRate           Float        @default(0)
   linkedinUrl            String?
   introVideoUrl          String?
-  onboardingStep         Int        @default(0)
-  profileViews           Int        @default(0)
-  lastProfileUpdate      DateTime   @default(now())
-  user                   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  onboardingStep         Int          @default(0)
+  profileViews           Int          @default(0)
+  lastProfileUpdate      DateTime     @default(now())
+  institution            Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([institutionId])
   @@index([tier, isAvailable, isActive])
   @@index([college, degree, branch])
   @@index([avgRating, totalReviews])
@@ -350,43 +355,100 @@ model SessionNote {
   @@index([createdAt])
 }
 
+model Institution {
+  id                        String                    @id @default(uuid()) @db.Uuid
+  name                      String
+  shortName                 String?
+  slug                      String                    @unique
+  academicCategory          AcademicCategory
+  institutionClassification InstitutionClassification
+  institutionTier           InstitutionTier           @default(UNCLASSIFIED)
+  city                      String?
+  state                     String?
+  website                   String?
+  officialId                String?
+  officialSource            String?
+  isActive                  Boolean                   @default(true)
+  createdAt                 DateTime                  @default(now())
+  updatedAt                 DateTime                  @updatedAt
+  domains                   CollegeDomain[]
+  mentors                   MentorProfile[]
+  verificationEvidence      VerificationEvidence[]
+  approvedSuggestions       InstitutionSuggestion[]
+
+  @@unique([officialSource, officialId])
+  @@index([name])
+  @@index([shortName])
+  @@index([academicCategory])
+  @@index([institutionClassification])
+  @@index([institutionTier])
+  @@index([state, city])
+}
+
 model CollegeDomain {
-  id          String      @id @default(uuid()) @db.Uuid
-  domain      String      @unique
-  collegeName String
-  type        CollegeType
-  tier        MentorTier  @default(RISING)
-  city        String?
-  state       String?
-  website     String?
-  isApproved  Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String       @id @default(uuid()) @db.Uuid
+  domain        String       @unique
+  collegeName   String
+  type          CollegeType
+  tier          MentorTier   @default(RISING)
+  city          String?
+  state         String?
+  website       String?
+  institutionId String?      @db.Uuid
+  isApproved    Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  institution   Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
 
   @@index([collegeName])
   @@index([tier])
   @@index([type])
+  @@index([institutionId])
   @@index([isApproved])
 }
 
 model VerificationEvidence {
-  id         String                   @id @default(uuid()) @db.Uuid
-  mentorId   String                   @db.Uuid
-  type       VerificationEvidenceType
-  provider   VerificationProvider
-  status     VerificationStatus       @default(PENDING)
-  confidence Int?
-  metadata   Json?
-  verifiedAt DateTime?
-  createdAt  DateTime                 @default(now())
-  updatedAt  DateTime                 @updatedAt
-  mentor     User                     @relation("MentorVerificationEvidence", fields: [mentorId], references: [id], onDelete: Cascade)
+  id            String                   @id @default(uuid()) @db.Uuid
+  mentorId      String                   @db.Uuid
+  institutionId String?                  @db.Uuid
+  type          VerificationEvidenceType
+  provider      VerificationProvider
+  status        VerificationStatus       @default(PENDING)
+  confidence    Int?
+  metadata      Json?
+  verifiedAt    DateTime?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  institution   Institution?             @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  mentor        User                     @relation("MentorVerificationEvidence", fields: [mentorId], references: [id], onDelete: Cascade)
 
   @@index([mentorId])
+  @@index([institutionId])
   @@index([type])
   @@index([provider])
   @@index([status])
   @@index([mentorId, type])
+}
+
+model InstitutionSuggestion {
+  id                    String                      @id @default(uuid()) @db.Uuid
+  mentorId              String                      @db.Uuid
+  approvedInstitutionId String?                     @db.Uuid
+  submittedName         String
+  normalizedName        String
+  status                InstitutionSuggestionStatus @default(PENDING)
+  reviewedBy            String?                     @db.Uuid
+  reviewedAt            DateTime?
+  rejectionReason       String?
+  createdAt             DateTime                    @default(now())
+  updatedAt             DateTime                    @updatedAt
+  approvedInstitution   Institution?                @relation(fields: [approvedInstitutionId], references: [id], onDelete: SetNull)
+  mentor                User                        @relation("MentorInstitutionSuggestions", fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([normalizedName])
+  @@index([mentorId])
+  @@index([approvedInstitutionId])
 }
 
 model MentorVerification {
@@ -506,6 +568,58 @@ enum CollegeType {
   STATE
   PRIVATE
   OTHER
+}
+
+enum AcademicCategory {
+  ENGINEERING
+  MEDICAL
+  MANAGEMENT
+  LAW
+  PHARMACY
+  ARCHITECTURE
+  DESIGN
+  AGRICULTURE
+  SCIENCE
+  ARTS
+  COMMERCE
+  NURSING
+  DENTAL
+  PARAMEDICAL
+  EDUCATION
+  MULTIDISCIPLINARY
+  OTHER
+}
+
+enum InstitutionClassification {
+  CENTRAL_UNIVERSITY
+  STATE_UNIVERSITY
+  PRIVATE_UNIVERSITY
+  DEEMED_UNIVERSITY
+  IIT
+  NIT
+  IIIT
+  IIM
+  AIIMS
+  NLU
+  GOVERNMENT_COLLEGE
+  PRIVATE_COLLEGE
+  AUTONOMOUS_COLLEGE
+  GOVERNMENT_INSTITUTE
+  PRIVATE_INSTITUTE
+  OTHER
+}
+
+enum InstitutionTier {
+  TIER_1
+  TIER_2
+  TIER_3
+  UNCLASSIFIED
+}
+
+enum InstitutionSuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum SessionType {

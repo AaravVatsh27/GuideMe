@@ -1,21 +1,8 @@
 import type { Metadata } from "next";
-import { DM_Sans, Syne } from "next/font/google";
 import localFont from "next/font/local";
-import "./globals.css";
+import "@/Frontend/styles/globals.css";
 import { AppProviders } from "@/app/providers";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
-  weight: ["400", "500", "700"],
-});
-
-const syne = Syne({
-  subsets: ["latin"],
-  variable: "--font-syne",
-  weight: ["600", "700", "800"],
-});
+import { ErrorBoundary } from "@/Frontend/components/ErrorBoundary";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -50,7 +37,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${dmSans.variable} ${syne.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className="antialiased">
         <ErrorBoundary>

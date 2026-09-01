@@ -1,16 +1,15 @@
-import { redirect } from "next/navigation";
-
-import { auth } from "@/auth";
-import { AuthShell } from "@/app/auth/_components/auth-shell";
-import { SignupView } from "@/app/auth/_components/signup-view";
+import { auth } from "@/Backend/auth";
+import { AlreadyAuthenticatedView } from "@/Frontend/views/auth/already-authenticated-view";
+import { AuthShell } from "@/Frontend/views/auth/auth-shell";
+import { SignupView } from "@/Frontend/views/auth/signup-view";
 import {
   AuthPageSearchParams,
   getAuthCallbackUrl,
   getFirstSearchParam,
   isTruthySearchParam,
-} from "@/app/auth/_lib/search-params";
-import { getOnboardingPath } from "@/server/auth-flow";
-import { getAuthShellContent } from "@/server/public-data";
+} from "@/Frontend/views/auth/search-params";
+import { AUTH_DEFAULT_REDIRECT, getOnboardingPath } from "@/Backend/server/auth-flow";
+import { getAuthShellContent } from "@/Backend/server/public-data";
 
 type SignUpPageProps = {
   searchParams?: AuthPageSearchParams;
@@ -23,10 +22,26 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   const session = await auth();
 
   const isForcingRole = !!searchParams?.role;
+  const continueHref =
+    session?.user
+      ? session.user.onboardingComplete
+        ? callbackUrl
+        : getOnboardingPath(session.user.role)
+      : AUTH_DEFAULT_REDIRECT;
 
   if (session?.user && !isCompletingOAuth && !isForcingRole) {
-    redirect(
-      session.user.onboardingComplete ? callbackUrl : getOnboardingPath(session.user.role),
+    const shellContent = await getAuthShellContent();
+
+    return (
+      <AuthShell {...shellContent}>
+        <AlreadyAuthenticatedView
+          continueHref={continueHref}
+          callbackUrl={callbackUrl}
+          role={session.user.role}
+          onboardingComplete={session.user.onboardingComplete}
+          mode="signup"
+        />
+      </AuthShell>
     );
   }
 

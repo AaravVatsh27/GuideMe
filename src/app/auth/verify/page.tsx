@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Inbox, MailCheck } from "lucide-react";
 
-import { AuthShell } from "@/app/auth/_components/auth-shell";
+import { AuthShell } from "@/Frontend/views/auth/auth-shell";
 import {
   AuthPageSearchParams,
   getAuthCallbackUrl,
   getFirstSearchParam,
-} from "@/app/auth/_lib/search-params";
-import { buttonVariants } from "@/client/components/ui/button";
+} from "@/Frontend/views/auth/search-params";
+import { buttonVariants } from "@/Frontend/components/ui/button";
 import {
   Card,
   CardContent,
@@ -15,9 +15,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/client/components/ui/card";
-import { getAuthShellContent } from "@/server/public-data";
-import { cn } from "@/server/utils";
+} from "@/Frontend/components/ui/card";
+import { getAuthShellContent } from "@/Backend/server/public-data";
+import { cn } from "@/Backend/server/utils";
 
 type VerifyPageProps = {
   searchParams?: AuthPageSearchParams;

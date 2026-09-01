@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
-import { StudentShell } from "@/app/dashboard/student/_components/student-shell";
+import { auth } from "@/Backend/auth";
+import { StudentShell } from "@/Frontend/views/dashboard/student/student-shell";
 
 export default async function StudentDashboardLayout({
   children,

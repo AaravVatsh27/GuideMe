@@ -7,12 +7,12 @@ import {
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { cacheDel, cacheDelPattern, cacheKeys } from "@/lib/cache";
-import { log } from "@/lib/logger";
-import { PLATFORM_CUT } from "@/server/constants";
-import { db } from "@/server/db";
-import { sendBookingConfirmation, sendPaymentFailureEmail, sendRefundConfirmationEmail } from "@/server/resend";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
+import { log } from "@/Backend/lib/logger";
+import { PLATFORM_CUT } from "@/Backend/server/constants";
+import { db } from "@/Backend/server/db";
+import { sendBookingConfirmation, sendPaymentFailureEmail, sendRefundConfirmationEmail } from "@/Backend/server/resend";
 
 function verifyWebhookSignature(body: string, signature: string): boolean {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;

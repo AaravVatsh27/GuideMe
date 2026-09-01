@@ -7,21 +7,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, RotateCcw, Video } from "lucide-react";
 import { toast } from "sonner";
 
-import { MentorAvatar } from "@/components/MentorAvatar";
+import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
 import {
   formatCurrency,
   formatDateOnly,
   formatDateTime,
   formatEnumLabel,
   getInitials,
-} from "@/app/dashboard/student/_components/student-dashboard-utils";
-import { Badge } from "@/client/components/ui/badge";
-import { Button, buttonVariants } from "@/client/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/client/components/ui/card";
-import { Skeleton } from "@/client/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/client/components/ui/tabs";
-import { queryKeys } from "@/lib/react-query";
-import { cn } from "@/server/utils";
+} from "@/Frontend/views/dashboard/student/student-dashboard-utils";
+import { Badge } from "@/Frontend/components/ui/badge";
+import { Button, buttonVariants } from "@/Frontend/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/Frontend/components/ui/card";
+import { Skeleton } from "@/Frontend/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/Frontend/components/ui/tabs";
+import { queryKeys } from "@/Frontend/lib/react-query";
+import { cn } from "@/Backend/server/utils";
 
 type SessionStatus = "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
 type SessionTab = "upcoming" | "past" | "cancelled";

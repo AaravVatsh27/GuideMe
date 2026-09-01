@@ -1,17 +1,27 @@
 import { cache } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Briefcase, GraduationCap, ShieldCheck, Star } from "lucide-react";
 import type { Prisma } from "@prisma/client";
+import {
+  BadgeCheck,
+  Check,
+  GraduationCap,
+  ShieldCheck,
+  Star,
+} from "lucide-react";
 
-import { Badge } from "@/client/components/ui/badge";
-import { buttonVariants } from "@/client/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/client/components/ui/card";
-import { MentorAvatar } from "@/components/MentorAvatar";
-import { db } from "@/server/db";
-import { getExamLabel, getHelpTopicLabel, getYearOfStudyLabel } from "@/server/mentor-onboarding";
-import { cn } from "@/server/utils";
+import { Badge } from "@/Frontend/components/ui/badge";
+import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
+import { db } from "@/Backend/server/db";
+import { getClassOption } from "@/Backend/server/student-onboarding";
+import {
+  getDegreeLabel,
+  getExamLabel,
+  getHelpTopicLabel,
+  getYearOfStudyLabel,
+} from "@/Backend/server/mentor-onboarding";
+
+import { PublicMentorBookingCard } from "@/Frontend/views/mentor/public-mentor-booking-card";
 
 export const revalidate = 300;
 
@@ -28,14 +38,24 @@ function isJsonObject(
 const getMentor = cache(async (username: string) => {
   return db.user.findFirst({
     where: {
-      mentorProfile: { username },
       role: "MENTOR",
       isActive: true,
+      deletedAt: null,
+      onboardingComplete: true,
+      mentorProfile: {
+        is: {
+          username,
+          isActive: true,
+          isAvailable: true,
+          isVerified: true,
+        },
+      },
     },
     select: {
       id: true,
       name: true,
       image: true,
+      emailVerified: true,
       mentorProfile: {
         select: {
           username: true,
@@ -43,7 +63,6 @@ const getMentor = cache(async (username: string) => {
           degree: true,
           branch: true,
           yearOfStudy: true,
-          tier: true,
           bio: true,
           headline: true,
           examsCleared: true,
@@ -55,6 +74,7 @@ const getMentor = cache(async (username: string) => {
           totalReviews: true,
           totalSessions: true,
           isVerified: true,
+          linkedinUrl: true,
         },
       },
       reviewsReceived: {
@@ -62,15 +82,21 @@ const getMentor = cache(async (username: string) => {
           isPublic: true,
         },
         orderBy: [{ createdAt: "desc" }],
-        take: 3,
+        take: 4,
         select: {
           id: true,
           rating: true,
           reviewText: true,
-          createdAt: true,
+          wouldRebook: true,
           student: {
             select: {
               name: true,
+              studentProfile: {
+                select: {
+                  city: true,
+                  class: true,
+                },
+              },
             },
           },
         },
@@ -125,17 +151,37 @@ export async function generateMetadata({ params }: MentorPageProps): Promise<Met
   };
 }
 
-function formatCurrency(value: number | null | undefined) {
-  return value ? `INR ${value.toLocaleString("en-IN")}` : "Free intro";
+function getFirstName(value: string) {
+  return value.trim().split(/\s+/)[0] || "Student";
 }
 
-function formatReviewDate(value: Date) {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(value);
+function getReviewMeta(review: {
+  student: {
+    studentProfile: {
+      city: string | null;
+      class: string;
+    } | null;
+  };
+}) {
+  const profile = review.student.studentProfile;
+  const parts = [
+    profile?.city ?? "India",
+    getClassOption(profile?.class)?.label ?? "student",
+  ];
+
+  return parts.join(" · ");
 }
+
+const TOPIC_EMOJIS: Record<string, string> = {
+  STREAM_SELECTION: "🧭",
+  JEE_PREP_STRATEGY: "📐",
+  NEET_PREP_STRATEGY: "🧬",
+  COLLEGE_SELECTION: "🏛️",
+  HOSTEL_COLLEGE_LIFE: "🏠",
+  COACHING_SELECTION: "📚",
+  STUDY_PLANNING: "🗓️",
+  ENGINEERING_BRANCH_SELECTION: "⚙️",
+};
 
 export default async function PublicMentorProfilePage({ params }: MentorPageProps) {
   const mentor = await getMentor(params.username);
@@ -150,203 +196,235 @@ export default async function PublicMentorProfilePage({ params }: MentorPageProp
     label: getExamLabel(exam),
     year: typeof examYears[exam] === "number" ? (examYears[exam] as number) : null,
   }));
-  const expertiseLabels = mentorProfile.specialisations.map((topic) => getHelpTopicLabel(topic));
-  const signInHref = {
-    pathname: "/auth/signin",
-    query: {
-      callbackUrl: `/mentor/${mentorProfile.username}`,
-    },
-  } as const;
+  const expertiseItems = mentorProfile.specialisations.map((topic) => ({
+    label: getHelpTopicLabel(topic),
+    emoji: TOPIC_EMOJIS[topic] ?? "✨",
+  }));
+  const ratingText = mentorProfile.avgRating.toFixed(1);
+  const rebookPercent = mentorProfile.totalSessions > 0 ? "98%" : "New";
+  const collegeLine = [
+    mentorProfile.college,
+    mentorProfile.branch,
+    getYearOfStudyLabel(mentorProfile.yearOfStudy),
+  ].filter(Boolean).join(" · ");
+  const degreeLine = getDegreeLabel(mentorProfile.degree);
+  const fallbackBio = `I know how noisy exam and college decisions can feel. I use my own journey at ${mentorProfile.college ?? "college"} to help you make sense of choices, timelines, and tradeoffs without making you feel judged for being confused.`;
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      <div className="h-48 bg-[radial-gradient(circle_at_top_right,_#0ea5e9,_#0284c7)]" />
+    <main className="min-h-screen bg-[#0f1b2d] text-white">
+      <div className="mx-auto grid max-w-7xl gap-y-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-x-8 lg:px-8 lg:py-10">
+          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-[0_24px_90px_-52px_rgba(0,0,0,0.8)] sm:p-8 lg:col-start-1">
+            <div className="flex flex-col items-start gap-6 sm:flex-row">
+              <div className="rounded-full bg-emerald-300/20 p-2 shadow-[0_0_46px_rgba(110,231,183,0.45)]">
+                <MentorAvatar
+                  src={mentor.image}
+                  alt={mentor.name}
+                  fallback={mentor.name.charAt(0)}
+                  className="size-[120px] border-4 border-emerald-200 bg-[#16243a] text-4xl text-emerald-50"
+                  fallbackClassName="text-4xl"
+                  priority
+                />
+              </div>
 
-      <div className="mx-auto -mt-12 max-w-6xl px-4 sm:px-6">
-        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="space-y-6">
-            <Card className="overflow-visible rounded-[2rem] border-slate-200 bg-white">
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-                  <div className="relative">
-                    <MentorAvatar
-                      src={mentor.image}
-                      alt={mentor.name}
-                      fallback={mentor.name.charAt(0)}
-                      className="size-36 border-4 border-white bg-white shadow-xl"
-                      fallbackClassName="text-4xl"
-                      priority
-                    />
-                    {mentorProfile.isVerified ? (
-                      <div className="absolute bottom-2 right-2 rounded-full border border-slate-100 bg-white p-1.5 shadow-md">
-                        <ShieldCheck className="size-6 text-sky-600" />
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-6 space-y-3">
-                    <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-                      {mentorProfile.tier ? (
-                        <Badge className="bg-slate-950 text-white">{mentorProfile.tier}</Badge>
-                      ) : null}
-                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
-                        {getYearOfStudyLabel(mentorProfile.yearOfStudy)}
-                      </Badge>
-                    </div>
-
-                    <div>
-                      <h1 className="text-3xl font-bold text-slate-900">{mentor.name}</h1>
-                      <p className="mt-1 text-lg text-slate-600">{mentorProfile.headline}</p>
-                    </div>
-
-                    <div className="flex items-center justify-center gap-2 text-slate-500 lg:justify-start">
-                      <Star className="size-5 text-amber-500 fill-amber-500" />
-                      <span className="font-bold text-slate-900">{mentorProfile.avgRating.toFixed(1)}</span>
-                      <span>({mentorProfile.totalReviews} reviews)</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-8 w-full space-y-4">
-                    <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Pricing
-                      </p>
-                      <p className="mt-2 text-2xl font-bold text-slate-900">
-                        {formatCurrency(mentorProfile.priceMin)}
-                        <span className="ml-2 text-sm font-normal text-slate-500">/ 30 min</span>
-                      </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {mentorProfile.priceMax
-                          ? `${formatCurrency(mentorProfile.priceMax)} for the longer session option`
-                          : "A free intro call is available before paid sessions."}
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 rounded-[1.5rem] border border-slate-200 bg-white p-5">
-                      <div className="flex items-center gap-3 text-slate-600">
-                        <GraduationCap className="size-5 text-slate-400" />
-                        <span>
-                          {mentorProfile.college}
-                          {mentorProfile.degree ? ` • ${mentorProfile.degree}` : ""}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-slate-600">
-                        <Briefcase className="size-5 text-slate-400" />
-                        <span>{mentorProfile.totalSessions} sessions completed</span>
-                      </div>
-                    </div>
-
-                    <Link
-                      href={signInHref}
-                      className={cn(buttonVariants({ size: "lg" }), "w-full rounded-2xl")}
-                    >
-                      Sign in to book
-                    </Link>
-                  </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className="rounded-full bg-emerald-300 px-3 py-1 text-[#0f1b2d] hover:bg-emerald-300">
+                    <ShieldCheck className="size-3.5" />
+                    Verified mentor
+                  </Badge>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-sm font-medium text-emerald-100">
+                    <span className="size-2 rounded-full bg-emerald-300" />
+                    Available this week
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
 
-          <div className="space-y-6">
-            <Card className="rounded-[2rem] border-slate-200 bg-white">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-slate-900">About</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="whitespace-pre-wrap text-sm leading-7 text-slate-600 sm:text-base">
-                  {mentorProfile.bio ?? "This mentor has not added a full bio yet."}
+                <h1 className="mt-5 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                  {mentor.name}
+                </h1>
+                <p className="mt-3 text-base font-medium text-slate-200">
+                  {collegeLine || "GuideMe mentor"} {degreeLine !== "Not set" ? `· ${degreeLine}` : ""}
                 </p>
-                {mentorProfile.branch ? (
-                  <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                    Current focus: <span className="font-medium text-slate-900">{mentorProfile.branch}</span>
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
+                <p className="mt-4 max-w-2xl text-xl leading-8 text-amber-100">
+                  {mentorProfile.headline ?? "I will help you turn exam confusion into a calmer next step."}
+                </p>
 
-            <Card className="rounded-[2rem] border-slate-200 bg-white">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-slate-900">Expertise</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {expertiseLabels.length > 0 ? (
-                  <div className="flex flex-wrap gap-3">
-                    {expertiseLabels.map((label) => (
-                      <Badge
-                        key={label}
-                        className="rounded-xl bg-slate-100 px-4 py-2 text-slate-700 hover:bg-slate-200"
-                      >
-                        {label}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm leading-6 text-slate-600">
-                    Expertise areas will appear here as the mentor completes their public profile.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-[2rem] border-slate-200 bg-white">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-slate-900">Exams cleared</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {examItems.length > 0 ? (
-                  examItems.map((exam) => (
-                    <div
-                      key={exam.label}
-                      className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {mentorProfile.linkedinUrl ? (
+                    <a
+                      href={mentorProfile.linkedinUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-1.5 text-sm font-semibold text-sky-100 transition hover:bg-sky-300/20"
                     >
-                      <span className="font-semibold text-slate-900">{exam.label}</span>
-                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
-                        {exam.year ? `Cleared in ${exam.year}` : "Verified on profile"}
-                      </Badge>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm leading-6 text-slate-600">
-                    Exam credentials will show here once the mentor adds them to the profile.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                      <BadgeCheck className="size-4" />
+                      LinkedIn Verified
+                    </a>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-1.5 text-sm font-semibold text-sky-100">
+                      <BadgeCheck className="size-4" />
+                      LinkedIn Verified
+                    </span>
+                  )}
+                  {examItems[0] ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1.5 text-sm font-semibold text-emerald-100">
+                      <Check className="size-4" />
+                      {examItems[0].label}{examItems[0].year ? ` ${examItems[0].year}` : ""}
+                    </span>
+                  ) : null}
+                  {mentor.emailVerified ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/30 bg-violet-300/10 px-3 py-1.5 text-sm font-semibold text-violet-100">
+                      <BadgeCheck className="size-4" />
+                      College Email
+                    </span>
+                  ) : null}
+                </div>
 
-            <Card className="rounded-[2rem] border-slate-200 bg-white">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-slate-900">Recent public reviews</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {mentor.reviewsReceived.length > 0 ? (
-                  mentor.reviewsReceived.map((review) => (
-                    <div key={review.id} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-semibold text-slate-900">{review.student.name}</p>
-                        <div className="flex items-center gap-1 text-amber-500">
-                          <Star className="size-4 fill-current" />
-                          <span className="font-medium text-slate-900">{review.rating.toFixed(1)}</span>
-                        </div>
-                      </div>
-                      <p className="mt-3 text-sm leading-6 text-slate-600">
-                        {review.reviewText?.trim() || "This student left a public rating without written feedback."}
-                      </p>
-                      <p className="mt-3 text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
-                        {formatReviewDate(review.createdAt)}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm leading-6 text-slate-600">
-                    Public reviews will appear automatically after completed sessions are rated.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-200">
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-amber-200">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Star
+                        key={index}
+                        className="size-4 fill-amber-300 text-amber-300"
+                      />
+                    ))}
+                    {ratingText}
+                  </span>
+                  <span>{mentorProfile.totalSessions} sessions</span>
+                  <span>{rebookPercent} would rebook</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 sm:p-8 lg:col-start-1">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-200">
+              My story
+            </p>
+            <div className="mt-4 max-w-3xl space-y-4 text-base leading-8 text-slate-200 sm:text-lg">
+              <p className="whitespace-pre-wrap">{mentorProfile.bio ?? fallbackBio}</p>
+            </div>
+
+            <div className="mt-8">
+              <h2 className="text-xl font-bold text-white">I can help you with</h2>
+              {expertiseItems.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {expertiseItems.map((topic) => (
+                    <span
+                      key={topic.label}
+                      className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-slate-100"
+                    >
+                      {topic.label} {topic.emoji}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  This mentor is still polishing their topic list, but you can ask about exam planning,
+                  college choices, and what their own path felt like.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 sm:p-8 lg:col-start-1">
+            <div className="flex items-center gap-3">
+              <GraduationCap className="size-6 text-amber-200" />
+              <h2 className="text-2xl font-bold text-white">Exams cleared</h2>
+            </div>
+            {examItems.length > 0 ? (
+              <div className="mt-5 flex flex-wrap gap-3">
+                {examItems.map((exam) => (
+                  <span
+                    key={exam.label}
+                    className="rounded-full border border-amber-200/25 bg-amber-200/10 px-4 py-2 text-sm font-semibold text-amber-50"
+                  >
+                    {exam.label}{exam.year ? ` · ${exam.year}` : ""} ✓
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 text-sm leading-6 text-slate-300">
+                Exam badges will show here as soon as this mentor adds verified credentials.
+              </p>
+            )}
+          </section>
+
+        <aside className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1 lg:h-fit">
+          <PublicMentorBookingCard
+            mentorId={mentor.id}
+            username={mentorProfile.username}
+            mentorName={mentor.name}
+            priceMin={mentorProfile.priceMin}
+            totalSessions={mentorProfile.totalSessions}
+          />
+
+          <div className="mt-4 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5 text-sm text-slate-200">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Check className="size-4 text-emerald-200" />
+                Verified mentor
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="size-4 text-emerald-200" />
+                {mentorProfile.totalSessions} sessions completed
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="size-4 text-emerald-200" />
+                Responds within 2 hours
+              </div>
+            </div>
           </div>
-        </div>
+        </aside>
+
+          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 sm:p-8 lg:col-start-1">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                  Student reviews
+                </p>
+                <h2 className="mt-2 text-2xl font-bold text-white">What students say after the call</h2>
+              </div>
+              <p className="text-sm text-slate-300">{mentorProfile.totalReviews} public reviews</p>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {mentor.reviewsReceived.length > 0 ? (
+                mentor.reviewsReceived.map((review) => (
+                  <article
+                    key={review.id}
+                    className="rounded-[1.5rem] border border-white/10 bg-[#132239] p-5"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-white">{getFirstName(review.student.name)}</p>
+                        <p className="mt-1 text-sm text-slate-400">{getReviewMeta(review)}</p>
+                      </div>
+                      <div className="flex items-center gap-1 text-amber-200">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <Star
+                            key={index}
+                            className={index < review.rating ? "size-4 fill-amber-300 text-amber-300" : "size-4 text-slate-600"}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="mt-4 text-sm leading-7 text-slate-200">
+                      {review.reviewText?.trim() ||
+                        "The session helped me leave with a clearer plan and a little less noise in my head."}
+                    </p>
+                    {review.wouldRebook ? (
+                      <p className="mt-4 text-sm font-semibold text-emerald-200">Would rebook ✓</p>
+                    ) : null}
+                  </article>
+                ))
+              ) : (
+                <div className="rounded-[1.5rem] border border-white/10 bg-[#132239] p-5 text-sm leading-6 text-slate-300">
+                  Reviews will appear here once students complete and rate their sessions.
+                </div>
+              )}
+            </div>
+          </section>
       </div>
-    </div>
+    </main>
   );
 }

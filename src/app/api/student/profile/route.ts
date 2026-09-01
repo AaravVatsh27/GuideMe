@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-import { withApiErrorHandling } from "@/lib/api-helpers";
-import { db } from "@/server/db";
-import { getRedis } from "@/server/redis";
-import { invalidateMatchingCacheForStudent } from "@/server/matching";
+import { auth } from "@/Backend/auth";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { db } from "@/Backend/server/db";
+import { getRedis } from "@/Backend/server/redis";
+import { invalidateMatchingCacheForStudent } from "@/Backend/server/matching";
 
 const studentSettingsSchema = z.object({
   notificationsEnabled: z.boolean().optional(),

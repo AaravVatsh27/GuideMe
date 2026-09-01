@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth, updateSession } from "@/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/lib/api-helpers";
-import { authLimiter } from "@/lib/ratelimit";
-import { AUTH_DEFAULT_REDIRECT, getOnboardingPath } from "@/server/auth-flow";
-import { db } from "@/server/db";
+import { auth, updateSession } from "@/Backend/auth";
+import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { authLimiter } from "@/Backend/lib/ratelimit";
+import { AUTH_DEFAULT_REDIRECT, getOnboardingPath } from "@/Backend/server/auth-flow";
+import { db } from "@/Backend/server/db";
 
 const completeSignupSchema = z.object({
   role: z.enum(["STUDENT", "MENTOR"]),

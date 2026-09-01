@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getPublicPlatformSnapshot } from "@/server/public-data";
+import { getPublicPlatformSnapshot } from "@/Backend/server/public-data";
 
 export const dynamic = "force-dynamic";
 

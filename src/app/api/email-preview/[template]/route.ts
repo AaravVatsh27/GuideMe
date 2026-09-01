@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { withApiErrorHandling } from "@/lib/api-helpers";
+import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { emailPreviewRegistry, emailPreviewTemplates, renderEmailTemplate } from "@emails";
 
 type RouteParams = { params: Promise<{ template: string }> };
