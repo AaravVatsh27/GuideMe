@@ -3,13 +3,17 @@ import { z } from "zod";
 
 import {
   BOARD_VALUES,
+  COACHING_MODE_VALUES,
   CONFUSION_TYPE_VALUES,
+  DECISION_STAGE_VALUES,
   getAllowedStreamValues,
   getConfusionOptions,
   INDIAN_STATE_VALUES,
   isUGClass,
   LANGUAGE_VALUES,
+  MENTORSHIP_NEED_VALUES,
   requiresBoard,
+  SCHOOLING_MODE_VALUES,
   STREAM_VALUES,
   STUDENT_CLASS_VALUES,
 } from "@/Backend/server/student-onboarding";
@@ -31,6 +35,37 @@ const targetExamSchema = z.enum([
   "OTHER",
   "UNDECIDED",
 ]);
+const schoolingModeSchema = z.enum([
+  "REGULAR_SCHOOL",
+  "REGULAR_SCHOOL_WITH_COACHING",
+  "DUMMY_SCHOOL_WITH_COACHING",
+  "ONLINE_SCHOOL_WITH_COACHING",
+  "SELF_STUDY",
+  "OTHER",
+]);
+const coachingModeSchema = z.enum(["NONE", "ONLINE", "OFFLINE", "ONLINE_AND_OFFLINE"]);
+const decisionStageSchema = z.enum([
+  "EXPLORING",
+  "SHORTLISTING",
+  "COMPARING",
+  "DECIDING_SOON",
+  "EXECUTION",
+]);
+const mentorshipNeedSchema = z.enum([
+  "STREAM_SELECTION",
+  "SUBJECT_SELECTION",
+  "EXAM_PREPARATION",
+  "STUDY_STRATEGY",
+  "SCHOOL_COACHING_BALANCE",
+  "COLLEGE_SELECTION",
+  "BRANCH_SELECTION",
+  "COLLEGE_COMPARISON",
+  "CAREER_EXPLORATION",
+  "COLLEGE_LIFE",
+  "HIGHER_STUDIES",
+  "TIME_MANAGEMENT",
+  "OTHER",
+]);
 const confusionTypeSchema = z.enum(CONFUSION_TYPE_VALUES);
 const parentalPressureSchema = z.enum(["LOW", "MEDIUM", "HIGH"]);
 const languageSchema = z.enum(LANGUAGE_VALUES);
@@ -43,6 +78,9 @@ const citySchema = z
   .transform(sanitizeText);
 const optionalTextSchema = z
   .union([z.string().trim().max(80), z.literal(""), z.null()])
+  .transform((value) => value || undefined);
+const currentConfusionSchema = z
+  .union([z.string().trim().min(10).max(500), z.literal(""), z.null()])
   .transform((value) => value || undefined);
 const confusionTypesSchema = z
   .array(confusionTypeSchema)
@@ -167,7 +205,13 @@ export const studentProfileUpdateSchema = z
     class: classSchema.optional(),
     board: boardSchema.optional(),
     stream: streamSchema.optional(),
+    schoolingMode: schoolingModeSchema.optional(),
+    coachingMode: coachingModeSchema.optional(),
     targetExam: targetExamSchema.optional(),
+    targetExams: z.array(targetExamSchema).max(5).optional(),
+    mentorshipNeeds: z.array(mentorshipNeedSchema).max(5).optional(),
+    decisionStage: decisionStageSchema.optional(),
+    currentConfusion: currentConfusionSchema.optional(),
     confusionType: confusionTypeSchema.optional(),
     confusionTypes: z.array(confusionTypeSchema).max(3).optional(),
     city: optionalTextSchema.optional(),
