@@ -17,9 +17,12 @@ import {
 import {
   studentBoardStepSchema,
   studentClassStepSchema,
-  studentConfusionsStepSchema,
+  studentCurrentConfusionStepSchema,
+  studentDecisionStageStepSchema,
+  studentLocationStepSchema,
+  studentMentorshipNeedsStepSchema,
   studentOnboardingSchema,
-  studentStreamStepSchema,
+  studentTargetExamsStepSchema,
 } from "@/Backend/validations/student";
 import {
   type CoachingMode,
@@ -34,7 +37,7 @@ const STUDENT_DASHBOARD_PATH = "/dashboard/student";
 const STUDENT_DRAFT_STREAM = "UNDECIDED";
 
 const patchRequestSchema = z.object({
-  step: z.number().int().min(1).max(4),
+  step: z.number().int().min(1).max(7),
   data: z.object({}).passthrough(),
 });
 
@@ -67,9 +70,15 @@ function getValidatedStepData(step: number, data: Record<string, unknown>) {
     case 2:
       return studentBoardStepSchema.safeParse(data);
     case 3:
-      return studentStreamStepSchema.safeParse(data);
+      return studentTargetExamsStepSchema.safeParse(data);
     case 4:
-      return studentConfusionsStepSchema.safeParse(data);
+      return studentMentorshipNeedsStepSchema.safeParse(data);
+    case 5:
+      return studentDecisionStageStepSchema.safeParse(data);
+    case 6:
+      return studentCurrentConfusionStepSchema.safeParse(data);
+    case 7:
+      return studentLocationStepSchema.safeParse(data);
     default:
       return z.never().safeParse(data);
   }
@@ -419,7 +428,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
       },
       data: {
         onboardingComplete: true,
-        onboardingStep: 5,
+        onboardingStep: 7,
       },
     });
 
@@ -437,7 +446,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
 
   return NextResponse.json({
     onboardingComplete: true,
-    savedStep: 5,
+    savedStep: 7,
     redirectTo: STUDENT_DASHBOARD_PATH,
     profile: result,
   });
