@@ -596,7 +596,14 @@ export function StudentOnboardingWizard({
   }
 
   async function handleComplete() {
-    if (!isStepValid(7, draft) || !draft.class || !draft.stream || !draft.state || !draft.languagePreference) {
+    if (
+      !isStepValid(7, draft) ||
+      !draft.class ||
+      !draft.state ||
+      !draft.city.trim() ||
+      !draft.languagePreference
+    ) {
+      toast.error("Please complete all required fields on this step.");
       return;
     }
 
@@ -612,7 +619,7 @@ export function StudentOnboardingWizard({
         body: JSON.stringify({
           class: draft.class,
           board: requiresBoard(draft.class) ? draft.board : undefined,
-          stream: draft.stream,
+          stream: draft.stream ?? "UNDECIDED",
           schoolingMode: draft.schoolingMode,
           coachingMode: draft.coachingMode,
           targetExams: draft.targetExams,
@@ -629,28 +636,35 @@ export function StudentOnboardingWizard({
       const payload = (await response.json().catch(() => null)) as
         | {
             error?: string;
+            issues?: unknown;
             redirectTo?: string;
           }
         | null;
 
       if (!response.ok || !payload?.redirectTo) {
+        if (process.env.NODE_ENV !== "production" && payload?.issues) {
+          console.error("Onboarding POST failed:", payload.issues);
+        }
         throw new Error(payload?.error ?? "We could not save your onboarding details.");
       }
 
-      await update({
-        user: {
-          role: "STUDENT",
-          onboardingComplete: true,
-        },
-      });
-
-      setLastSavedStep(5);
+      setLastSavedStep(7);
       setSaveState("saved");
       window.localStorage.removeItem(STUDENT_ONBOARDING_STORAGE_KEY);
       setIsSuccess(true);
-      setTimeout(() => {
-        router.replace(payload.redirectTo as Route);
-      }, 1300);
+
+      try {
+        await update({
+          user: {
+            role: "STUDENT",
+            onboardingComplete: true,
+          },
+        });
+      } catch (sessionErr) {
+        console.warn("Session update warning during onboarding complete:", sessionErr);
+      }
+
+      router.replace(payload.redirectTo as Route);
     } catch (error) {
       setSaveState("error");
       toast.error(
@@ -1120,7 +1134,7 @@ export function StudentOnboardingWizard({
                                   state: event.target.value ? (event.target.value as IndianStateValue) : undefined,
                                 }))
                               }
-                              className="h-12 w-full rounded-[18px] border border-violet-100 bg-violet-50/30 px-4 text-sm text-slate-800 focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
+                              className="h-12 w-full rounded-[18px] border border-violet-200 bg-white px-4 text-sm text-slate-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10 dark:bg-white dark:text-slate-900"
                             >
                               <option value="">Select your state</option>
                               {INDIAN_STATE_VALUES.map((state) => (
@@ -1140,7 +1154,7 @@ export function StudentOnboardingWizard({
                                 }))
                               }
                               placeholder={draft.state ? `Search cities in ${draft.state}` : "Type your city"}
-                              className="h-12 rounded-[18px] border-violet-100 bg-violet-50/30 px-4 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10"
+                              className="h-12 rounded-[18px] border-violet-200 bg-white px-4 text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 dark:bg-white dark:text-slate-900"
                             />
                             {citySuggestions.length > 0 ? (
                               <div className="flex flex-wrap gap-2 pt-2">
@@ -1150,8 +1164,8 @@ export function StudentOnboardingWizard({
                                     type="button"
                                     onClick={() => updateDraft((current) => ({ ...current, city }))}
                                     className={cn(
-                                      "rounded-full border border-violet-100 bg-violet-50/30 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-violet-200",
-                                      city.toLowerCase() === normalizedCityValue ? "border-violet-500 bg-violet-600 text-white" : "",
+                                      "rounded-full border border-violet-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50",
+                                      city.toLowerCase() === normalizedCityValue ? "border-violet-500 bg-violet-600 text-white hover:bg-violet-600" : "",
                                     )}
                                   >
                                     {city}
@@ -1171,7 +1185,7 @@ export function StudentOnboardingWizard({
                                   languagePreference: event.target.value ? (event.target.value as LanguageValue) : undefined,
                                 }))
                               }
-                              className="h-12 w-full rounded-[18px] border border-violet-100 bg-violet-50/30 px-4 text-sm text-slate-800 focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
+                              className="h-12 w-full rounded-[18px] border border-violet-200 bg-white px-4 text-sm text-slate-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10 dark:bg-white dark:text-slate-900"
                             >
                               <option value="">Choose a language</option>
                               {LANGUAGE_VALUES.map((language) => (
