@@ -247,23 +247,45 @@ export default function StudentDashboardPage() {
 
   return (
     <div className="space-y-5">
-      <section className="grid gap-4 xl:grid-cols-[1.25fr_0.95fr]">
-        <Card className="overflow-hidden rounded-[1.75rem] border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.16),_transparent_22%),linear-gradient(135deg,_#ffffff_0%,_#f8fafc_55%,_#eef2ff_100%)]">
+      <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+        <Card className="overflow-hidden rounded-[1.9rem] border-violet-200 bg-[radial-gradient(circle_at_top_left,_rgba(124,58,237,0.18),_transparent_28%),radial-gradient(circle_at_right,_rgba(236,72,153,0.14),_transparent_35%),linear-gradient(135deg,_#ffffff_0%,_#faf5ff_38%,_#f5f3ff_100%)] shadow-[0_26px_70px_-40px_rgba(124,58,237,0.5)]">
           <CardContent className="p-6 sm:p-8">
-            <Badge variant="outline" className="border-slate-300 bg-white/80 text-slate-700">
-              Student overview
-            </Badge>
+            <div className="flex items-center justify-between gap-3">
+              <Badge variant="outline" className="border-violet-200 bg-white/80 text-violet-700">
+                Your guidance workspace
+              </Badge>
+              <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Saved automatically
+              </div>
+            </div>
+
             <div className="mt-5 max-w-2xl space-y-4">
               <div>
-                <h2 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">{greeting}</h2>
+                <h2 className="text-3xl font-semibold tracking-[-0.06em] text-slate-950 sm:text-4xl">{greeting}</h2>
                 <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
-                  Track the next session, review your recent moves, and move the strongest mentor matches straight into discovery.
+                  We&apos;ve kept your next steps clear, your mentor shortlist close, and the most important guidance moments easy to act on.
                 </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "Exam strategy",
+                  "Branch selection",
+                  "Study planning",
+                ].map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-violet-200 bg-white/60 px-3 py-1.5 text-sm font-medium text-violet-700"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
 
               <div className="flex flex-wrap gap-3">
                 <Link href="/dashboard/student/find-mentor" className={buttonVariants({ size: "lg" })}>
-                  Find mentor
+                  Find a mentor
                   <ArrowRight className="size-4" />
                 </Link>
                 <Link
@@ -278,11 +300,11 @@ export default function StudentDashboardPage() {
         </Card>
 
         {data.upcomingSession ? (
-          <Card className="rounded-[1.75rem] border-emerald-200 bg-emerald-50/80">
+          <Card className="rounded-[1.9rem] border-violet-200 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-500 text-white shadow-[0_28px_70px_-36px_rgba(168,85,247,0.8)]">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
-                <CalendarClock className="size-5 text-emerald-700" />
-                Upcoming in the next 24 hours
+              <CardTitle className="flex items-center gap-2 text-lg text-white">
+                <CalendarClock className="size-5 text-violet-100" />
+                Next session
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -291,11 +313,11 @@ export default function StudentDashboardPage() {
                   src={data.upcomingSession.mentor.image}
                   alt={data.upcomingSession.mentor.name}
                   fallback={getInitials(data.upcomingSession.mentor.name)}
-                  className="size-12"
+                  className="size-12 ring-2 ring-white/30"
                 />
                 <div>
-                  <p className="font-semibold text-slate-950">{data.upcomingSession.mentor.name}</p>
-                  <p className="text-sm text-slate-600">
+                  <p className="font-semibold text-white">{data.upcomingSession.mentor.name}</p>
+                  <p className="text-sm text-violet-100">
                     {data.upcomingSession.mentor.mentorProfile?.headline ??
                       data.upcomingSession.mentor.mentorProfile?.college ??
                       "Mentor session"}
@@ -303,17 +325,17 @@ export default function StudentDashboardPage() {
                 </div>
               </div>
 
-              <div className="grid gap-3 rounded-[1.5rem] border border-emerald-200/70 bg-white/80 p-4 sm:grid-cols-2">
+              <div className="grid gap-3 rounded-[1.5rem] border border-white/20 bg-white/10 p-4 backdrop-blur-sm sm:grid-cols-2">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Scheduled</p>
-                  <p className="mt-2 text-sm font-medium text-slate-900">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-100">Scheduled</p>
+                  <p className="mt-2 text-sm font-medium text-white">
                     {formatDateTime(data.upcomingSession.scheduledAt)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Countdown</p>
-                  <p className="mt-2 flex items-center gap-2 text-sm font-medium text-slate-900">
-                    <Clock3 className="size-4 text-emerald-700" />
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-100">Countdown</p>
+                  <p className="mt-2 flex items-center gap-2 text-sm font-medium text-white">
+                    <Clock3 className="size-4 text-violet-100" />
                     {countdown?.label ?? "Starting soon"}
                   </p>
                 </div>
@@ -338,22 +360,22 @@ export default function StudentDashboardPage() {
                   href={getMentorDiscoveryHref(data.upcomingSession.mentor.id)}
                   className={buttonVariants({ variant: "outline", size: "lg" })}
                 >
-                  Find similar mentors
+                  Similar mentors
                 </Link>
               </div>
             </CardContent>
           </Card>
         ) : (
-          <Card className="rounded-[1.75rem] border-slate-200 bg-white">
+          <Card className="rounded-[1.9rem] border-violet-200 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
-                <Compass className="size-5 text-sky-600" />
-                No session due in the next 24 hours
+                <Compass className="size-5 text-violet-600" />
+                No session in the next 24 hours
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm leading-6 text-slate-600">
-                Use your matching recommendations or saved mentors to line up the next high-signal conversation.
+                Use mentor matches or your saved list to plan the next conversation with maximum signal.
               </p>
               <Link href="/dashboard/student/find-mentor" className={buttonVariants({ variant: "outline" })}>
                 Explore mentor matches
@@ -368,38 +390,38 @@ export default function StudentDashboardPage() {
           {
             label: "Sessions completed",
             value: data.quickStats.sessionsCompleted.toLocaleString("en-IN"),
-            detail: "Completed calls that reached the finish line.",
+            detail: "Meaningful conversations that moved clarity forward.",
           },
           {
             label: "Money spent",
             value: formatCurrency(data.quickStats.moneySpent),
-            detail: "Total captured payments across your mentoring sessions.",
+            detail: "Total value invested in your guidance journey.",
           },
           {
             label: "Mentors tried",
             value: data.quickStats.mentorsTried.toLocaleString("en-IN"),
-            detail: "Distinct mentors you have already learned from.",
+            detail: "Distinct mentors who helped you sharpen your path.",
           },
         ].map((stat) => (
-          <Card key={stat.label} className="rounded-[1.5rem] border-slate-200 bg-white">
+          <Card key={stat.label} className="rounded-[1.5rem] border-violet-100 bg-white shadow-[0_18px_50px_-36px_rgba(124,58,237,0.3)]">
             <CardContent className="p-5">
               <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{stat.value}</p>
+              <p className="mt-3 text-3xl font-semibold tracking-[-0.06em] text-slate-950">{stat.value}</p>
               <p className="mt-3 text-sm leading-6 text-slate-600">{stat.detail}</p>
             </CardContent>
           </Card>
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
-        <Card className="rounded-[1.75rem] border-slate-200 bg-white">
+      <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+        <Card className="rounded-[1.9rem] border-violet-100 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
           <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
-                <Heart className="size-5 text-rose-600" />
+                <Heart className="size-5 text-rose-500" />
                 Saved mentors
               </CardTitle>
-              <p className="mt-1 text-sm text-slate-500">Your shortlist stays visible here for faster rebooking.</p>
+              <p className="mt-1 text-sm text-slate-500">People you want to revisit when the next decision matters.</p>
             </div>
             <Link href="/dashboard/student/saved" className={buttonVariants({ variant: "outline", size: "sm" })}>
               View all
@@ -413,7 +435,7 @@ export default function StudentDashboardPage() {
                 Saved mentors are unavailable right now.
               </div>
             ) : savedMentors.length === 0 ? (
-              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-[1.25rem] border border-violet-100 bg-violet-50/40 p-5">
                 <p className="font-medium text-slate-900">No saved mentors yet.</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   Build a shortlist while browsing mentor matches so the next booking starts with real options.
@@ -424,10 +446,7 @@ export default function StudentDashboardPage() {
               </div>
             ) : (
               savedMentors.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4"
-                >
+                <div key={item.id} className="rounded-[1.25rem] border border-violet-100 bg-violet-50/30 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <MentorAvatar
@@ -444,20 +463,20 @@ export default function StudentDashboardPage() {
                       </div>
                     </div>
                     {item.mentor.mentorProfile?.tier ? (
-                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700">
                         {item.mentor.mentorProfile.tier}
                       </Badge>
                     ) : null}
                   </div>
 
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="rounded-xl border border-violet-100 bg-white p-3">
                       <p className="text-slate-500">Rating</p>
                       <p className="mt-1 font-semibold text-slate-950">
                         {item.mentor.mentorProfile?.avgRating?.toFixed(1) ?? "0.0"} / 5
                       </p>
                     </div>
-                    <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="rounded-xl border border-violet-100 bg-white p-3">
                       <p className="text-slate-500">Starting price</p>
                       <p className="mt-1 font-semibold text-slate-950">
                         {formatCurrency(item.mentor.mentorProfile?.priceMin)}
@@ -482,16 +501,14 @@ export default function StudentDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.75rem] border-slate-200 bg-white">
+        <Card className="rounded-[1.9rem] border-violet-100 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
           <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
-                <RotateCcw className="size-5 text-sky-700" />
-                Past sessions to rebook
+                <RotateCcw className="size-5 text-violet-600" />
+                Past sessions
               </CardTitle>
-              <p className="mt-1 text-sm text-slate-500">
-                Revisit AI summaries from finished sessions and go straight back to the same mentor.
-              </p>
+              <p className="mt-1 text-sm text-slate-500">Helpful context you can revisit before the next decision.</p>
             </div>
             <Link href="/dashboard/student/sessions" className={buttonVariants({ variant: "outline", size: "sm" })}>
               Open history
@@ -505,15 +522,12 @@ export default function StudentDashboardPage() {
                 Past sessions are unavailable right now.
               </div>
             ) : pastSessions.length === 0 ? (
-              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+              <div className="rounded-[1.25rem] border border-violet-100 bg-violet-50/30 p-5 text-sm leading-6 text-slate-600">
                 No completed sessions yet. Once a session finishes, its summary and rebook option will appear here.
               </div>
             ) : (
               pastSessions.map((session) => (
-                <div
-                  key={session.id}
-                  className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4"
-                >
+                <div key={session.id} className="rounded-[1.25rem] border border-violet-100 bg-violet-50/30 p-4">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
                       <MentorAvatar
@@ -531,18 +545,18 @@ export default function StudentDashboardPage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700">
                         {session.type}
                       </Badge>
-                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700">
                         <Star className="mr-1 size-3.5 text-amber-500" />
                         {session.review?.rating ? `${session.review.rating} / 5` : "No rating"}
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-[1rem] border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">AI summary</p>
+                  <div className="mt-4 rounded-[1rem] border border-violet-100 bg-white p-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-600">AI summary</p>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {session.aiSummary?.slice(0, 180) ?? "Summary is still being generated for this session."}
                     </p>
@@ -564,19 +578,16 @@ export default function StudentDashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="rounded-[1.75rem] border-slate-200 bg-white">
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="rounded-[1.9rem] border-violet-100 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
           <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
             <div>
               <CardTitle className="text-lg text-slate-950">Recommended mentors</CardTitle>
               <p className="mt-1 text-sm text-slate-500">
-                Ranked from your current onboarding and recent matching cache.
+                Ranked for your current path and recent guidance needs.
               </p>
             </div>
-            <Link
-              href="/dashboard/student/find-mentor"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
+            <Link href="/dashboard/student/find-mentor" className={buttonVariants({ variant: "outline", size: "sm" })}>
               Explore all
             </Link>
           </CardHeader>
@@ -592,7 +603,7 @@ export default function StudentDashboardPage() {
                 Mentor matching is unavailable right now.
               </div>
             ) : mentors.length === 0 ? (
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-[1.5rem] border border-violet-100 bg-violet-50/30 p-5">
                 <p className="font-medium text-slate-900">No strong mentor matches yet.</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   Refresh your onboarding preferences from profile to improve the recommendations.
@@ -601,10 +612,7 @@ export default function StudentDashboardPage() {
             ) : (
               <div className="flex gap-4 overflow-x-auto pb-2">
                 {mentors.map((entry) => (
-                  <article
-                    key={entry.mentor.id}
-                    className="min-w-[280px] rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-4"
-                  >
+                  <article key={entry.mentor.id} className="min-w-[280px] rounded-[1.5rem] border border-violet-100 bg-violet-50/30 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <MentorAvatar
@@ -620,13 +628,13 @@ export default function StudentDashboardPage() {
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700">
                         {entry.matchScore}/100
                       </Badge>
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-2">
-                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700">
                         {entry.mentor.tier}
                       </Badge>
                       {entry.mentor.availableThisWeek ? (
@@ -635,11 +643,11 @@ export default function StudentDashboardPage() {
                     </div>
 
                     <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                      <div className="rounded-xl border border-slate-200 bg-white p-3">
+                      <div className="rounded-xl border border-violet-100 bg-white p-3">
                         <p className="text-slate-500">Starting price</p>
                         <p className="mt-1 font-semibold text-slate-950">{formatCurrency(entry.mentor.priceMin)}</p>
                       </div>
-                      <div className="rounded-xl border border-slate-200 bg-white p-3">
+                      <div className="rounded-xl border border-violet-100 bg-white p-3">
                         <p className="text-slate-500">Rating</p>
                         <p className="mt-1 font-semibold text-slate-950">
                           {entry.mentor.avgRating.toFixed(1)} / 5
@@ -650,7 +658,7 @@ export default function StudentDashboardPage() {
                     <div className="mt-4 space-y-2">
                       {entry.matchReasons.slice(0, 3).map((reason) => (
                         <div key={reason} className="flex items-start gap-2 text-sm text-slate-600">
-                          <Sparkles className="mt-0.5 size-3.5 shrink-0 text-teal-600" />
+                          <Sparkles className="mt-0.5 size-3.5 shrink-0 text-violet-600" />
                           <span>{reason}</span>
                         </div>
                       ))}
@@ -669,22 +677,19 @@ export default function StudentDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.75rem] border-slate-200 bg-white">
+        <Card className="rounded-[1.9rem] border-violet-100 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg text-slate-950">Recent activity</CardTitle>
-            <p className="text-sm text-slate-500">Latest five actions from your student account.</p>
+            <p className="text-sm text-slate-500">Latest actions from your student account.</p>
           </CardHeader>
           <CardContent className="space-y-3">
             {data.recentActivity.length === 0 ? (
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
+              <div className="rounded-[1.5rem] border border-violet-100 bg-violet-50/30 p-5 text-sm text-slate-600">
                 No recent activity yet.
               </div>
             ) : (
               data.recentActivity.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-start justify-between gap-3 rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4"
-                >
+                <div key={item.id} className="flex items-start justify-between gap-3 rounded-[1.25rem] border border-violet-100 bg-violet-50/30 p-4">
                   <div className="min-w-0">
                     <p className="font-medium text-slate-950">{formatActivityLabel(item.action)}</p>
                     <p className="mt-1 text-sm text-slate-500">{formatActivityLabel(item.entityType)}</p>
