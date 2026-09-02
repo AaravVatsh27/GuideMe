@@ -40,6 +40,38 @@ export const CONFUSION_TYPE_VALUES = [
   "POST_GRADUATION_PATH",
 ] as const;
 
+export const SCHOOLING_MODE_VALUES = [
+  "REGULAR_SCHOOL",
+  "REGULAR_SCHOOL_WITH_COACHING",
+  "DUMMY_SCHOOL_WITH_COACHING",
+  "ONLINE_SCHOOL_WITH_COACHING",
+  "SELF_STUDY",
+  "OTHER",
+] as const;
+export const COACHING_MODE_VALUES = ["NONE", "ONLINE", "OFFLINE", "ONLINE_AND_OFFLINE"] as const;
+export const DECISION_STAGE_VALUES = [
+  "EXPLORING",
+  "SHORTLISTING",
+  "COMPARING",
+  "DECIDING_SOON",
+  "EXECUTION",
+] as const;
+export const MENTORSHIP_NEED_VALUES = [
+  "STREAM_SELECTION",
+  "SUBJECT_SELECTION",
+  "EXAM_PREPARATION",
+  "STUDY_STRATEGY",
+  "SCHOOL_COACHING_BALANCE",
+  "COLLEGE_SELECTION",
+  "BRANCH_SELECTION",
+  "COLLEGE_COMPARISON",
+  "CAREER_EXPLORATION",
+  "COLLEGE_LIFE",
+  "HIGHER_STUDIES",
+  "TIME_MANAGEMENT",
+  "OTHER",
+] as const;
+
 export const LANGUAGE_VALUES = [
   "English",
   "Hindi",
@@ -95,6 +127,10 @@ export type StudentClassValue = (typeof STUDENT_CLASS_VALUES)[number];
 export type BoardValue = (typeof BOARD_VALUES)[number];
 export type StreamValue = (typeof STREAM_VALUES)[number];
 export type ConfusionTypeValue = (typeof CONFUSION_TYPE_VALUES)[number];
+export type SchoolingModeValue = (typeof SCHOOLING_MODE_VALUES)[number];
+export type CoachingModeValue = (typeof COACHING_MODE_VALUES)[number];
+export type DecisionStageValue = (typeof DECISION_STAGE_VALUES)[number];
+export type MentorshipNeedValue = (typeof MENTORSHIP_NEED_VALUES)[number];
 export type LanguageValue = (typeof LANGUAGE_VALUES)[number];
 export type IndianStateValue = (typeof INDIAN_STATE_VALUES)[number];
 
