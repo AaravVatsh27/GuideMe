@@ -9,11 +9,17 @@ import { ArrowRight, CalendarClock, Clock3, Compass, Heart, RotateCcw, Sparkles,
 
 import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
 import {
+  buildHeroSubtitle,
+  formatAcademicContext,
   formatActivityLabel,
   formatCurrency,
   formatDateTime,
+  formatDecisionStage,
+  formatMentorshipNeeds,
   formatShortDateTime,
+  formatTargetExamLabel,
   getInitials,
+  truncateSentence,
 } from "@/Frontend/views/dashboard/student/student-dashboard-utils";
 import { Badge } from "@/Frontend/components/ui/badge";
 import { buttonVariants } from "@/Frontend/components/ui/button";
@@ -113,6 +119,30 @@ type PastSessionItem = {
   review?: { rating: number } | null;
 };
 
+type StudentProfileSnapshot = {
+  class?: string | null;
+  board?: string | null;
+  stream?: string | null;
+  schoolingMode?: string | null;
+  coachingMode?: string | null;
+  targetExam?: string | null;
+  targetExams?: string[] | null;
+  mentorshipNeeds?: string[] | null;
+  decisionStage?: string | null;
+  currentConfusion?: string | null;
+  confusionType?: string | null;
+  confusionTypes?: string[] | null;
+  city?: string | null;
+  state?: string | null;
+  languagePreference?: string | null;
+};
+
+type StudentProfileResponse = {
+  user: { id: string; name: string; email: string; image?: string | null };
+  studentProfile: StudentProfileSnapshot | null;
+  settings: { notificationsEnabled: boolean; profileVisibility: string };
+};
+
 async function getDashboard() {
   const res = await fetch("/api/student/dashboard");
   if (!res.ok) throw new Error("Failed to load dashboard");
@@ -137,6 +167,12 @@ async function getPastSessions() {
   if (!res.ok) throw new Error("Failed to load past sessions");
   const json = (await res.json()) as { data: PastSessionItem[] };
   return json.data;
+}
+
+async function getStudentProfile() {
+  const res = await fetch("/api/student/profile");
+  if (!res.ok) return null;
+  return (await res.json()) as StudentProfileResponse;
 }
 
 function useCountdown(targetDate?: string | null) {
@@ -199,6 +235,11 @@ export default function StudentDashboardPage() {
     queryKey: queryKeys.student.dashboardPastSessions,
     queryFn: getPastSessions,
   });
+  const { data: profileData } = useQuery({
+    queryKey: queryKeys.student.profile,
+    queryFn: getStudentProfile,
+    retry: false,
+  });
 
   const countdown = useCountdown(data?.upcomingSession?.scheduledAt);
   const greetingPeriod = useMemo(() => {
@@ -217,22 +258,23 @@ export default function StudentDashboardPage() {
   const greeting = `${greetingPeriod}, ${data?.greetingName ?? "Student"}`;
   const mentors = (matchesData?.matches ?? []).slice(0, 3);
 
+  const profile = profileData?.studentProfile ?? null;
+  const academicContext = formatAcademicContext(profile);
+  const targetExamLabel = formatTargetExamLabel(profile);
+  const focusTags = formatMentorshipNeeds(profile?.mentorshipNeeds ?? null);
+  const decisionStageLabel = formatDecisionStage(profile?.decisionStage ?? null);
+  const heroSubtitle = buildHeroSubtitle(profile);
+
   if (isLoading) {
     return (
       <div className="space-y-5">
-        <div className="grid gap-4 xl:grid-cols-[1.25fr_0.95fr]">
-          <Skeleton className="h-56 rounded-[1.75rem]" />
-          <Skeleton className="h-56 rounded-[1.75rem]" />
+        <Skeleton className="h-56 rounded-[1.9rem]" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Skeleton className="h-32 rounded-[1.5rem]" />
+          <Skeleton className="h-32 rounded-[1.5rem]" />
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-32 rounded-[1.5rem]" />
-          ))}
-        </div>
-        <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-          <Skeleton className="h-96 rounded-[1.75rem]" />
-          <Skeleton className="h-96 rounded-[1.75rem]" />
-        </div>
+        <Skeleton className="h-48 rounded-[1.75rem]" />
+        <Skeleton className="h-80 rounded-[1.9rem]" />
       </div>
     );
   }
@@ -247,155 +289,88 @@ export default function StudentDashboardPage() {
 
   return (
     <div className="space-y-5">
-      <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
-        <Card className="overflow-hidden rounded-[1.9rem] border-violet-200 bg-[radial-gradient(circle_at_top_left,_rgba(124,58,237,0.18),_transparent_28%),radial-gradient(circle_at_right,_rgba(236,72,153,0.14),_transparent_35%),linear-gradient(135deg,_#ffffff_0%,_#faf5ff_38%,_#f5f3ff_100%)] shadow-[0_26px_70px_-40px_rgba(124,58,237,0.5)]">
-          <CardContent className="p-6 sm:p-8">
-            <div className="flex items-center justify-between gap-3">
-              <Badge variant="outline" className="border-violet-200 bg-white/80 text-violet-700">
-                Your guidance workspace
-              </Badge>
-              <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Saved automatically
-              </div>
-            </div>
-
-            <div className="mt-5 max-w-2xl space-y-4">
-              <div>
-                <h2 className="text-3xl font-semibold tracking-[-0.06em] text-slate-950 sm:text-4xl">{greeting}</h2>
-                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
-                  We&apos;ve kept your next steps clear, your mentor shortlist close, and the most important guidance moments easy to act on.
-                </p>
-              </div>
-
+      {/* Hero */}
+      <Card className="overflow-hidden rounded-[1.9rem] border-violet-200 bg-[radial-gradient(circle_at_top_left,_rgba(124,58,237,0.18),_transparent_28%),radial-gradient(circle_at_right,_rgba(236,72,153,0.14),_transparent_35%),linear-gradient(135deg,_#ffffff_0%,_#faf5ff_38%,_#f5f3ff_100%)] shadow-[0_26px_70px_-40px_rgba(124,58,237,0.5)]">
+        <CardContent className="p-6 sm:p-8">
+          <div className="max-w-2xl space-y-4">
+            {focusTags.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {[
-                  "Exam strategy",
-                  "Branch selection",
-                  "Study planning",
-                ].map((tag) => (
+                {focusTags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-violet-200 bg-white/60 px-3 py-1.5 text-sm font-medium text-violet-700"
+                    className="rounded-full border border-white/40 bg-white/20 px-3 py-1.5 text-sm font-medium text-violet-800"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
+            )}
 
-              <div className="flex flex-wrap gap-3">
-                <Link href="/dashboard/student/find-mentor" className={buttonVariants({ size: "lg" })}>
-                  Find a mentor
-                  <ArrowRight className="size-4" />
-                </Link>
-                <Link
-                  href="/dashboard/student/sessions"
-                  className={buttonVariants({ variant: "outline", size: "lg" })}
-                >
-                  Review sessions
-                </Link>
-              </div>
+            <div>
+              <h2 className="text-3xl font-semibold tracking-[-0.06em] text-slate-950 sm:text-4xl">{greeting}</h2>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+                {heroSubtitle}
+              </p>
             </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link href="/dashboard/student/find-mentor" className={buttonVariants({ size: "lg" })}>
+                Find a mentor
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                href="/dashboard/student/sessions"
+                className={buttonVariants({ variant: "outline", size: "lg" })}
+              >
+                Review sessions
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Current Focus — only shown when profile data exists */}
+      {profileData?.studentProfile && (
+        <Card className="rounded-[1.75rem] border-violet-200 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base text-slate-950">
+              <Sparkles className="size-4 text-violet-600" />
+              Your current focus
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              {academicContext && (
+                <p className="text-sm font-medium text-slate-600">{academicContext}</p>
+              )}
+              {targetExamLabel && (
+                <p className="mt-1 text-lg font-semibold text-slate-950">Preparing for {targetExamLabel}</p>
+              )}
+              {decisionStageLabel && (
+                <p className="mt-1 text-sm text-slate-500">{decisionStageLabel}</p>
+              )}
+            </div>
+            {profileData.studentProfile.currentConfusion && (
+              <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">
+                  What you&apos;re working through
+                </p>
+                <p className="mt-1.5 text-sm leading-6 text-slate-700">
+                  {truncateSentence(profileData.studentProfile.currentConfusion, 120)}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
+      )}
 
-        {data.upcomingSession ? (
-          <Card className="rounded-[1.9rem] border-violet-200 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-500 text-white shadow-[0_28px_70px_-36px_rgba(168,85,247,0.8)]">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg text-white">
-                <CalendarClock className="size-5 text-violet-100" />
-                Next session
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="flex items-center gap-3">
-                <MentorAvatar
-                  src={data.upcomingSession.mentor.image}
-                  alt={data.upcomingSession.mentor.name}
-                  fallback={getInitials(data.upcomingSession.mentor.name)}
-                  className="size-12 ring-2 ring-white/30"
-                />
-                <div>
-                  <p className="font-semibold text-white">{data.upcomingSession.mentor.name}</p>
-                  <p className="text-sm text-violet-100">
-                    {data.upcomingSession.mentor.mentorProfile?.headline ??
-                      data.upcomingSession.mentor.mentorProfile?.college ??
-                      "Mentor session"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 rounded-[1.5rem] border border-white/20 bg-white/10 p-4 backdrop-blur-sm sm:grid-cols-2">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-100">Scheduled</p>
-                  <p className="mt-2 text-sm font-medium text-white">
-                    {formatDateTime(data.upcomingSession.scheduledAt)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-100">Countdown</p>
-                  <p className="mt-2 flex items-center gap-2 text-sm font-medium text-white">
-                    <Clock3 className="size-4 text-violet-100" />
-                    {countdown?.label ?? "Starting soon"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                {data.upcomingSession.meetingLink ? (
-                  <a
-                    href={data.upcomingSession.meetingLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={buttonVariants({ size: "lg" })}
-                  >
-                    Join session
-                  </a>
-                ) : (
-                  <Link href="/dashboard/student/sessions" className={buttonVariants({ size: "lg" })}>
-                    Open sessions
-                  </Link>
-                )}
-                <Link
-                  href={getMentorDiscoveryHref(data.upcomingSession.mentor.id)}
-                  className={buttonVariants({ variant: "outline", size: "lg" })}
-                >
-                  Similar mentors
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="rounded-[1.9rem] border-violet-200 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
-                <Compass className="size-5 text-violet-600" />
-                No session in the next 24 hours
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm leading-6 text-slate-600">
-                Use mentor matches or your saved list to plan the next conversation with maximum signal.
-              </p>
-              <Link href="/dashboard/student/find-mentor" className={buttonVariants({ variant: "outline" })}>
-                Explore mentor matches
-              </Link>
-            </CardContent>
-          </Card>
-        )}
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-3">
+      {/* Quick stats */}
+      <section className="grid gap-4 sm:grid-cols-2">
         {[
           {
             label: "Sessions completed",
             value: data.quickStats.sessionsCompleted.toLocaleString("en-IN"),
             detail: "Meaningful conversations that moved clarity forward.",
-          },
-          {
-            label: "Money spent",
-            value: formatCurrency(data.quickStats.moneySpent),
-            detail: "Total value invested in your guidance journey.",
           },
           {
             label: "Mentors tried",
@@ -412,6 +387,92 @@ export default function StudentDashboardPage() {
           </Card>
         ))}
       </section>
+
+      {/* Upcoming session */}
+      {data.upcomingSession ? (
+        <Card className="rounded-[1.9rem] border-violet-200 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-500 text-white shadow-[0_28px_70px_-36px_rgba(168,85,247,0.8)]">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg text-white">
+              <CalendarClock className="size-5 text-violet-100" />
+              Next session
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="flex items-center gap-3">
+              <MentorAvatar
+                src={data.upcomingSession.mentor.image}
+                alt={data.upcomingSession.mentor.name}
+                fallback={getInitials(data.upcomingSession.mentor.name)}
+                className="size-12 ring-2 ring-white/30"
+              />
+              <div>
+                <p className="font-semibold text-white">{data.upcomingSession.mentor.name}</p>
+                <p className="text-sm text-violet-100">
+                  {data.upcomingSession.mentor.mentorProfile?.headline ??
+                    data.upcomingSession.mentor.mentorProfile?.college ??
+                    "Mentor session"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 rounded-[1.5rem] border border-white/20 bg-white/10 p-4 backdrop-blur-sm sm:grid-cols-2">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-100">Scheduled</p>
+                <p className="mt-2 text-sm font-medium text-white">
+                  {formatDateTime(data.upcomingSession.scheduledAt)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-100">Countdown</p>
+                <p className="mt-2 flex items-center gap-2 text-sm font-medium text-white">
+                  <Clock3 className="size-4 text-violet-100" />
+                  {countdown?.label ?? "Starting soon"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {data.upcomingSession.meetingLink ? (
+                <a
+                  href={data.upcomingSession.meetingLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={buttonVariants({ size: "lg" })}
+                >
+                  Join session
+                </a>
+              ) : (
+                <Link href="/dashboard/student/sessions" className={buttonVariants({ size: "lg" })}>
+                  Open sessions
+                </Link>
+              )}
+              <Link
+                href={getMentorDiscoveryHref(data.upcomingSession.mentor.id)}
+                className={buttonVariants({ variant: "outline", size: "lg" })}
+              >
+                View mentor
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="rounded-[1.9rem] border-violet-200 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
+              <Compass className="size-5 text-violet-600" />
+              No session in the next 24 hours
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm leading-6 text-slate-600">
+              Use mentor matches or your saved list to plan the next conversation with maximum signal.
+            </p>
+            <Link href="/dashboard/student/find-mentor" className={buttonVariants({ variant: "outline" })}>
+              Explore mentor matches
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <Card className="rounded-[1.9rem] border-violet-100 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
@@ -492,7 +553,7 @@ export default function StudentDashboardPage() {
                       href={getMentorDiscoveryHref(item.mentorId)}
                       className={buttonVariants({ variant: "secondary", size: "sm" })}
                     >
-                      Quick book
+                      View mentor
                     </Link>
                   </div>
                 </div>
@@ -613,62 +674,43 @@ export default function StudentDashboardPage() {
               <div className="flex gap-4 overflow-x-auto pb-2">
                 {mentors.map((entry) => (
                   <article key={entry.mentor.id} className="min-w-[280px] rounded-[1.5rem] border border-violet-100 bg-violet-50/30 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <MentorAvatar
-                          src={entry.mentor.image}
-                          alt={entry.mentor.name}
-                          fallback={getInitials(entry.mentor.name)}
-                          className="size-11"
-                        />
-                        <div>
-                          <p className="font-semibold text-slate-950">{entry.mentor.name}</p>
-                          <p className="text-sm text-slate-600">
-                            {entry.mentor.headline ?? entry.mentor.college ?? "Mentor"}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700">
-                        {entry.matchScore}/100
-                      </Badge>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700">
-                        {entry.mentor.tier}
-                      </Badge>
-                      {entry.mentor.availableThisWeek ? (
-                        <Badge className="bg-emerald-600 text-white">Available this week</Badge>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                      <div className="rounded-xl border border-violet-100 bg-white p-3">
-                        <p className="text-slate-500">Starting price</p>
-                        <p className="mt-1 font-semibold text-slate-950">{formatCurrency(entry.mentor.priceMin)}</p>
-                      </div>
-                      <div className="rounded-xl border border-violet-100 bg-white p-3">
-                        <p className="text-slate-500">Rating</p>
-                        <p className="mt-1 font-semibold text-slate-950">
-                          {entry.mentor.avgRating.toFixed(1)} / 5
+                    <div className="flex items-start gap-3">
+                      <MentorAvatar
+                        src={entry.mentor.image}
+                        alt={entry.mentor.name}
+                        fallback={getInitials(entry.mentor.name)}
+                        className="size-11"
+                      />
+                      <div>
+                        <p className="font-semibold text-slate-950">{entry.mentor.name}</p>
+                        <p className="text-sm text-slate-600">
+                          {entry.mentor.headline ?? entry.mentor.college ?? "Mentor"}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-4 space-y-2">
-                      {entry.matchReasons.slice(0, 3).map((reason) => (
-                        <div key={reason} className="flex items-start gap-2 text-sm text-slate-600">
-                          <Sparkles className="mt-0.5 size-3.5 shrink-0 text-violet-600" />
-                          <span>{reason}</span>
-                        </div>
-                      ))}
+                    {entry.mentor.availableThisWeek && (
+                      <p className="mt-2 text-xs font-medium text-emerald-600">● Available this week</p>
+                    )}
+
+                    <div className="mt-3 flex gap-3 text-sm text-slate-500">
+                      <span>From {formatCurrency(entry.mentor.priceMin)}</span>
+                      <span className="text-slate-300">·</span>
+                      <span>★ {entry.mentor.avgRating.toFixed(1)}</span>
                     </div>
+
+                    {entry.matchReasons.length > 0 && (
+                      <p className="mt-2 flex items-start gap-1.5 text-sm text-slate-600">
+                        <Sparkles className="mt-0.5 size-3.5 shrink-0 text-violet-500" />
+                        <span>{entry.matchReasons[0]}</span>
+                      </p>
+                    )}
 
                     <Link
                       href={getMentorDiscoveryHref(entry.mentor.id)}
-                      className={cn(buttonVariants({ variant: "outline" }), "mt-5 w-full")}
+                      className={cn(buttonVariants({ variant: "outline" }), "mt-4 w-full")}
                     >
-                      View in discovery
+                      View mentor
                     </Link>
                   </article>
                 ))}
