@@ -21,6 +21,7 @@ import { DashboardAccountPanel } from "@/Frontend/views/dashboard/dashboard-acco
 import { Avatar, AvatarFallback, AvatarImage } from "@/Frontend/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/Frontend/components/ui/dropdown-menu";
 import { getInitials } from "@/Frontend/views/dashboard/student/student-dashboard-utils";
+import { MentraLogo } from "@/components/brand/MentraLogo";
 import { cn } from "@/Backend/server/utils";
 
 const navItems = [
@@ -54,98 +55,103 @@ export function StudentShell({ children }: Props) {
     navItems[0];
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(124,58,237,0.14),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(236,72,153,0.1),_transparent_30%),linear-gradient(180deg,_#faf5ff_0%,_#f5f3ff_55%,_#ffffff_100%)]">
-      <div className="mx-auto flex max-w-7xl gap-5 px-4 py-4 sm:px-6 lg:px-8">
-        <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-72 shrink-0 flex-col rounded-[2rem] border border-violet-200/80 bg-white/80 p-5 shadow-[0_30px_100px_-40px_rgba(124,58,237,0.35)] backdrop-blur-xl lg:flex">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 via-fuchsia-500 to-pink-500 text-sm font-bold text-white shadow-sm">M</div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-violet-600">Mentra</p>
+    <div className="min-h-screen bg-slate-50/70">
+      <div className="mx-auto flex max-w-[1440px] gap-6 px-4 py-4 sm:px-6 lg:px-8">
+        {/* Sidebar */}
+        <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-[270px] shrink-0 flex-col rounded-2xl border border-violet-200/80 bg-white/90 p-4 shadow-[0_15px_50px_-25px_rgba(124,58,237,0.2)] backdrop-blur-xl lg:flex">
+          {/* Scrollable upper area for Brand, Account Card, Navigation */}
+          <div className="flex flex-1 flex-col overflow-y-auto space-y-4 pr-0.5">
+            {/* Brand */}
+            <div className="space-y-1.5 px-1 pt-1">
+              <div className="flex items-center gap-2">
+                <MentraLogo size="sm" showTagline={false} className="h-7 w-auto" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold tracking-tight text-slate-950">Student dashboard</h2>
+                <p className="text-xs text-slate-500 leading-relaxed">Guidance, decisions, and next steps.</p>
+              </div>
             </div>
-            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">Student dashboard</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Your guidance workspace for mentors, decisions, and next steps.
-            </p>
-          </div>
 
-          <div className="mt-6">
-            <DashboardAccountPanel
-              name={userName}
-              email={userEmail}
-              image={data?.user?.image}
-              initials={initials}
-              roleLabel="Student"
-              onboardingComplete={Boolean(data?.user?.onboardingComplete)}
-              profileHref="/dashboard/student/profile"
-              signOutRedirectTo="/auth/signin"
-            />
-          </div>
+            {/* Account Card */}
+            <div className="[&>div]:rounded-xl [&>div]:border-violet-100/80 [&>div]:bg-violet-50/40 [&>div]:p-3 [&>div]:shadow-none">
+              <DashboardAccountPanel
+                name={userName}
+                email={userEmail}
+                image={data?.user?.image}
+                initials={initials}
+                roleLabel="Student"
+                onboardingComplete={Boolean(data?.user?.onboardingComplete)}
+                profileHref="/dashboard/student/profile"
+                signOutRedirectTo="/auth/signin"
+              />
+            </div>
 
-          <nav className="mt-8 space-y-1.5">
-            {navItems.map((item) => {
-              const isActive =
-                pathname === item.href || (item.href !== "/dashboard/student" && pathname.startsWith(item.href));
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition",
-                    isActive
-                      ? "bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-[0_18px_40px_-25px_rgba(124,58,237,0.85)]"
-                      : "text-slate-600 hover:bg-violet-50 hover:text-violet-800",
-                  )}
-                >
-                  <span
+            {/* Navigation */}
+            <nav className="space-y-1 py-1">
+              {navItems.map((item) => {
+                const isActive =
+                  pathname === item.href || (item.href !== "/dashboard/student" && pathname.startsWith(item.href));
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
                     className={cn(
-                      "flex size-10 items-center justify-center rounded-xl border",
-                      isActive ? "border-white/10 bg-white/10" : "border-violet-100 bg-white",
+                      "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition",
+                      isActive
+                        ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-500/20"
+                        : "text-slate-600 hover:bg-violet-50 hover:text-violet-900",
                     )}
                   >
-                    <item.icon className="size-4" />
-                  </span>
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+                    <span
+                      className={cn(
+                        "flex size-8 items-center justify-center rounded-lg border",
+                        isActive ? "border-white/20 bg-white/20 text-white" : "border-violet-100 bg-white text-slate-500",
+                      )}
+                    >
+                      <item.icon className="size-4" />
+                    </span>
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
 
-          <div className="mt-auto rounded-[1.5rem] bg-gradient-to-br from-violet-700 via-fuchsia-600 to-pink-500 p-5 text-white shadow-[0_22px_56px_-30px_rgba(168,85,247,0.7)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-100">Keep momentum</p>
-            <p className="mt-3 text-sm leading-6 text-violet-50">
-              Use your saved mentors and session history to make the next booking faster and sharper.
+          {/* Bottom Keep Momentum Card (Never clipped) */}
+          <div className="mt-3 shrink-0 rounded-2xl bg-gradient-to-br from-violet-700 via-fuchsia-600 to-pink-500 p-4 text-white shadow-md">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-100">Keep momentum</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-violet-50">
+              Use saved mentors and session history to make your next move sharper.
             </p>
           </div>
         </aside>
 
+        {/* Main Content Container */}
         <div className="min-w-0 flex-1 pb-24 lg:pb-0">
-          <header className="sticky top-4 z-20 mb-5 flex items-center justify-between gap-4 rounded-[1.5rem] border border-violet-200/80 bg-white/80 px-4 py-4 shadow-[0_15px_50px_-28px_rgba(124,58,237,0.35)] backdrop-blur-xl">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-600">Mentra</p>
-              <div className="mt-1 flex flex-wrap items-center gap-3">
-                <h1 className="truncate text-lg font-semibold tracking-tight text-slate-950">{activeItem.label}</h1>
-                <span className="hidden text-sm text-slate-500 sm:inline">{pageDateFormatter.format(new Date())}</span>
-              </div>
+          <header className="sticky top-4 z-20 mb-5 flex items-center justify-between gap-4 rounded-2xl border border-violet-200/80 bg-white/90 px-5 py-3.5 shadow-sm backdrop-blur-xl">
+            <div className="min-w-0 flex items-center gap-3">
+              <h1 className="truncate text-base font-bold tracking-tight text-slate-950 sm:text-lg">{activeItem.label}</h1>
+              <span className="hidden text-xs text-slate-400 sm:inline">·</span>
+              <span className="hidden text-xs font-medium text-slate-500 sm:inline">{pageDateFormatter.format(new Date())}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="relative flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+                className="relative flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
                 aria-label="Notifications"
               >
                 <Bell className="size-4" />
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-1.5 py-1 pr-3 text-left transition hover:border-slate-300">
-                  <Avatar className="size-8">
+                  <Avatar className="size-7">
                     <AvatarImage src={data?.user?.image ?? ""} alt={userName} />
-                    <AvatarFallback>{initials}</AvatarFallback>
+                    <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="hidden sm:block">
-                    <p className="max-w-28 truncate text-sm font-medium text-slate-950">{userName}</p>
-                    <p className="text-xs text-slate-500">Student</p>
+                    <p className="max-w-28 truncate text-xs font-semibold text-slate-950">{userName}</p>
                   </div>
-                  <ChevronDown className="size-4 text-slate-500" />
+                  <ChevronDown className="size-3.5 text-slate-500" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52 min-w-52">
                   <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/dashboard/student/profile")}>
@@ -155,7 +161,7 @@ export function StudentShell({ children }: Props) {
                     <Settings className="mr-2 size-4" /> Settings
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="cursor-pointer"
+                    className="cursor-pointer text-red-600 focus:text-red-600"
                     onClick={() => signOut({ redirectTo: "/auth/signin" })}
                   >
                     <LogOut className="mr-2 size-4" /> Sign Out
@@ -168,6 +174,7 @@ export function StudentShell({ children }: Props) {
         </div>
       </div>
 
+      {/* Mobile Nav */}
       <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden">
         {navItems.map((item) => {
           const isActive =
@@ -177,8 +184,8 @@ export function StudentShell({ children }: Props) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
-                isActive ? "text-slate-950" : "text-slate-500",
+                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition",
+                isActive ? "text-violet-700 font-semibold" : "text-slate-500",
               )}
             >
               <item.icon className="size-4" />
