@@ -80,23 +80,35 @@ model VerificationToken {
 }
 
 model StudentProfile {
-  userId             String            @id @db.Uuid
+  userId             String           @id @db.Uuid
   class              Class
   board              Board?
   stream             Stream
+
   targetExam         TargetExam?
+  targetExams        TargetExam[]     @default([])
+
   confusionType      ConfusionType?
-  confusionTypes     ConfusionType[]   @default([])
+  confusionTypes     ConfusionType[]  @default([])
+
+  schoolingMode      SchoolingMode?
+  coachingMode       CoachingMode?
+  mentorshipNeeds    MentorshipNeed[] @default([])
+  decisionStage      DecisionStage?
+  currentConfusion   String?
+
   city               String?
   state              String?
   languagePreference String?
   parentalPressure   ParentalPressure?
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([class, board, stream])
   @@index([targetExam, confusionType])
   @@index([city, state])
   @@index([languagePreference])
+  @@index([schoolingMode, coachingMode])
+  @@index([decisionStage])
 }
 
 model MentorProfile {
@@ -525,6 +537,22 @@ enum Stream {
   UNDECIDED
 }
 
+enum SchoolingMode {
+  REGULAR_SCHOOL
+  REGULAR_SCHOOL_WITH_COACHING
+  DUMMY_SCHOOL_WITH_COACHING
+  ONLINE_SCHOOL_WITH_COACHING
+  SELF_STUDY
+  OTHER
+}
+
+enum CoachingMode {
+  NONE
+  ONLINE
+  OFFLINE
+  ONLINE_AND_OFFLINE
+}
+
 enum TargetExam {
   JEE
   NEET
@@ -538,6 +566,30 @@ enum TargetExam {
   NDA
   OTHER
   UNDECIDED
+}
+
+enum MentorshipNeed {
+  STREAM_SELECTION
+  SUBJECT_SELECTION
+  EXAM_PREPARATION
+  STUDY_STRATEGY
+  SCHOOL_COACHING_BALANCE
+  COLLEGE_SELECTION
+  BRANCH_SELECTION
+  COLLEGE_COMPARISON
+  CAREER_EXPLORATION
+  COLLEGE_LIFE
+  HIGHER_STUDIES
+  TIME_MANAGEMENT
+  OTHER
+}
+
+enum DecisionStage {
+  EXPLORING
+  SHORTLISTING
+  COMPARING
+  DECIDING_SOON
+  EXECUTION
 }
 
 enum ConfusionType {
