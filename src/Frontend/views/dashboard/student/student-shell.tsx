@@ -54,14 +54,17 @@ export function StudentShell({ children }: Props) {
     navItems[0];
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.12),_transparent_26%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)]">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(124,58,237,0.14),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(236,72,153,0.1),_transparent_30%),linear-gradient(180deg,_#faf5ff_0%,_#f5f3ff_55%,_#ffffff_100%)]">
       <div className="mx-auto flex max-w-7xl gap-5 px-4 py-4 sm:px-6 lg:px-8">
-        <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-72 shrink-0 flex-col rounded-[2rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] backdrop-blur lg:flex">
+        <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-72 shrink-0 flex-col rounded-[2rem] border border-violet-200/80 bg-white/80 p-5 shadow-[0_30px_100px_-40px_rgba(124,58,237,0.35)] backdrop-blur-xl lg:flex">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">GuideMe</p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">Student dashboard</h2>
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 via-fuchsia-500 to-pink-500 text-sm font-bold text-white shadow-sm">M</div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-violet-600">Mentra</p>
+            </div>
+            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">Student dashboard</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Keep your mentors, sessions, and profile settings in one clean workspace.
+              Your guidance workspace for mentors, decisions, and next steps.
             </p>
           </div>
 
@@ -89,14 +92,14 @@ export function StudentShell({ children }: Props) {
                   className={cn(
                     "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition",
                     isActive
-                      ? "bg-slate-950 text-white shadow-[0_16px_40px_-28px_rgba(15,23,42,0.85)]"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+                      ? "bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-[0_18px_40px_-25px_rgba(124,58,237,0.85)]"
+                      : "text-slate-600 hover:bg-violet-50 hover:text-violet-800",
                   )}
                 >
                   <span
                     className={cn(
                       "flex size-10 items-center justify-center rounded-xl border",
-                      isActive ? "border-white/10 bg-white/10" : "border-slate-200 bg-white",
+                      isActive ? "border-white/10 bg-white/10" : "border-violet-100 bg-white",
                     )}
                   >
                     <item.icon className="size-4" />
@@ -107,18 +110,18 @@ export function StudentShell({ children }: Props) {
             })}
           </nav>
 
-          <div className="mt-auto rounded-[1.5rem] bg-slate-950 p-5 text-white">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Keep momentum</p>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+          <div className="mt-auto rounded-[1.5rem] bg-gradient-to-br from-violet-700 via-fuchsia-600 to-pink-500 p-5 text-white shadow-[0_22px_56px_-30px_rgba(168,85,247,0.7)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-100">Keep momentum</p>
+            <p className="mt-3 text-sm leading-6 text-violet-50">
               Use your saved mentors and session history to make the next booking faster and sharper.
             </p>
           </div>
         </aside>
 
         <div className="min-w-0 flex-1 pb-24 lg:pb-0">
-          <header className="sticky top-4 z-20 mb-5 flex items-center justify-between gap-4 rounded-[1.5rem] border border-slate-200/80 bg-white/90 px-4 py-4 shadow-sm backdrop-blur">
+          <header className="sticky top-4 z-20 mb-5 flex items-center justify-between gap-4 rounded-[1.5rem] border border-violet-200/80 bg-white/80 px-4 py-4 shadow-[0_15px_50px_-28px_rgba(124,58,237,0.35)] backdrop-blur-xl">
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">GuideMe</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-600">Mentra</p>
               <div className="mt-1 flex flex-wrap items-center gap-3">
                 <h1 className="truncate text-lg font-semibold tracking-tight text-slate-950">{activeItem.label}</h1>
                 <span className="hidden text-sm text-slate-500 sm:inline">{pageDateFormatter.format(new Date())}</span>
