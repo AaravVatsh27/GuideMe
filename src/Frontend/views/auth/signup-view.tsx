@@ -192,7 +192,6 @@ export function SignupView({
   function handleRoleSelect(role: "STUDENT" | "MENTOR") {
     window.sessionStorage.setItem(SIGNUP_ROLE_STORAGE_KEY, role);
     setSelectedRole(role);
-    setStep(2);
   }
 
   function handleBack() {
@@ -213,17 +212,17 @@ export function SignupView({
   }
 
   return (
-    <Card className="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/92 py-0 shadow-card backdrop-blur">
-      <CardHeader className="gap-4 border-b border-slate-200/80 px-6 py-7 sm:px-7">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-            GuideMe sign up
+    <Card className="border-0 bg-transparent py-0 shadow-none">
+      <CardHeader className="gap-4 border-0 px-0 pb-7 pt-0">
+        <div className="space-y-2.5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#7C3AED]">
+            Create your account
           </p>
-          <CardTitle className="font-display text-3xl font-bold text-slate-950">
-            Start with the right lane.
+          <CardTitle className="text-[1.9rem] font-bold tracking-[-0.04em] text-[#1E1B4B] sm:text-[2.1rem]">
+            What brings you to Mentra?
           </CardTitle>
-          <CardDescription className="text-sm leading-6 text-slate-600">
-            Choose your role first so GuideMe can shape the experience around what you need next.
+          <CardDescription className="max-w-md text-sm leading-6 text-slate-500">
+            Choose how you want to use Mentra.
           </CardDescription>
         </div>
 
@@ -249,7 +248,7 @@ export function SignupView({
         ) : null}
       </CardHeader>
 
-      <CardContent className="px-6 py-7 sm:px-7">
+      <CardContent className="px-0 py-0">
         <AnimatePresence mode="wait">
           {isCompletingOAuth ? (
             <motion.div
@@ -289,22 +288,16 @@ export function SignupView({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -18 }}
               transition={{ duration: 0.24, ease: "easeOut" }}
-              className="space-y-5"
+              className="space-y-4"
             >
               {step === 1 ? (
                 <>
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                      Step 1
-                    </p>
-                    <h3 className="font-display text-2xl font-semibold text-slate-950">
-                      Choose how you want to use GuideMe.
-                    </h3>
-                  </div>
-
-                  <div className="grid gap-4">
+                  <div className="grid gap-6 sm:grid-cols-2">
                     {(Object.entries(roleOptions) as Array<
-                      ["STUDENT" | "MENTOR", (typeof roleOptions)["STUDENT"]]
+                      [
+                        "STUDENT" | "MENTOR",
+                        (typeof roleOptions)["STUDENT"],
+                      ]
                     >).map(([role, option]) => {
                       const Icon = option.icon;
                       const isSelected = selectedRole === role;
@@ -314,107 +307,134 @@ export function SignupView({
                           key={role}
                           type="button"
                           onClick={() => handleRoleSelect(role)}
+                          aria-pressed={isSelected}
                           className={cn(
-                            "rounded-[1.5rem] border bg-white p-5 text-left transition",
+                            "group relative flex min-h-[200px] flex-col overflow-hidden rounded-[1.5rem] border p-5 text-left transition duration-200 sm:min-h-[205px]",
                             isSelected
-                              ? "border-slate-950 bg-slate-50 shadow-card"
-                              : "border-slate-200 hover:-translate-y-0.5 hover:border-slate-950 hover:shadow-card",
+                              ? "border-[#7C3AED] bg-[#7C3AED]/[0.045] shadow-[0_20px_42px_-28px_rgba(124,58,237,0.48)]"
+                              : "border-slate-200/90 bg-white/90 hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:shadow-[0_18px_40px_-28px_rgba(30,27,75,0.22)]",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/30 focus-visible:ring-offset-2",
                           )}
                         >
-                          <div className="flex items-start gap-4">
-                            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                          {/* Selection indicator */}
+                          <div className="flex items-start justify-between">
+                            <span
+                              className={cn(
+                                "flex size-12 items-center justify-center rounded-[1rem] transition duration-200",
+                                isSelected
+                                  ? "bg-[#7C3AED] text-white shadow-[0_10px_24px_-16px_rgba(124,58,237,0.8)]"
+                                  : "bg-violet-50 text-[#7C3AED] group-hover:bg-violet-100",
+                              )}
+                            >
                               <Icon className="size-5" />
                             </span>
-                            <div className="flex-1 space-y-3">
-                              <div>
-                                <div className="flex items-center justify-between gap-3">
-                                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                                    {option.subtitle}
-                                  </div>
-                                  {isSelected ? (
-                                    <span className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
-                                      Selected
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <h4 className="mt-1 font-display text-xl font-semibold text-slate-950">
-                                  {option.title}
-                                </h4>
-                              </div>
-                              <p className="text-sm leading-6 text-slate-600">
-                                {option.description}
-                              </p>
-                              <div className="grid gap-2">
-                                {option.benefits.map((benefit) => (
-                                  <div
-                                    key={benefit}
-                                    className="flex items-center gap-2 text-sm text-slate-700"
-                                  >
-                                    <CheckCircle2 className="size-4 text-teal-600" />
-                                    {benefit}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
+
+                            <span
+                              className={cn(
+                                "flex size-6 items-center justify-center rounded-full border-2 transition duration-200",
+                                isSelected
+                                  ? "border-[#7C3AED] bg-[#7C3AED]"
+                                  : "border-slate-300 bg-white group-hover:border-violet-300",
+                              )}
+                            >
+                              {isSelected ? (
+                                <span className="size-2 rounded-full bg-white" />
+                              ) : null}
+                            </span>
+                          </div>
+
+                          {/* Content */}
+                          <div className="mt-7">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7C3AED]">
+                              {role === "STUDENT" ? "For students" : "For mentors"}
+                            </p>
+
+                            <h4 className="mt-2 text-xl font-bold tracking-[-0.03em] text-[#1E1B4B]">
+                              {role === "STUDENT"
+                                ? "I want guidance"
+                                : "I want to mentor"}
+                            </h4>
+
+                            <p className="mt-3 text-sm leading-6 text-slate-500">
+                              {role === "STUDENT"
+                                ? "Find someone who has already walked the road and can help you make a clearer decision."
+                                : "Share what you've learned and help another student make a better decision."}
+                            </p>
+                          </div>
+
+                          {/* Bottom role label */}
+                          <div className="mt-auto pt-6">
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold",
+                                isSelected
+                                  ? "bg-violet-100 text-[#6D28D9]"
+                                  : "bg-slate-100 text-slate-500",
+                              )}
+                            >
+                              {role === "STUDENT" ? "Student" : "Mentor"}
+                            </span>
                           </div>
                         </button>
                       );
                     })}
                   </div>
 
-                  {selectedRole ? (
-                    <Button
-                      type="button"
-                      onClick={() => setStep(2)}
-                      className="h-12 w-full rounded-xl bg-slate-950 text-base font-semibold text-white hover:bg-slate-900"
-                    >
-                      Continue as {selectedRole === "STUDENT" ? "Student" : "Mentor"}
-                      <ArrowRight className="size-4" />
-                    </Button>
-                  ) : (
-                    <p className="text-sm leading-6 text-slate-500">
-                      Pick a role to continue with Google signup.
-                    </p>
-                  )}
+                  <div className="pt-2">
+                    {selectedRole ? (
+                      <Button
+                        type="button"
+                        onClick={() => setStep(2)}
+                        className="group h-12 w-full rounded-xl bg-[#7C3AED] text-sm font-semibold text-white shadow-[0_14px_30px_-20px_rgba(124,58,237,0.68)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#6D28D9] hover:shadow-[0_18px_36px_-20px_rgba(124,58,237,0.68)] active:scale-[0.99]"
+                      >
+                        Continue as{" "}
+                        {selectedRole === "STUDENT" ? "Student" : "Mentor"}
+                        <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                      </Button>
+                    ) : (
+                      <p className="py-1 text-center text-xs text-slate-400">
+                        Choose a role to continue.
+                      </p>
+                    )}
+                  </div>
                 </>
               ) : (
                 <>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                      Step 2
+                      Continue
                     </p>
-                    <h3 className="font-display text-2xl font-semibold text-slate-950">
-                      Continue with Google.
+                    <h3 className="text-2xl font-bold tracking-[-0.035em] text-[#1E1B4B]">
+                      Continue with Google
                     </h3>
                   </div>
 
                   {selectedRole ? (
-                    <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-5">
+                    <div className="rounded-[1.5rem] border border-violet-100 bg-violet-50/[0.45] p-5">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#7C3AED]">
                             Selected role
                           </p>
-                          <h4 className="mt-1 font-display text-xl font-semibold text-slate-950">
+                          <h4 className="mt-1 text-xl font-bold tracking-[-0.03em] text-[#1E1B4B]">
                             {roleOptions[selectedRole].title}
                           </h4>
-                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                          <p className="mt-2 text-sm leading-6 text-slate-500">
                             {roleOptions[selectedRole].description}
                           </p>
                         </div>
-                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700">
+                        <span className="rounded-full bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#7C3AED]">
                           {selectedRole.toLowerCase()}
                         </span>
                       </div>
                     </div>
                   ) : null}
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row">
                     <Button
                       type="button"
-                      variant="outline"
                       onClick={handleBack}
-                      className="h-12 rounded-xl border-slate-200 bg-white px-4 text-slate-900 hover:bg-slate-100"
+                      className="h-12 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-[#1E1B4B] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50/40 active:scale-[0.99]"
                     >
                       <ArrowLeft className="size-4" />
                       Back
@@ -423,17 +443,17 @@ export function SignupView({
                       type="button"
                       onClick={handleGoogleSignup}
                       disabled={!selectedRole || pending !== null}
-                      className="h-12 flex-1 rounded-xl bg-slate-950 text-base font-semibold text-white hover:bg-slate-900"
+                      className="group h-12 flex-1 rounded-xl bg-[#7C3AED] text-sm font-semibold text-white shadow-[0_14px_30px_-20px_rgba(124,58,237,0.68)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#6D28D9] hover:shadow-[0_18px_36px_-20px_rgba(124,58,237,0.68)] active:scale-[0.99]"
                     >
                       <GoogleIcon />
-                      {pending === "google" ? "Redirecting to Google..." : "Sign up with Google"}
+                      {pending === "google" ? "Redirecting to Google..." : "Continue with Google"}
                       <ArrowRight className="size-4" />
                     </Button>
                   </div>
 
-                  <p className="text-sm leading-6 text-slate-500">
-                    Your selected role is saved before redirect so we can finish account setup
-                    when you return.
+                  <p className="text-xs leading-5 text-slate-400">
+                    Your role is saved securely before Google sign-in so we can finish
+                    setting up your account when you return.
                   </p>
                 </>
               )}
@@ -442,11 +462,13 @@ export function SignupView({
         </AnimatePresence>
       </CardContent>
 
-      <CardFooter className="justify-center rounded-none border-t border-slate-200 bg-slate-50/80 px-6 py-5 text-center text-sm text-slate-600 sm:px-7">
-        Already have an account?{" "}
-        <Link href={signInHref} className="font-semibold text-slate-950 underline-offset-4 hover:underline">
-          Sign in
-        </Link>
+      <CardFooter className="mt-7 border-t border-violet-100/80 bg-transparent px-0 pt-5">
+        <p className="w-full text-center text-sm text-slate-500">
+          Already have an account?{" "}
+          <Link href={signInHref} className="font-semibold text-[#7C3AED] underline-offset-4 transition-colors hover:text-[#6D28D9] hover:underline">
+            Sign in
+          </Link>
+        </p>
       </CardFooter>
     </Card>
   );
