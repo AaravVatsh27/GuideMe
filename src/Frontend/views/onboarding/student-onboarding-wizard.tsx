@@ -299,8 +299,20 @@ function getFirstIncompleteStep(draft: StudentOnboardingDraft): WizardStep {
     return 2;
   }
 
-  if (!draft.stream) {
+  if (draft.targetExams.length === 0) {
     return 3;
+  }
+
+  if (draft.mentorshipNeeds.length === 0) {
+    return 4;
+  }
+
+  if (!draft.decisionStage) {
+    return 5;
+  }
+
+  if (!draft.city || !draft.state || !draft.languagePreference) {
+    return 7;
   }
 
   return 7;
@@ -313,11 +325,11 @@ function isStepValid(step: WizardStep, draft: StudentOnboardingDraft) {
     case 2:
       return requiresBoard(draft.class) ? Boolean(draft.board) : true;
     case 3:
-      return true;
+      return draft.targetExams.length > 0;
     case 4:
-      return true;
+      return draft.mentorshipNeeds.length > 0;
     case 5:
-      return true;
+      return Boolean(draft.decisionStage);
     case 6:
       return true;
     case 7:
@@ -426,20 +438,22 @@ export function StudentOnboardingWizard({
       case 3:
         return {
           class: currentDraft.class,
-          stream: currentDraft.stream,
+          stream: currentDraft.stream ?? "UNDECIDED",
           targetExams: currentDraft.targetExams,
         };
       case 4:
         return {
           class: currentDraft.class,
-          confusionTypes: currentDraft.confusionTypes,
+          stream: currentDraft.stream ?? "UNDECIDED",
+          targetExams: currentDraft.targetExams,
           mentorshipNeeds: currentDraft.mentorshipNeeds,
+          confusionTypes: currentDraft.confusionTypes,
         };
       case 5:
         return {
           class: currentDraft.class,
           board: currentDraft.board,
-          stream: currentDraft.stream,
+          stream: currentDraft.stream ?? "UNDECIDED",
           schoolingMode: currentDraft.schoolingMode,
           coachingMode: currentDraft.coachingMode,
           targetExams: currentDraft.targetExams,
@@ -450,7 +464,7 @@ export function StudentOnboardingWizard({
         return {
           class: currentDraft.class,
           board: currentDraft.board,
-          stream: currentDraft.stream,
+          stream: currentDraft.stream ?? "UNDECIDED",
           schoolingMode: currentDraft.schoolingMode,
           coachingMode: currentDraft.coachingMode,
           targetExams: currentDraft.targetExams,
@@ -462,7 +476,7 @@ export function StudentOnboardingWizard({
         return {
           class: currentDraft.class,
           board: currentDraft.board,
-          stream: currentDraft.stream,
+          stream: currentDraft.stream ?? "UNDECIDED",
           schoolingMode: currentDraft.schoolingMode,
           coachingMode: currentDraft.coachingMode,
           targetExams: currentDraft.targetExams,
@@ -494,12 +508,16 @@ export function StudentOnboardingWizard({
     const payload = (await response.json().catch(() => null)) as
       | {
           error?: string;
+          issues?: unknown;
           savedStep?: number;
         }
       | null;
 
     if (!response.ok) {
       setSaveState("error");
+      if (process.env.NODE_ENV !== "production" && payload?.issues) {
+        console.error("Step validation failed:", payload.issues);
+      }
       throw new Error(payload?.error ?? "We could not save this step.");
     }
 
