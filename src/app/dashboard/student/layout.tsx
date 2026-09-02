@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/Backend/auth";
 import { StudentShell } from "@/Frontend/views/dashboard/student/student-shell";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: "Mentra — Dashboard",
+  },
+};
 
 export default async function StudentDashboardLayout({
   children,
