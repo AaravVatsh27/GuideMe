@@ -103,7 +103,9 @@ const DECISION_STAGE_LABELS: Record<string, string> = {
 };
 
 const STREAM_LABEL_MAP: Record<string, string> = (() => {
-  const map: Record<string, string> = {};
+  const map: Record<string, string> = {
+    UNDECIDED: "Not sure yet / Confused",
+  };
   for (const option of [...SCHOOL_STREAM_OPTIONS, ...UG_FOCUS_OPTIONS]) {
     map[option.value] = option.label;
   }
