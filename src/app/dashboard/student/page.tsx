@@ -288,17 +288,17 @@ export default function StudentDashboardPage() {
   }
 
   return (
-    <div className="space-y-5">
-      {/* Hero */}
-      <Card className="overflow-hidden rounded-[1.9rem] border-violet-200 bg-[radial-gradient(circle_at_top_left,_rgba(124,58,237,0.18),_transparent_28%),radial-gradient(circle_at_right,_rgba(236,72,153,0.14),_transparent_35%),linear-gradient(135deg,_#ffffff_0%,_#faf5ff_38%,_#f5f3ff_100%)] shadow-[0_26px_70px_-40px_rgba(124,58,237,0.5)]">
-        <CardContent className="p-6 sm:p-8">
-          <div className="max-w-2xl space-y-4">
+    <div className="space-y-6">
+      {/* Hero Banner */}
+      <Card className="overflow-hidden rounded-2xl border-violet-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(124,58,237,0.14),_transparent_28%),radial-gradient(circle_at_right,_rgba(236,72,153,0.1),_transparent_35%),linear-gradient(135deg,_#ffffff_0%,_#faf5ff_38%,_#f5f3ff_100%)] shadow-sm">
+        <CardContent className="p-5 sm:p-6">
+          <div className="max-w-2xl space-y-3">
             {focusTags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {focusTags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-white/40 bg-white/20 px-3 py-1.5 text-sm font-medium text-violet-800"
+                    className="rounded-full border border-violet-200/80 bg-violet-100/50 px-2.5 py-1 text-xs font-semibold text-violet-800"
                   >
                     {tag}
                   </span>
@@ -307,20 +307,20 @@ export default function StudentDashboardPage() {
             )}
 
             <div>
-              <h2 className="text-3xl font-semibold tracking-[-0.06em] text-slate-950 sm:text-4xl">{greeting}</h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+              <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{greeting}</h2>
+              <p className="mt-1.5 text-xs text-slate-600 sm:text-sm leading-relaxed">
                 {heroSubtitle}
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link href="/dashboard/student/find-mentor" className={buttonVariants({ size: "lg" })}>
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              <Link href="/dashboard/student/find-mentor" className={buttonVariants({ size: "default", className: "h-9 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium text-xs px-4" })}>
                 Find a mentor
-                <ArrowRight className="size-4" />
+                <ArrowRight className="ml-1 size-3.5" />
               </Link>
               <Link
                 href="/dashboard/student/sessions"
-                className={buttonVariants({ variant: "outline", size: "lg" })}
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-violet-200 bg-white px-4 text-xs font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
               >
                 Review sessions
               </Link>
@@ -329,34 +329,41 @@ export default function StudentDashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Current Focus — only shown when profile data exists */}
+      {/* Current Focus — compact & human-readable */}
       {profileData?.studentProfile && (
-        <Card className="rounded-[1.75rem] border-violet-200 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base text-slate-950">
+        <Card className="rounded-2xl border-violet-100 bg-white shadow-sm">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-950">
               <Sparkles className="size-4 text-violet-600" />
               Your current focus
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
+          <CardContent className="p-4 pt-1 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
               {academicContext && (
-                <p className="text-sm font-medium text-slate-600">{academicContext}</p>
+                <Badge variant="outline" className="border-violet-200 bg-violet-50/50 text-slate-800 font-medium text-xs py-1 px-3">
+                  {academicContext}
+                </Badge>
               )}
               {targetExamLabel && (
-                <p className="mt-1 text-lg font-semibold text-slate-950">Preparing for {targetExamLabel}</p>
+                <Badge variant="outline" className="border-violet-200 bg-violet-50/50 text-slate-800 font-medium text-xs py-1 px-3">
+                  Target: {targetExamLabel}
+                </Badge>
               )}
               {decisionStageLabel && (
-                <p className="mt-1 text-sm text-slate-500">{decisionStageLabel}</p>
+                <Badge variant="outline" className="border-violet-200 bg-violet-50/50 text-slate-800 font-medium text-xs py-1 px-3">
+                  {decisionStageLabel}
+                </Badge>
               )}
             </div>
+
             {profileData.studentProfile.currentConfusion && (
-              <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">
-                  What you&apos;re working through
+              <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-700">
+                  Exploring your next academic direction
                 </p>
-                <p className="mt-1.5 text-sm leading-6 text-slate-700">
-                  {truncateSentence(profileData.studentProfile.currentConfusion, 120)}
+                <p className="mt-1 text-xs leading-relaxed text-slate-700">
+                  {truncateSentence(profileData.studentProfile.currentConfusion, 140)}
                 </p>
               </div>
             )}
@@ -378,11 +385,11 @@ export default function StudentDashboardPage() {
             detail: "Distinct mentors who helped you sharpen your path.",
           },
         ].map((stat) => (
-          <Card key={stat.label} className="rounded-[1.5rem] border-violet-100 bg-white shadow-[0_18px_50px_-36px_rgba(124,58,237,0.3)]">
-            <CardContent className="p-5">
-              <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-              <p className="mt-3 text-3xl font-semibold tracking-[-0.06em] text-slate-950">{stat.value}</p>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{stat.detail}</p>
+          <Card key={stat.label} className="rounded-2xl border-violet-100 bg-white shadow-sm">
+            <CardContent className="p-4 sm:p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{stat.label}</p>
+              <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{stat.value}</p>
+              <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">{stat.detail}</p>
             </CardContent>
           </Card>
         ))}
@@ -390,24 +397,24 @@ export default function StudentDashboardPage() {
 
       {/* Upcoming session */}
       {data.upcomingSession ? (
-        <Card className="rounded-[1.9rem] border-violet-200 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-500 text-white shadow-[0_28px_70px_-36px_rgba(168,85,247,0.8)]">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg text-white">
-              <CalendarClock className="size-5 text-violet-100" />
+        <Card className="rounded-2xl border-violet-200 bg-gradient-to-br from-violet-700 via-fuchsia-600 to-pink-500 text-white shadow-md">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="flex items-center gap-2 text-base font-bold text-white">
+              <CalendarClock className="size-4 text-violet-100" />
               Next session
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="p-4 pt-1 space-y-4">
             <div className="flex items-center gap-3">
               <MentorAvatar
                 src={data.upcomingSession.mentor.image}
                 alt={data.upcomingSession.mentor.name}
                 fallback={getInitials(data.upcomingSession.mentor.name)}
-                className="size-12 ring-2 ring-white/30"
+                className="size-11 ring-2 ring-white/30"
               />
               <div>
-                <p className="font-semibold text-white">{data.upcomingSession.mentor.name}</p>
-                <p className="text-sm text-violet-100">
+                <p className="font-semibold text-white text-sm">{data.upcomingSession.mentor.name}</p>
+                <p className="text-xs text-violet-100">
                   {data.upcomingSession.mentor.mentorProfile?.headline ??
                     data.upcomingSession.mentor.mentorProfile?.college ??
                     "Mentor session"}
@@ -415,40 +422,40 @@ export default function StudentDashboardPage() {
               </div>
             </div>
 
-            <div className="grid gap-3 rounded-[1.5rem] border border-white/20 bg-white/10 p-4 backdrop-blur-sm sm:grid-cols-2">
+            <div className="grid gap-2 rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm sm:grid-cols-2">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-100">Scheduled</p>
-                <p className="mt-2 text-sm font-medium text-white">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-100">Scheduled</p>
+                <p className="mt-1 text-xs font-medium text-white">
                   {formatDateTime(data.upcomingSession.scheduledAt)}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-100">Countdown</p>
-                <p className="mt-2 flex items-center gap-2 text-sm font-medium text-white">
-                  <Clock3 className="size-4 text-violet-100" />
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-100">Countdown</p>
+                <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-white">
+                  <Clock3 className="size-3.5 text-violet-100" />
                   {countdown?.label ?? "Starting soon"}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 pt-1">
               {data.upcomingSession.meetingLink ? (
                 <a
                   href={data.upcomingSession.meetingLink}
                   target="_blank"
                   rel="noreferrer"
-                  className={buttonVariants({ size: "lg" })}
+                  className={buttonVariants({ size: "sm", className: "rounded-xl bg-white text-violet-900 hover:bg-violet-50 font-semibold text-xs" })}
                 >
                   Join session
                 </a>
               ) : (
-                <Link href="/dashboard/student/sessions" className={buttonVariants({ size: "lg" })}>
+                <Link href="/dashboard/student/sessions" className={buttonVariants({ size: "sm", className: "rounded-xl bg-white text-violet-900 hover:bg-violet-50 font-semibold text-xs" })}>
                   Open sessions
                 </Link>
               )}
               <Link
                 href={getMentorDiscoveryHref(data.upcomingSession.mentor.id)}
-                className={buttonVariants({ variant: "outline", size: "lg" })}
+                className="inline-flex h-8 items-center justify-center rounded-xl border border-white/30 bg-white/10 px-3 text-xs font-medium text-white transition hover:bg-white/20"
               >
                 View mentor
               </Link>
@@ -456,102 +463,113 @@ export default function StudentDashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="rounded-[1.9rem] border-violet-200 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
-              <Compass className="size-5 text-violet-600" />
+        <Card className="rounded-2xl border-violet-100 bg-white shadow-sm">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+              <Compass className="size-4 text-violet-600" />
               No session in the next 24 hours
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm leading-6 text-slate-600">
+          <CardContent className="p-4 pt-1 space-y-3">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Use mentor matches or your saved list to plan the next conversation with maximum signal.
             </p>
-            <Link href="/dashboard/student/find-mentor" className={buttonVariants({ variant: "outline" })}>
+            <Link
+              href="/dashboard/student/find-mentor"
+              className="inline-flex items-center justify-center rounded-xl border border-violet-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
+            >
               Explore mentor matches
             </Link>
           </CardContent>
         </Card>
       )}
 
-      <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card className="rounded-[1.9rem] border-violet-100 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
-                <Heart className="size-5 text-rose-500" />
+      {/* Two-column content grid */}
+      <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+        {/* Saved Mentors */}
+        <Card className="rounded-2xl border-violet-100 bg-white shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 p-4 pb-3 space-y-0">
+            <div className="space-y-0.5">
+              <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-950">
+                <Heart className="size-4 text-rose-500" />
                 Saved mentors
               </CardTitle>
-              <p className="mt-1 text-sm text-slate-500">People you want to revisit when the next decision matters.</p>
+              <p className="text-xs text-slate-500">People you want to revisit when the next decision matters.</p>
             </div>
-            <Link href="/dashboard/student/saved" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            <Link
+              href="/dashboard/student/saved"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
+            >
               View all
             </Link>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="p-4 pt-0 space-y-3">
             {savedMentorsLoading ? (
-              Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-32 rounded-[1.25rem]" />)
+              Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-28 rounded-xl" />)
             ) : savedMentorsError ? (
-              <div className="rounded-[1.25rem] border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600">
                 Saved mentors are unavailable right now.
               </div>
             ) : savedMentors.length === 0 ? (
-              <div className="rounded-[1.25rem] border border-violet-100 bg-violet-50/40 p-5">
-                <p className="font-medium text-slate-900">No saved mentors yet.</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+              <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-4">
+                <p className="text-xs font-semibold text-slate-900">No saved mentors yet.</p>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
                   Build a shortlist while browsing mentor matches so the next booking starts with real options.
                 </p>
-                <Link href="/dashboard/student/find-mentor" className={cn(buttonVariants({ variant: "outline" }), "mt-4")}>
+                <Link
+                  href="/dashboard/student/find-mentor"
+                  className="mt-3 inline-flex items-center justify-center rounded-xl border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
+                >
                   Find mentors
                 </Link>
               </div>
             ) : (
               savedMentors.map((item) => (
-                <div key={item.id} className="rounded-[1.25rem] border border-violet-100 bg-violet-50/30 p-4">
+                <div key={item.id} className="rounded-xl border border-violet-100 bg-violet-50/30 p-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <MentorAvatar
                         src={item.mentor.image}
                         alt={item.mentor.name}
                         fallback={getInitials(item.mentor.name)}
-                        className="size-11"
+                        className="size-10"
                       />
                       <div>
-                        <p className="font-semibold text-slate-950">{item.mentor.name}</p>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-xs font-bold text-slate-950">{item.mentor.name}</p>
+                        <p className="text-[11px] text-slate-600">
                           {item.mentor.mentorProfile?.headline ?? item.mentor.mentorProfile?.college ?? "Mentor"}
                         </p>
                       </div>
                     </div>
                     {item.mentor.mentorProfile?.tier ? (
-                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700">
+                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700 text-[10px] py-0.5">
                         {item.mentor.mentorProfile.tier}
                       </Badge>
                     ) : null}
                   </div>
 
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-xl border border-violet-100 bg-white p-3">
-                      <p className="text-slate-500">Rating</p>
-                      <p className="mt-1 font-semibold text-slate-950">
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-lg border border-violet-100 bg-white p-2">
+                      <p className="text-[10px] text-slate-500">Rating</p>
+                      <p className="mt-0.5 font-bold text-slate-950">
                         {item.mentor.mentorProfile?.avgRating?.toFixed(1) ?? "0.0"} / 5
                       </p>
                     </div>
-                    <div className="rounded-xl border border-violet-100 bg-white p-3">
-                      <p className="text-slate-500">Starting price</p>
-                      <p className="mt-1 font-semibold text-slate-950">
+                    <div className="rounded-lg border border-violet-100 bg-white p-2">
+                      <p className="text-[10px] text-slate-500">Starting price</p>
+                      <p className="mt-0.5 font-bold text-slate-950">
                         {formatCurrency(item.mentor.mentorProfile?.priceMin)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <p className="text-xs text-slate-500">
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <p className="text-[10px] text-slate-500">
                       Saved {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                     </p>
                     <Link
                       href={getMentorDiscoveryHref(item.mentorId)}
-                      className={buttonVariants({ variant: "secondary", size: "sm" })}
+                      className="inline-flex items-center justify-center rounded-lg border border-violet-200 bg-white px-2.5 py-1 text-xs font-medium text-violet-700 transition hover:bg-violet-50"
                     >
                       View mentor
                     </Link>
@@ -562,73 +580,77 @@ export default function StudentDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.9rem] border-violet-100 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
-                <RotateCcw className="size-5 text-violet-600" />
+        {/* Past Sessions */}
+        <Card className="rounded-2xl border-violet-100 bg-white shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 p-4 pb-3 space-y-0">
+            <div className="space-y-0.5">
+              <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-950">
+                <RotateCcw className="size-4 text-violet-600" />
                 Past sessions
               </CardTitle>
-              <p className="mt-1 text-sm text-slate-500">Helpful context you can revisit before the next decision.</p>
+              <p className="text-xs text-slate-500">Helpful context you can revisit before the next decision.</p>
             </div>
-            <Link href="/dashboard/student/sessions" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            <Link
+              href="/dashboard/student/sessions"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
+            >
               Open history
             </Link>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="p-4 pt-0 space-y-3">
             {pastSessionsLoading ? (
-              Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-36 rounded-[1.25rem]" />)
+              Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-28 rounded-xl" />)
             ) : pastSessionsError ? (
-              <div className="rounded-[1.25rem] border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600">
                 Past sessions are unavailable right now.
               </div>
             ) : pastSessions.length === 0 ? (
-              <div className="rounded-[1.25rem] border border-violet-100 bg-violet-50/30 p-5 text-sm leading-6 text-slate-600">
+              <div className="rounded-xl border border-violet-100 bg-violet-50/30 p-4 text-xs leading-relaxed text-slate-600">
                 No completed sessions yet. Once a session finishes, its summary and rebook option will appear here.
               </div>
             ) : (
               pastSessions.map((session) => (
-                <div key={session.id} className="rounded-[1.25rem] border border-violet-100 bg-violet-50/30 p-4">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div key={session.id} className="rounded-xl border border-violet-100 bg-violet-50/30 p-3.5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
                       <MentorAvatar
                         src={session.mentor.image}
                         alt={session.mentor.name}
                         fallback={getInitials(session.mentor.name)}
-                        className="size-11"
+                        className="size-10"
                       />
                       <div className="min-w-0">
-                        <p className="font-semibold text-slate-950">{session.mentor.name}</p>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-xs font-bold text-slate-950">{session.mentor.name}</p>
+                        <p className="text-[11px] text-slate-600">
                           {session.mentor.mentorProfile?.headline ?? session.mentor.mentorProfile?.college ?? "Mentor"}
                         </p>
-                        <p className="mt-1 text-xs text-slate-500">{formatShortDateTime(session.scheduledAt)}</p>
+                        <p className="mt-0.5 text-[10px] text-slate-500">{formatShortDateTime(session.scheduledAt)}</p>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700 text-[10px]">
                         {session.type}
                       </Badge>
-                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700">
-                        <Star className="mr-1 size-3.5 text-amber-500" />
+                      <Badge variant="outline" className="border-violet-200 bg-white text-violet-700 text-[10px]">
+                        <Star className="mr-1 size-3 text-amber-500" />
                         {session.review?.rating ? `${session.review.rating} / 5` : "No rating"}
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-[1rem] border border-violet-100 bg-white p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-600">AI summary</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">
-                      {session.aiSummary?.slice(0, 180) ?? "Summary is still being generated for this session."}
+                  <div className="mt-3 rounded-lg border border-violet-100 bg-white p-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-700">AI summary</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-700">
+                      {session.aiSummary?.slice(0, 160) ?? "Summary is still being generated for this session."}
                     </p>
                   </div>
 
-                  <div className="mt-4 flex justify-end">
+                  <div className="mt-3 flex justify-end">
                     <Link
                       href={getMentorDiscoveryHref(session.mentorId)}
-                      className={buttonVariants({ variant: "secondary", size: "sm" })}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-white px-2.5 py-1 text-xs font-medium text-violet-700 transition hover:bg-violet-50"
                     >
-                      <RotateCcw className="size-3.5" />
+                      <RotateCcw className="size-3" />
                       Rebook mentor
                     </Link>
                   </div>
@@ -639,76 +661,81 @@ export default function StudentDashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="rounded-[1.9rem] border-violet-100 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
-            <div>
-              <CardTitle className="text-lg text-slate-950">Recommended mentors</CardTitle>
-              <p className="mt-1 text-sm text-slate-500">
+      {/* Recommended Mentors & Recent Activity */}
+      <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+        {/* Recommended Mentors */}
+        <Card className="rounded-2xl border-violet-100 bg-white shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 p-4 pb-3 space-y-0">
+            <div className="space-y-0.5">
+              <CardTitle className="text-base font-bold text-slate-950">Recommended mentors</CardTitle>
+              <p className="text-xs text-slate-500">
                 Ranked for your current path and recent guidance needs.
               </p>
             </div>
-            <Link href="/dashboard/student/find-mentor" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            <Link
+              href="/dashboard/student/find-mentor"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
+            >
               Explore all
             </Link>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0">
             {matchesLoading ? (
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {Array.from({ length: 3 }).map((_, index) => (
-                  <Skeleton key={index} className="h-72 min-w-[280px] rounded-[1.5rem]" />
+                  <Skeleton key={index} className="h-64 min-w-[260px] rounded-xl" />
                 ))}
               </div>
             ) : matchesError ? (
-              <div className="rounded-[1.5rem] border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600">
                 Mentor matching is unavailable right now.
               </div>
             ) : mentors.length === 0 ? (
-              <div className="rounded-[1.5rem] border border-violet-100 bg-violet-50/30 p-5">
-                <p className="font-medium text-slate-900">No strong mentor matches yet.</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Refresh your onboarding preferences from profile to improve the recommendations.
+              <div className="rounded-xl border border-violet-100 bg-violet-50/30 p-4">
+                <p className="text-xs font-semibold text-slate-900">No strong mentor matches yet.</p>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                  Refresh your onboarding preferences from profile to improve recommendations.
                 </p>
               </div>
             ) : (
-              <div className="flex gap-4 overflow-x-auto pb-2">
+              <div className="flex gap-3 overflow-x-auto pb-2">
                 {mentors.map((entry) => (
-                  <article key={entry.mentor.id} className="min-w-[280px] rounded-[1.5rem] border border-violet-100 bg-violet-50/30 p-4">
+                  <article key={entry.mentor.id} className="min-w-[260px] flex-1 rounded-xl border border-violet-100 bg-violet-50/30 p-3.5">
                     <div className="flex items-start gap-3">
                       <MentorAvatar
                         src={entry.mentor.image}
                         alt={entry.mentor.name}
                         fallback={getInitials(entry.mentor.name)}
-                        className="size-11"
+                        className="size-10"
                       />
                       <div>
-                        <p className="font-semibold text-slate-950">{entry.mentor.name}</p>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-xs font-bold text-slate-950">{entry.mentor.name}</p>
+                        <p className="text-[11px] text-slate-600">
                           {entry.mentor.headline ?? entry.mentor.college ?? "Mentor"}
                         </p>
                       </div>
                     </div>
 
                     {entry.mentor.availableThisWeek && (
-                      <p className="mt-2 text-xs font-medium text-emerald-600">● Available this week</p>
+                      <p className="mt-2 text-[10px] font-medium text-emerald-600">● Available this week</p>
                     )}
 
-                    <div className="mt-3 flex gap-3 text-sm text-slate-500">
+                    <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
                       <span>From {formatCurrency(entry.mentor.priceMin)}</span>
-                      <span className="text-slate-300">·</span>
+                      <span>·</span>
                       <span>★ {entry.mentor.avgRating.toFixed(1)}</span>
                     </div>
 
                     {entry.matchReasons.length > 0 && (
-                      <p className="mt-2 flex items-start gap-1.5 text-sm text-slate-600">
-                        <Sparkles className="mt-0.5 size-3.5 shrink-0 text-violet-500" />
+                      <p className="mt-2 flex items-start gap-1.5 text-xs text-slate-600">
+                        <Sparkles className="mt-0.5 size-3 shrink-0 text-violet-500" />
                         <span>{entry.matchReasons[0]}</span>
                       </p>
                     )}
 
                     <Link
                       href={getMentorDiscoveryHref(entry.mentor.id)}
-                      className={cn(buttonVariants({ variant: "outline" }), "mt-4 w-full")}
+                      className="mt-3 flex w-full items-center justify-center rounded-lg border border-violet-200 bg-white py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:bg-violet-50"
                     >
                       View mentor
                     </Link>
@@ -719,25 +746,26 @@ export default function StudentDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.9rem] border-violet-100 bg-white shadow-[0_20px_60px_-38px_rgba(124,58,237,0.35)]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-slate-950">Recent activity</CardTitle>
-            <p className="text-sm text-slate-500">Latest actions from your student account.</p>
+        {/* Recent Activity */}
+        <Card className="rounded-2xl border-violet-100 bg-white shadow-sm">
+          <CardHeader className="p-4 pb-3 space-y-0.5">
+            <CardTitle className="text-base font-bold text-slate-950">Recent activity</CardTitle>
+            <p className="text-xs text-slate-500">Latest actions from your student account.</p>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="p-4 pt-0 space-y-2.5">
             {data.recentActivity.length === 0 ? (
-              <div className="rounded-[1.5rem] border border-violet-100 bg-violet-50/30 p-5 text-sm text-slate-600">
+              <div className="rounded-xl border border-violet-100 bg-violet-50/30 p-4 text-xs text-slate-600">
                 No recent activity yet.
               </div>
             ) : (
               data.recentActivity.map((item) => (
-                <div key={item.id} className="flex items-start justify-between gap-3 rounded-[1.25rem] border border-violet-100 bg-violet-50/30 p-4">
+                <div key={item.id} className="flex items-start justify-between gap-3 rounded-xl border border-violet-100 bg-violet-50/30 p-3">
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-950">{formatActivityLabel(item.action)}</p>
-                    <p className="mt-1 text-sm text-slate-500">{formatActivityLabel(item.entityType)}</p>
+                    <p className="text-xs font-semibold text-slate-950">{formatActivityLabel(item.action)}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">{formatActivityLabel(item.entityType)}</p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2 text-xs text-slate-500">
-                    <Users className="size-3.5" />
+                  <div className="flex shrink-0 items-center gap-1 text-[10px] text-slate-500">
+                    <Users className="size-3" />
                     <span>{formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}</span>
                   </div>
                 </div>
