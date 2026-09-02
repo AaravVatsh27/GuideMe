@@ -115,19 +115,19 @@ export function SignInView({
   }
 
   return (
-    <Card className="overflow-hidden rounded-[1.5rem] border border-border/70 bg-card shadow-[0_24px_70px_-40px_rgba(15,23,42,0.35)]">
-      <CardHeader className="px-6 pb-5 pt-6 sm:px-8 sm:pb-6 sm:pt-8">
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary/80">
+    <Card className="border-0 bg-transparent shadow-none">
+      <CardHeader className="px-0 pb-7 pt-0">
+        <div className="space-y-2.5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#7C3AED]">
             Welcome back
           </p>
 
-          <CardTitle className="text-[1.75rem] font-semibold tracking-[-0.03em] text-foreground sm:text-[2rem]">
+          <CardTitle className="text-[1.9rem] font-bold tracking-[-0.04em] text-[#1E1B4B] sm:text-[2.1rem]">
             Sign in to Mentra
           </CardTitle>
 
-          <CardDescription className="max-w-sm text-sm leading-6 text-muted-foreground">
-            Continue to your mentoring journey.
+          <CardDescription className="max-w-sm text-sm leading-6 text-slate-500">
+            Continue your mentoring journey.
           </CardDescription>
         </div>
 
@@ -186,8 +186,8 @@ export function SignInView({
         </AnimatePresence>
       </CardHeader>
 
-      <CardContent className="px-6 pb-6 sm:px-8 sm:pb-8">
-        <div className="space-y-5">
+      <CardContent className="px-0 pb-0">
+        <div className="space-y-4">
           {/* Primary authentication method */}
           <Button
             type="button"
@@ -197,7 +197,7 @@ export function SignInView({
             aria-busy={
               pendingProvider === "google"
             }
-            className="h-12 w-full rounded-xl bg-primary text-[0.95rem] font-semibold shadow-[0_12px_28px_-18px_rgba(79,70,229,0.65)] transition-[transform,background-color,box-shadow] duration-200 hover:bg-primary/90 hover:shadow-[0_16px_32px_-18px_rgba(79,70,229,0.7)] active:scale-[0.99]"
+            className="h-12 w-full rounded-xl bg-[#1E1B4B] text-[0.95rem] font-semibold text-white shadow-[0_14px_30px_-18px_rgba(30,27,75,0.6)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-[#2A275A] hover:shadow-[0_18px_36px_-18px_rgba(30,27,75,0.55)] active:scale-[0.99]"
           >
             <GoogleIcon
               className="mr-3 size-5"
@@ -210,16 +210,16 @@ export function SignInView({
           </Button>
 
           {/* Divider */}
-          <div className="relative py-1">
+          <div className="relative py-2">
             <div
               className="absolute inset-0 flex items-center"
               aria-hidden="true"
             >
-              <div className="w-full border-t border-border" />
+              <div className="w-full border-t border-violet-100" />
             </div>
 
             <div className="relative flex justify-center">
-              <span className="bg-card px-3 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              <span className="bg-white/80 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 backdrop-blur-xl">
                 or continue with email
               </span>
             </div>
@@ -242,7 +242,7 @@ export function SignInView({
 
               <div className="relative">
                 <Mail
-                  className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
                   aria-hidden="true"
                 />
 
@@ -288,7 +288,7 @@ export function SignInView({
                       ? "signin-email-error"
                       : "signin-email-hint"
                   }
-                  className="h-12 rounded-xl border-input bg-background pl-11 pr-4 text-base transition-[border-color,box-shadow] duration-200 placeholder:text-muted-foreground/55 focus-visible:border-primary"
+                  className="h-12 rounded-xl border-slate-200 bg-white/80 pl-11 pr-4 text-base text-[#1E1B4B] shadow-sm transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-slate-400 focus-visible:border-[#7C3AED] focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#7C3AED]/15"
                 />
               </div>
 
@@ -353,7 +353,7 @@ export function SignInView({
               aria-busy={
                 pendingProvider === "email"
               }
-              className="h-12 w-full rounded-xl border-border bg-background text-[0.95rem] font-semibold text-foreground transition-[background-color,border-color,transform] duration-200 hover:bg-muted/60 hover:border-primary/20 active:scale-[0.99]"
+              className="h-12 w-full rounded-xl bg-[#7C3AED] text-[0.95rem] font-semibold text-white shadow-[0_14px_30px_-18px_rgba(124,58,237,0.72)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-[#6D28D9] hover:shadow-[0_18px_36px_-18px_rgba(124,58,237,0.7)] active:scale-[0.99]"
             >
               {pendingProvider === "email" ? (
                 <>
@@ -387,12 +387,12 @@ export function SignInView({
         </div>
       </CardContent>
 
-      <CardFooter className="justify-center border-t border-border/70 bg-muted/20 px-6 py-4 sm:px-8">
-        <p className="text-sm text-muted-foreground">
+      <CardFooter className="mt-7 border-t border-violet-100/80 bg-transparent px-0 pt-6">
+        <p className="text-sm text-slate-500">
           New to Mentra?{" "}
           <Link
             href={signUpHref}
-            className="font-semibold text-primary underline-offset-4 transition-colors duration-150 hover:text-primary/80 hover:underline"
+            className="font-semibold text-[#7C3AED] underline-offset-4 transition-colors hover:text-[#6D28D9] hover:underline"
           >
             Create an account
           </Link>
