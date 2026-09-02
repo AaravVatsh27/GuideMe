@@ -1,7 +1,14 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import Script from "next/script";
+import Link from "next/link";
+import {
+  ArrowRight,
+  Check,
+  GraduationCap,
+  HeartHandshake,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 
+import { MentraLogo } from "@/components/brand/MentraLogo";
 import {
   getPublicPlatformSnapshot,
   getPublicReviewSpotlights,
@@ -10,23 +17,9 @@ import {
   type PublicReviewSpotlight,
 } from "@/Backend/server/public-data";
 
-const legacyStaticDir = path.join(process.cwd(), "legacy-static");
-const SCHOOL_MENTOR_YEARS = new Set([1, 2]);
-
 export const dynamic = "force-dynamic";
 
-async function readLegacyFile(fileName: string) {
-  return fs.readFile(path.join(legacyStaticDir, fileName), "utf8");
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+const SCHOOL_MENTOR_YEARS = new Set([1, 2]);
 
 function formatNumber(value: number) {
   return value.toLocaleString("en-IN");
@@ -52,968 +45,1315 @@ function getMentorInitials(name: string) {
     .map((part) => part.charAt(0).toUpperCase())
     .join("");
 
-  return initials || "GM";
+  return initials || "M";
 }
 
 function getMentorGroup(mentor: PublicMentorCard) {
-  return mentor.yearOfStudy !== null && SCHOOL_MENTOR_YEARS.has(mentor.yearOfStudy)
+  return mentor.yearOfStudy !== null &&
+    SCHOOL_MENTOR_YEARS.has(mentor.yearOfStudy)
     ? "school"
     : "ug";
 }
 
-function buildFloorPriceText(snapshot: PublicPlatformSnapshot) {
-  return snapshot.minPrice > 0
-    ? `${formatCurrency(snapshot.minPrice)} onwards`
-    : "Profiles opening now";
+function getMentorPrice(mentor: PublicMentorCard) {
+  return mentor.priceMin && mentor.priceMin > 0
+    ? formatCurrency(mentor.priceMin)
+    : "View pricing";
 }
 
-function buildLivePriceBandMarkup(snapshot: PublicPlatformSnapshot) {
-  if (snapshot.minPrice > 0 && snapshot.maxPrice > 0) {
-    return `${formatCurrency(snapshot.minPrice)} - ${formatCurrency(snapshot.maxPrice)} <span>/ current range</span>`;
-  }
+function getMentorContext(mentor: PublicMentorCard) {
+  const parts = [
+    mentor.college,
+    mentor.degree,
+    mentor.yearLabel,
+  ].filter(Boolean);
 
-  return "Mentor pricing unlocks as live profiles go active";
+  return parts.length > 0 ? parts.join(" · ") : "Mentor profile";
 }
 
-function buildTypicalPriceMarkup(snapshot: PublicPlatformSnapshot) {
-  return snapshot.averagePaidSessionPrice > 0
-    ? `${formatCurrency(snapshot.averagePaidSessionPrice)} <span>/ session</span>`
-    : "Awaiting live bookings";
+function getMentorTopic(mentor: PublicMentorCard) {
+  return (
+    mentor.topicLabels[0] ??
+    mentor.examLabels[0] ??
+    "Academic guidance"
+  );
 }
 
-function estimateMonthlyEarnings(sessionsPerWeek: number, averagePrice: number) {
-  return Math.round(sessionsPerWeek * averagePrice * 4.33 * 3);
-}
-
-function roundToNearestTen(value: number) {
-  return Math.round(value / 10) * 10;
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function getCalculatorPriceInputs(snapshot: PublicPlatformSnapshot) {
-  const min = snapshot.minPrice > 0 ? roundToNearestTen(snapshot.minPrice) : 100;
-  const max = snapshot.maxPrice > 0 ? roundToNearestTen(snapshot.maxPrice) : Math.max(min + 200, 500);
-  const normalizedMax = Math.max(max, min + 100);
-  const fallbackValue = roundToNearestTen((min + normalizedMax) / 2);
-  const baseValue =
-    snapshot.averagePaidSessionPrice > 0
-      ? roundToNearestTen(snapshot.averagePaidSessionPrice)
-      : fallbackValue;
-
-  return {
-    min,
-    max: normalizedMax,
-    value: clamp(baseValue, min, normalizedMax),
-  };
-}
-
-function buildIncomeRangeText(snapshot: PublicPlatformSnapshot) {
-  const calculator = getCalculatorPriceInputs(snapshot);
-  const low = estimateMonthlyEarnings(3, calculator.value);
-  const high = estimateMonthlyEarnings(5, calculator.value);
-
-  return `Earn around ${formatCurrency(low)}-${formatCurrency(high)}/month`;
-}
-
-function buildRevenueNoteText(snapshot: PublicPlatformSnapshot) {
-  const calculator = getCalculatorPriceInputs(snapshot);
-  const monthlyEstimate = estimateMonthlyEarnings(4, calculator.value);
-
-  return `At the current booking value, 4 sessions/week can generate about ${formatCurrency(monthlyEstimate)}/month.`;
-}
-
-function buildMentorDetailLine(mentor: PublicMentorCard) {
-  const parts = [mentor.college];
-
-  if (mentor.degree) {
-    parts.push(mentor.degree);
-  }
-
-  if (mentor.yearOfStudy !== null) {
-    parts.push(mentor.yearLabel);
-  }
-
-  if (parts.length === 0 && mentor.headline) {
-    parts.push(mentor.headline);
-  }
-
-  return `${escapeHtml(mentor.name)}${parts.length > 0 ? ` · ${escapeHtml(parts.join(", "))}` : ""}`;
-}
-
-function buildMentorBadgeText(mentor: PublicMentorCard) {
-  return mentor.college ?? mentor.degree ?? mentor.headline ?? "GuideMe mentor";
-}
-
-function buildMentorLane(mentor: PublicMentorCard) {
-  const prefix = getMentorGroup(mentor) === "school" ? "School students" : "UG students";
-  const labels = [...mentor.examLabels, ...mentor.topicLabels].slice(0, 2);
-
-  if (labels.length === 0) {
-    return `${prefix} → live mentor guidance`;
-  }
-
-  return `${prefix} → ${labels.join(" + ")}`;
-}
-
-function buildTagText(label: string) {
-  const compact = label.replace(/[^a-zA-Z0-9]+/g, "");
-  return compact ? `#${compact}` : "#GuideMe";
-}
-
-function buildMentorTagsMarkup(mentor: PublicMentorCard) {
-  const labels = [...mentor.examLabels, ...mentor.topicLabels].slice(0, 3);
-  const fallbackLabels =
-    getMentorGroup(mentor) === "school"
-      ? ["#SchoolMentor", "#LiveProfile"]
-      : ["#UGMentor", "#LiveProfile"];
-
-  return (labels.length > 0 ? labels.map(buildTagText) : fallbackLabels)
-    .map((label) => `<span>${escapeHtml(label)}</span>`)
-    .join("");
-}
-
-function buildMentorSocialProof(mentor: PublicMentorCard) {
+function getMentorProof(mentor: PublicMentorCard) {
   if (mentor.totalReviews > 0) {
-    const proofCount =
-      mentor.totalSessions > 0
-        ? `${formatNumber(mentor.totalSessions)} sessions`
-        : `${formatNumber(mentor.totalReviews)} reviews`;
-
-    return `⭐ ${mentor.avgRating.toFixed(1)} <span>(${escapeHtml(proofCount)})</span>`;
+    return `${mentor.avgRating.toFixed(1)} · ${formatNumber(
+      mentor.totalReviews,
+    )} reviews`;
   }
 
   if (mentor.totalSessions > 0) {
-    return `Live mentor <span>(${formatNumber(mentor.totalSessions)} sessions)</span>`;
+    return `${formatNumber(mentor.totalSessions)} sessions`;
   }
 
-  return "New mentor <span>(profile live)</span>";
+  return "New mentor";
 }
 
-function buildMentorPriceText(mentor: PublicMentorCard) {
-  return mentor.priceMin && mentor.priceMin > 0
-    ? `${formatCurrency(mentor.priceMin)} / session`
-    : "Price on profile";
-}
-
-function buildMentorCarouselMarkup(snapshot: PublicPlatformSnapshot) {
-  if (snapshot.featuredMentors.length === 0) {
-    return `
-      <div class="mentor-fallback-card">
-        <p>No live mentors yet. <a href="/auth/signup?role=MENTOR">Apply to become the first profile</a></p>
-      </div>
-    `.trim();
+function getStartingPrice(snapshot: PublicPlatformSnapshot) {
+  if (snapshot.minPrice > 0) {
+    return formatCurrency(snapshot.minPrice);
   }
 
-  return snapshot.featuredMentors
-    .map((mentor) => {
-      const group = getMentorGroup(mentor);
-      const colorClass =
-        group === "school" ? "mentor-avatar-shell--teal" : "mentor-avatar-shell--amber";
-
-      return `
-        <article class="mentor-profile-card" data-mentor-group="${group}">
-          <div class="mentor-profile-top">
-            <div class="mentor-avatar-shell ${colorClass}" aria-hidden="true">
-              <span>${escapeHtml(getMentorInitials(mentor.name))}</span>
-            </div>
-            <span class="mentor-online">
-              <span class="mentor-online-dot" aria-hidden="true"></span>
-              ${mentor.availableThisWeek ? "Online" : "Profile live"}
-            </span>
-          </div>
-
-          <p class="mentor-college-badge">
-            <span>${escapeHtml(buildMentorBadgeText(mentor))}</span>
-            <span class="verified-check" aria-hidden="true">
-              <svg viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="8" />
-                <path d="m4.7 8.2 2.1 2.1 4.5-4.7" />
-              </svg>
-            </span>
-          </p>
-          <h3 class="mentor-profile-name">${buildMentorDetailLine(mentor)}</h3>
-          <p class="mentor-profile-lane">${escapeHtml(buildMentorLane(mentor))}</p>
-          <div class="mentor-profile-tags">
-            ${buildMentorTagsMarkup(mentor)}
-          </div>
-          <div class="mentor-profile-meta">
-            <p>${buildMentorSocialProof(mentor)}</p>
-            <p>${escapeHtml(buildMentorPriceText(mentor))}</p>
-          </div>
-          <a class="btn mentor-profile-cta" href="${mentor.username ? `/mentor/${encodeURIComponent(mentor.username)}` : "/find-mentor"}">
-            ${mentor.username ? "View Profile" : "Browse Mentors"}
-          </a>
-        </article>
-      `.trim();
-    })
-    .join("\n");
-}
-
-function buildHeroMentorPreviewStrip(snapshot: PublicPlatformSnapshot) {
-  const fallbackMentors = [
-    {
-      initials: "AS",
-      name: "Aarav Sharma",
-      college: "IIT Bombay",
-      topic: "JEE Strategy",
-      price: "₹249",
-      href: "/find-mentor?exam=JEE",
-    },
-    {
-      initials: "NK",
-      name: "Nisha Kapoor",
-      college: "AIIMS",
-      topic: "NEET Prep",
-      price: "₹299",
-      href: "/find-mentor?exam=NEET",
-    },
-    {
-      initials: "RV",
-      name: "Rohan Verma",
-      college: "BITS Pilani",
-      topic: "College Selection",
-      price: "₹249",
-      href: "/find-mentor?q=College%20Selection",
-    },
-    {
-      initials: "IM",
-      name: "Ira Menon",
-      college: "NIT Trichy",
-      topic: "Stream Selection",
-      price: "₹199",
-      href: "/find-mentor?q=Stream%20Selection",
-    },
-  ];
-
-  const liveMentors = snapshot.featuredMentors.slice(0, 4).map((mentor) => ({
-    initials: getMentorInitials(mentor.name),
-    name: mentor.name,
-    college: mentor.college ?? mentor.degree ?? "GuideMe mentor",
-    topic: mentor.topicLabels[0] ?? mentor.examLabels[0] ?? "Exam clarity",
-    price: mentor.priceMin && mentor.priceMin > 0 ? formatCurrency(mentor.priceMin) : "₹249",
-    href: mentor.username ? `/mentor/${encodeURIComponent(mentor.username)}` : "/find-mentor",
-  }));
-
-  const mentors = liveMentors.length > 0 ? liveMentors : fallbackMentors;
-
-  return mentors
-    .map(
-      (mentor) => `
-        <article class="hero-preview-card">
-          <div class="hero-preview-avatar" aria-hidden="true">
-            ${escapeHtml(mentor.initials)}
-          </div>
-          <div class="hero-preview-copy">
-            <h3>${escapeHtml(mentor.name)}</h3>
-            <p>${escapeHtml(mentor.college)}</p>
-            <span>${escapeHtml(mentor.topic)}</span>
-          </div>
-          <div class="hero-preview-foot">
-            <strong>${escapeHtml(mentor.price)}</strong>
-            <a href="${mentor.href}">View</a>
-          </div>
-        </article>
-      `,
-    )
-    .join("\n");
-}
-
-function buildReviewQuote(review: PublicReviewSpotlight) {
-  const text = review.reviewText?.replace(/\s+/g, " ").trim();
-
-  if (text) {
-    return `&quot;${escapeHtml(text)}&quot;`;
+  if (snapshot.averagePaidSessionPrice > 0) {
+    return formatCurrency(snapshot.averagePaidSessionPrice);
   }
 
-  return `&quot;${escapeHtml(
-    `${review.studentFirstName} left a ${review.rating.toFixed(1)}-star public review after a GuideMe session.`,
-  )}&quot;`;
+  return "₹—";
 }
 
-function buildReviewStars(rating: number) {
-  const filledStars = Math.max(1, Math.min(5, Math.round(rating)));
-  return `${"★".repeat(filledStars)}${"☆".repeat(5 - filledStars)}`;
-}
-
-function buildTestimonialsMarkup(snapshot: PublicPlatformSnapshot) {
-  if (snapshot.reviewSpotlights.length === 0) {
-    return `
-      <div class="testimonial-fallback-card">
-        <p>Public student reviews will appear here after the first completed sessions.</p>
-      </div>
-    `.trim();
+function getTypicalPrice(snapshot: PublicPlatformSnapshot) {
+  if (snapshot.averagePaidSessionPrice > 0) {
+    return formatCurrency(snapshot.averagePaidSessionPrice);
   }
 
-  return snapshot.reviewSpotlights
-    .map(
-      (review, index) => `
-        <article
-          class="testimonial-card"
-          data-scroll-reveal
-          style="--reveal-stagger: ${0.05 + index * 0.07}s"
+  if (snapshot.minPrice > 0) {
+    return formatCurrency(snapshot.minPrice);
+  }
+
+  return "₹—";
+}
+
+function getPriceRange(snapshot: PublicPlatformSnapshot) {
+  if (snapshot.minPrice > 0 && snapshot.maxPrice > 0) {
+    return `${formatCurrency(snapshot.minPrice)} – ${formatCurrency(
+      snapshot.maxPrice,
+    )}`;
+  }
+
+  if (snapshot.minPrice > 0) {
+    return `${formatCurrency(snapshot.minPrice)} onwards`;
+  }
+
+  return "Pricing updates as mentors go live";
+}
+
+function estimateMonthlyEarnings(
+  sessionsPerWeek: number,
+  averagePrice: number,
+) {
+  return Math.round(sessionsPerWeek * averagePrice * 4.33 * 0.8);
+}
+
+function getMentorIncomeEstimate(snapshot: PublicPlatformSnapshot) {
+  const price =
+    snapshot.averagePaidSessionPrice > 0
+      ? snapshot.averagePaidSessionPrice
+      : snapshot.minPrice > 0
+        ? snapshot.minPrice
+        : 249;
+
+  return estimateMonthlyEarnings(4, price);
+}
+
+function getReviewInitials(review: PublicReviewSpotlight) {
+  return review.studentFirstName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
+function HomepageHeader() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-violet-100/80 bg-[#FAF5FF]/90 backdrop-blur-xl">
+      <div className="mx-auto flex min-h-[68px] max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <a
+          href="/"
+          aria-label="Mentra home"
+          className="flex w-[120px] shrink-0 items-center sm:w-[140px] lg:w-[150px]"
         >
-          <p class="testimonial-quote">
-            ${buildReviewQuote(review)}
-          </p>
-          <div class="testimonial-meta">
-            <p class="testimonial-student">${escapeHtml(review.studentFirstName)}${review.studentCity ? `, ${escapeHtml(review.studentCity)}` : ""}</p>
-            <p class="testimonial-detail">Reviewed ${escapeHtml(formatDate(review.createdAt))}</p>
-            <p class="testimonial-mentor">Mentored by ${escapeHtml(review.mentorName)}${review.mentorCollege ? ` · ${escapeHtml(review.mentorCollege)}` : ""}</p>
-            <p class="testimonial-rating">${buildReviewStars(review.rating)}</p>
-          </div>
-        </article>
-      `,
-    )
-    .join("\n");
-}
+          <MentraLogo
+            variant="color"
+            size="sm"
+            className="w-full"
+          />
+        </a>
 
-
-function buildHeroSection(snapshot: PublicPlatformSnapshot) {
-  return `
-    <section class="hero" id="top">
-      <div class="hero-network" aria-hidden="true">
-        <canvas class="hero-network-canvas"></canvas>
-      </div>
-
-      <div class="hero-inner">
-        <div class="hero-content">
-          <div class="hero-badge reveal-item" style="--reveal-delay: 0.1s">
-            <span class="hero-badge-pulse" aria-hidden="true"></span>
-            Trusted by 10,000+ students across India
-          </div>
-
-          <h1
-            class="hero-title"
-            aria-label="We'll figure it out, together."
+        <nav
+          aria-label="Main navigation"
+          className="hidden items-center gap-7 md:flex"
+        >
+          <Link
+            href="/find-mentor"
+            className="text-sm font-medium text-slate-600 transition-colors hover:text-[#1E1B4B]"
           >
-            <span class="hero-line">
-              <span class="hero-word" style="--word-delay: 0.24s">We'll</span>
-              <span class="hero-word" style="--word-delay: 0.34s">figure</span>
-              <span class="hero-word" style="--word-delay: 0.44s">it</span>
-              <span class="hero-word" style="--word-delay: 0.54s">out,</span>
+            Find a Mentor
+          </Link>
+          <Link
+            href="#how-it-works"
+            className="text-sm font-medium text-slate-600 transition-colors hover:text-[#1E1B4B]"
+          >
+            How it Works
+          </Link>
+          <Link
+            href="#for-mentors"
+            className="text-sm font-medium text-slate-600 transition-colors hover:text-[#1E1B4B]"
+          >
+            For Mentors
+          </Link>
+          <Link
+            href="/community"
+            className="text-sm font-medium text-slate-600 transition-colors hover:text-[#1E1B4B]"
+          >
+            Community
+          </Link>
+        </nav>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/auth/signup?role=MENTOR"
+            className="hidden rounded-full border border-violet-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#1E1B4B] transition hover:border-violet-300 hover:bg-violet-50 sm:inline-flex"
+          >
+            Become a Mentor
+          </Link>
+
+          <Link
+            href="/find-mentor"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#7C3AED] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_30px_-16px_rgba(124,58,237,0.65)] transition hover:-translate-y-0.5 hover:bg-[#6D28D9] hover:shadow-[0_14px_34px_-16px_rgba(124,58,237,0.72)]"
+          >
+            <span className="hidden sm:inline">
+              Find My Senior Friend
             </span>
-            <span class="hero-line hero-line-accent">
-              <span class="hero-word hero-word-accent hero-word-gradient" style="--word-delay: 0.7s">
-                together.
+            <span className="sm:hidden">Find a Mentor</span>
+            <ArrowRight className="size-4 shrink-0" />
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function HeroSection({
+  snapshot,
+}: {
+  snapshot: PublicPlatformSnapshot;
+}) {
+  const previewMentors = snapshot.featuredMentors.slice(0, 3);
+  const startingPrice = getStartingPrice(snapshot);
+
+  const colleges = [
+    "IIT Bombay",
+    "IIT Madras",
+    "IIT Delhi",
+    "AIIMS",
+    "NIT Trichy",
+    "BITS Pilani",
+    "IIM Bangalore",
+    "NLU Delhi",
+  ];
+
+  return (
+    <section
+      id="top"
+      className="relative overflow-hidden border-b border-violet-100/70 bg-[#FAF5FF]"
+    >
+      {/* Ambient background */}
+      <div
+        className="pointer-events-none absolute -left-32 top-0 h-[28rem] w-[28rem] rounded-full bg-[#7C3AED]/10 blur-[110px]"
+        aria-hidden="true"
+      />
+
+      <div
+        className="pointer-events-none absolute -right-32 top-20 h-[32rem] w-[32rem] rounded-full bg-[#EC4899]/10 blur-[120px]"
+        aria-hidden="true"
+      />
+
+      <div
+        className="pointer-events-none absolute left-1/2 top-[45%] h-[24rem] w-[24rem] -translate-x-1/2 rounded-full bg-[#F97316]/[0.06] blur-[110px]"
+        aria-hidden="true"
+      />
+
+      <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-14 sm:px-6 sm:pb-20 sm:pt-18 lg:px-8 lg:pb-24 lg:pt-20">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+          {/* Hero copy */}
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/70 px-3.5 py-2 text-xs font-semibold text-[#6D28D9] shadow-[0_8px_30px_-24px_rgba(124,58,237,0.7)] backdrop-blur-xl">
+              <span
+                className="size-1.5 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#EC4899]"
+                aria-hidden="true"
+              />
+              Your senior friend for every big decision
+            </div>
+
+            <h1 className="mt-7 max-w-4xl text-balance text-5xl font-extrabold leading-[0.98] tracking-[-0.055em] text-[#1E1B4B] sm:text-6xl lg:text-[5.2rem]">
+              Find your mantra.
+              <span className="block">Find your</span>
+              <span className="mt-1 block bg-gradient-to-r from-[#7C3AED] via-[#EC4899] to-[#F97316] bg-clip-text text-transparent">
+                mentor.
               </span>
-            </span>
-          </h1>
+            </h1>
 
-          <p class="hero-subheading reveal-item" style="--reveal-delay: 0.92s">
-            Connect with a college senior who recently cracked the same exams,
-            chose the same stream, and came out the other side. One honest
-            conversation changes everything.
-          </p>
+            <p className="mt-7 max-w-xl text-base leading-7 text-[#4B5875] sm:text-lg sm:leading-8">
+              One honest conversation can change everything. Talk to a
+              college senior who has recently walked the same road and can
+              help you choose with more clarity.
+            </p>
 
-          <div class="hero-actions reveal-item" style="--reveal-delay: 1.04s">
-            <a class="btn btn-hero-primary" href="/find-mentor">Find My Senior Friend →</a>
-            <a class="btn btn-hero-secondary" href="/auth/signup?role=MENTOR">Become a Mentor — Earn ₹15K+/month</a>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/find-mentor"
+                className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#7C3AED] px-6 text-sm font-semibold text-white shadow-[0_16px_36px_-18px_rgba(124,58,237,0.72)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#6D28D9]"
+              >
+                Find My Senior Friend
+                <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </Link>
+
+              <Link
+                href="/auth/signup?role=MENTOR"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-violet-200 bg-white/75 px-6 text-sm font-semibold text-[#1E1B4B] shadow-sm backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white"
+              >
+                Become a Mentor
+              </Link>
+            </div>
+
+            <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#667085]">
+              <span className="font-semibold text-[#7C3AED]">
+                {startingPrice} / session
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>Free {snapshot.introMinutes}-min intro</span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {formatNumber(snapshot.totalMentors)} verified mentors
+              </span>
+            </div>
           </div>
 
-          <p class="hero-proof reveal-item" style="--reveal-delay: 1.16s">
-            <span>₹249 avg session</span>
-            <span aria-hidden="true">·</span>
-            Free ${snapshot.introMinutes}-min intro
-            <span aria-hidden="true">·</span>
-            <span>500+ verified mentors</span>
-          </p>
-        </div>
+          {/* Mentor preview */}
+          <div className="relative mx-auto w-full max-w-xl">
+            <div
+              className="pointer-events-none absolute -inset-8 rounded-[2.5rem] bg-gradient-to-br from-[#7C3AED]/12 via-[#EC4899]/10 to-[#F97316]/8 blur-2xl"
+              aria-hidden="true"
+            />
 
-        <div class="hero-logo-panel reveal-item" style="--reveal-delay: 1.24s">
-          <p>Mentors from</p>
-          <div class="college-marquee" aria-label="Mentor colleges">
-            <div class="college-marquee-track">
-              <span>IIT Bombay</span>
-              <span>IIT Madras</span>
-              <span>IIT Delhi</span>
-              <span>AIIMS</span>
-              <span>NIT Trichy</span>
-              <span>BITS Pilani</span>
-              <span>IIM Bangalore</span>
-              <span>NLU Delhi</span>
-              <span aria-hidden="true">IIT Bombay</span>
-              <span aria-hidden="true">IIT Madras</span>
-              <span aria-hidden="true">IIT Delhi</span>
-              <span aria-hidden="true">AIIMS</span>
-              <span aria-hidden="true">NIT Trichy</span>
-              <span aria-hidden="true">BITS Pilani</span>
-              <span aria-hidden="true">IIM Bangalore</span>
-              <span aria-hidden="true">NLU Delhi</span>
+            <div className="relative rounded-[2rem] border border-white/80 bg-white/70 p-5 shadow-[0_28px_80px_-38px_rgba(30,27,75,0.30)] backdrop-blur-2xl sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7C3AED]">
+                    Start with someone who has been there
+                  </p>
+
+                  <h2 className="mt-2 text-xl font-bold tracking-tight text-[#1E1B4B]">
+                    Find a mentor who gets it.
+                  </h2>
+                </div>
+
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-violet-100 bg-white/90 text-[#7C3AED] shadow-sm">
+                  <HeartHandshake className="size-5" />
+                </div>
+              </div>
+
+              {previewMentors.length > 0 ? (
+                <div className="mt-6 space-y-3">
+                  {previewMentors.map((mentor) => {
+                    const group = getMentorGroup(mentor);
+
+                    return (
+                      <Link
+                        key={mentor.username ?? mentor.name}
+                        href={
+                          mentor.username
+                            ? `/mentor/${encodeURIComponent(
+                                mentor.username,
+                              )}`
+                            : "/find-mentor"
+                        }
+                        className="group flex items-center gap-3 rounded-2xl border border-slate-100/90 bg-white/85 p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:shadow-[0_12px_28px_-22px_rgba(124,58,237,0.45)]"
+                      >
+                        <div
+                          className={`flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                            group === "school"
+                              ? "bg-violet-100 text-[#7C3AED]"
+                              : "bg-orange-100 text-orange-700"
+                          }`}
+                        >
+                          {getMentorInitials(mentor.name)}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-sm font-semibold text-[#1E1B4B]">
+                              {mentor.name}
+                            </p>
+
+                            {mentor.totalReviews > 0 && (
+                              <ShieldCheck className="size-3.5 shrink-0 text-emerald-500" />
+                            )}
+                          </div>
+
+                          <p className="truncate text-xs text-slate-500">
+                            {getMentorContext(mentor)}
+                          </p>
+
+                          <p className="mt-1 text-xs font-medium text-[#7C3AED]">
+                            {getMentorTopic(mentor)}
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-[#1E1B4B]">
+                            {getMentorPrice(mentor)}
+                          </p>
+
+                          <p className="mt-1 text-[11px] text-slate-400">
+                            {getMentorProof(mentor)}
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+
+                  <Link
+                    href="/find-mentor"
+                    className="group flex min-h-11 items-center justify-between rounded-2xl border border-dashed border-violet-200 bg-white/55 px-4 text-sm font-semibold text-[#7C3AED] backdrop-blur transition hover:bg-violet-50/70"
+                  >
+                    Explore all mentors
+                    <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-6 rounded-2xl border border-dashed border-violet-200 bg-violet-50/60 p-6">
+                  <p className="text-sm font-semibold text-[#1E1B4B]">
+                    Mentor profiles are opening now.
+                  </p>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Search the mentor network and see who is currently live.
+                  </p>
+
+                  <Link
+                    href="/find-mentor"
+                    className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#1E1B4B] px-4 text-sm font-semibold text-white transition hover:bg-[#312E81]"
+                  >
+                    Find a mentor
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div class="hero-stat-row reveal-item" style="--reveal-delay: 1.32s">
-          <article>
-            <strong>500+</strong>
-            <span>Verified Mentors</span>
-          </article>
-          <article>
-            <strong>10,000+</strong>
-            <span>Students Guided</span>
-          </article>
-          <article>
-            <strong>₹249</strong>
-            <span>Average Session Price</span>
-          </article>
-        </div>
-
-        <div class="hero-preview-section reveal-item" style="--reveal-delay: 1.4s">
-          <div class="hero-preview-head">
-            <p>Start with someone who has been there recently.</p>
-            <a href="/find-mentor">Find a mentor →</a>
-          </div>
-          <div class="hero-preview-strip">
-            ${buildHeroMentorPreviewStrip(snapshot)}
-            <a class="hero-preview-end" href="/find-mentor">Find a mentor →</a>
-          </div>
-        </div>
-      </div>
-    </section>
-  `.trim();
-}
-
-function buildProblemSection(snapshot: PublicPlatformSnapshot) {
-  const { totalMentors, totalStudents, completedSessions, minPrice } = snapshot;
-  type PlatformStat =
-    | {
-        value: string;
-        label: string;
-        tone: "metric";
-        counterValue: number;
-        suffix?: string;
-        prefix?: string;
-      }
-    | {
-        value: string;
-        label: string;
-        tone: "status";
-      };
-
-  const problemHighlights = [
-    {
-      title: "Narrow exposure",
-      copy: "Most students hear only a small set of career paths from school, family, or coaching circles.",
-    },
-    {
-      title: "Pressure-led choices",
-      copy: "Stream and college decisions often get shaped by pressure before students understand their own fit.",
-    },
-    {
-      title: "Thin guidance access",
-      copy: "One-to-one guidance is still hard to find at the moment when students need it most.",
-    },
-    {
-      title: "Late clarity",
-      copy: "Students usually discover the right questions only after deadlines, forms, or opportunities have already passed.",
-    },
-  ];
-
-  const platformStats: PlatformStat[] = [
-    {
-      value: formatNumber(totalMentors),
-      label: "Verified mentors",
-      tone: "metric",
-      counterValue: totalMentors,
-    },
-    {
-      value: formatNumber(totalStudents),
-      label: "Students onboarded",
-      tone: "metric",
-      counterValue: totalStudents,
-    },
-    {
-      value: formatNumber(completedSessions),
-      label: "Sessions completed",
-      tone: "metric",
-      counterValue: completedSessions,
-    },
-    minPrice > 0
-      ? {
-          value: formatCurrency(minPrice),
-          label: "Starting price per session",
-          tone: "metric",
-          counterValue: minPrice,
-          prefix: "₹",
-        }
-      : {
-          value: "Not listed",
-          label: "Starting price per session",
-          tone: "status",
-        },
-  ];
-
-  return `
-    <section class="problem-section section" id="problem">
-      <div class="problem-inner">
-        <div class="problem-head">
-          <p class="section-kicker">The Problem</p>
-          <h2>India's students are navigating blind</h2>
-        </div>
-
-        <div class="problem-grid">
-          ${problemHighlights
-            .map(
-              (highlight) => `
-            <article class="problem-card problem-card--issue">
-              <p class="problem-stat problem-stat--issue-title">${highlight.title}</p>
-              <p class="problem-copy">${highlight.copy}</p>
-            </article>
-          `,
-            )
-            .join("\n")}
-        </div>
-
-        <div class="platform-stats-divider">
-          <span>Our Live Progress</span>
-        </div>
-
-        <div class="problem-grid platform-stats-grid">
-          ${platformStats
-            .map((stat) => {
-              const counterAttributes =
-                stat.tone === "metric"
-                  ? ` data-counter data-value="${stat.counterValue}"${stat.prefix ? ` data-prefix="${stat.prefix}"` : ""}${stat.suffix ? ` data-suffix="${stat.suffix}"` : ""}`
-                  : "";
-              const statClassName =
-                stat.tone === "metric"
-                  ? "problem-stat problem-stat--live"
-                  : "problem-stat problem-stat--status";
-
-              return `
-            <article class="problem-card platform-card">
-              <p class="${statClassName}"${counterAttributes}>
-                ${stat.value}
+        {/* Crawling college marquee */}
+        <div className="relative mt-14 overflow-hidden rounded-[1.75rem] border border-violet-100/80 bg-white/60 py-5 shadow-[0_12px_40px_-30px_rgba(30,27,75,0.25)] backdrop-blur-xl sm:mt-16">
+          <div className="flex items-center gap-5 px-5 sm:px-6">
+            <div className="z-10 shrink-0 border-r border-violet-100 pr-5 sm:pr-7">
+              <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.2em] text-[#7C3AED]">
+                Mentors from
               </p>
-              <p class="problem-copy">${stat.label}</p>
-            </article>
-          `;
-            })
-            .join("\n")}
-        </div>
-      </div>
-    </section>
-  `.trim();
-}
+            </div>
 
+            <div className="relative min-w-0 flex-1 overflow-hidden">
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-white/80 to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-white/80 to-transparent" />
 
-function buildMentorsSection(snapshot: PublicPlatformSnapshot) {
-  return `
-    <section class="mentors-section section" id="mentors">
-      <div class="section-head mentors-head">
-        <p class="section-kicker">Meet Your Mentors</p>
-        <h2>Real students. Real experience. Real guidance.</h2>
-        <p>
-          Every mentor on GuideMe recently lived the exact decisions you're
-          facing.
-        </p>
-      </div>
-
-      <div class="mentor-filter-row" role="group" aria-label="Mentor filters">
-        <button
-          class="mentor-filter is-active"
-          type="button"
-          data-mentor-filter="school"
-          aria-pressed="true"
-        >
-          For School Students
-        </button>
-        <button
-          class="mentor-filter is-active"
-          type="button"
-          data-mentor-filter="ug"
-          aria-pressed="true"
-        >
-          For UG Students
-        </button>
-      </div>
-
-      <div class="mentor-carousel-shell">
-        <div class="mentor-carousel" data-mentor-carousel>
-          ${buildMentorCarouselMarkup(snapshot)}
-        </div>
-      </div>
-    </section>
-  `.trim();
-}
-
-function buildTestimonialsSection(snapshot: PublicPlatformSnapshot) {
-  return `
-    <section class="testimonials-section section" id="testimonials">
-      <div class="section-head testimonials-head">
-        <p class="section-kicker">Testimonials</p>
-        <h2>Students who found clarity</h2>
-      </div>
-
-      <div class="testimonials-masonry">
-        ${buildTestimonialsMarkup(snapshot)}
-      </div>
-    </section>
-  `.trim();
-}
-
-function buildPricingSection(snapshot: PublicPlatformSnapshot) {
-  return `
-    <section class="pricing-section section" id="pricing">
-      <div class="section-head pricing-head">
-        <p class="section-kicker">Pricing</p>
-        <h2>Pay only for what you need. No subscriptions.</h2>
-        <p>
-          Students start with a free intro, then book current mentor pricing pulled
-          from active verified profiles.
-        </p>
-      </div>
-
-      <div class="pricing-grid">
-        <article class="pricing-card pricing-card--teal">
-          <div class="pricing-card-top">
-            <p class="pricing-tier">Free intro</p>
-            <p class="pricing-range">Free ${snapshot.introMinutes}-min call <span>/ first chat</span></p>
-            <p class="pricing-college">Start with zero commitment</p>
-          </div>
-          <p class="pricing-fit">Best for: first-time students who need clarity before booking.</p>
-          <ul class="pricing-features">
-            <li>Meet the mentor first</li>
-            <li>Share your current confusion</li>
-            <li>Check communication fit</li>
-            <li>Decide next steps calmly</li>
-          </ul>
-        </article>
-
-        <article class="pricing-card pricing-card--popular">
-          <div class="pricing-card-banner">
-            <span class="pricing-badge">LIVE AVERAGE</span>
-          </div>
-          <div class="pricing-card-top">
-            <p class="pricing-tier">Typical paid session</p>
-            <p class="pricing-range" data-live-typical-price>${buildTypicalPriceMarkup(snapshot)}</p>
-            <p class="pricing-college">Based on captured platform bookings</p>
-          </div>
-          <p class="pricing-fit">Best for: the current center of paid mentor demand on GuideMe.</p>
-          <ul class="pricing-features">
-            <li>Reflects real paid sessions</li>
-            <li>Updates from current platform data</li>
-            <li>No fake showcase pricing</li>
-            <li>Helps students budget realistically</li>
-            <li>Tracks mentor demand over time</li>
-            <li>Aligned with live checkout data</li>
-          </ul>
-        </article>
-
-        <article class="pricing-card pricing-card--amber">
-          <div class="pricing-card-top">
-            <p class="pricing-tier">Current live range</p>
-            <p class="pricing-range" data-live-price-band>${buildLivePriceBandMarkup(snapshot)}</p>
-            <p class="pricing-college">Across all active verified mentor profiles</p>
-          </div>
-          <p class="pricing-fit">Best for: understanding the full spread of available mentor pricing.</p>
-          <ul class="pricing-features">
-            <li>Low-end and top-end live price points</li>
-            <li>Built from current mentor profiles</li>
-            <li>Useful for comparing mentor tiers</li>
-            <li>Helps set student expectations</li>
-            <li>Changes as new mentors join</li>
-            <li>Reflects the current public network</li>
-            <li>No manual range updates needed</li>
-          </ul>
-        </article>
-      </div>
-
-      <div class="revenue-split-block">
-        <div class="revenue-split-track" data-revenue-split>
-          <div class="revenue-split-fill revenue-split-fill--mentor">
-            <span>Mentor 80%</span>
-          </div>
-          <div class="revenue-split-fill revenue-split-fill--platform">
-            <span>Platform 20%</span>
-          </div>
-        </div>
-        <p class="revenue-split-note" data-live-revenue-note>
-          ${escapeHtml(buildRevenueNoteText(snapshot))}
-        </p>
-      </div>
-    </section>
-  `.trim();
-}
-
-function buildMentorIncomeSection(snapshot: PublicPlatformSnapshot) {
-  const calculator = getCalculatorPriceInputs(snapshot);
-  const monthlyEstimate = estimateMonthlyEarnings(4, calculator.value);
-
-  return `
-    <section class="mentor-income-section section" id="for-mentors">
-      <div class="mentor-income-layout">
-        <div class="mentor-income-content">
-          <p class="section-kicker">FOR MENTORS</p>
-          <h2>Turn your experience into income</h2>
-          <p class="mentor-income-subheading">
-            You just cracked JEE/NEET/CAT. That knowledge is worth
-            something. Help the next batch — and earn real money doing it.
-          </p>
-
-          <div class="mentor-benefit-list">
-            <article class="mentor-benefit-card">
-              <div class="mentor-benefit-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M12 3v18" />
-                  <path d="M16 7.2c0-1.8-1.8-3.2-4-3.2s-4 1.4-4 3.2 1.2 2.7 4 3.3 4 1.4 4 3.4-1.8 3.3-4 3.3-4-1.5-4-3.3" />
-                </svg>
-              </div>
-              <div>
-                <h3 data-live-income-range>${escapeHtml(buildIncomeRangeText(snapshot))}</h3>
-                <p>Based on 3-5 sessions a week at current live booking values.</p>
-              </div>
-            </article>
-
-            <article class="mentor-benefit-card">
-              <div class="mentor-benefit-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M12 3.5 4.5 7v5.2c0 4.4 3 8.5 7.5 9.8 4.5-1.3 7.5-5.4 7.5-9.8V7L12 3.5Z" />
-                  <path d="m9.2 12.1 1.9 1.9 3.9-4.1" />
-                </svg>
-              </div>
-              <div>
-                <h3>Build your resume</h3>
-                <p>
-                  Verified mentorship certificate after 10 sessions. Real
-                  LinkedIn value.
-                </p>
-              </div>
-            </article>
-
-            <article class="mentor-benefit-card">
-              <div class="mentor-benefit-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M7 10.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-                  <path d="M17 10.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-                  <path d="M12 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-                  <path d="M9.5 8.6 10.8 9.4" />
-                  <path d="m14.5 8.6-1.3.8" />
-                  <path d="m10.8 14.6-1.3.8" />
-                  <path d="m13.2 14.6 1.3.8" />
-                </svg>
-              </div>
-              <div>
-                <h3>Join the community</h3>
-                <p>
-                  Private mentor network. Weekly leaderboard. Monthly
-                  rewards.
-                </p>
-              </div>
-            </article>
-          </div>
-        </div>
-
-        <div class="mentor-calc-stage">
-          <div class="mentor-calc-orb mentor-calc-orb--teal" aria-hidden="true"></div>
-          <div class="mentor-calc-orb mentor-calc-orb--amber" aria-hidden="true"></div>
-
-          <div class="mentor-calc-shell">
-            <div class="mentor-calc-widget">
-              <p class="panel-label">Earnings Calculator</p>
-
-              <label class="mentor-range-field">
-                <span class="mentor-range-label">Sessions per week</span>
-                <div class="mentor-range-meta">
-                  <span>Consistency</span>
-                  <output data-sessions-output>4</output>
+              <div
+                className="mentra-college-marquee"
+                aria-label={`Mentors from ${colleges.join(", ")}`}
+              >
+                <div className="mentra-college-marquee-track">
+                  {[...colleges, ...colleges].map((college, index) => (
+                    <span
+                      key={`${college}-${index}`}
+                      className="inline-flex shrink-0 items-center gap-4 whitespace-nowrap text-sm font-semibold text-slate-500"
+                    >
+                      {college}
+                      <span
+                        className="size-1 rounded-full bg-violet-200"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  ))}
                 </div>
-                <input
-                  class="mentor-range-input"
-                  type="range"
-                  min="1"
-                  max="10"
-                  step="1"
-                  value="4"
-                  data-sessions-range
-                />
-              </label>
-
-              <label class="mentor-range-field">
-                <span class="mentor-range-label">Avg session price</span>
-                <div class="mentor-range-meta">
-                  <span>Current live range</span>
-                  <output data-price-output>${formatCurrency(calculator.value)}</output>
-                </div>
-                <input
-                  class="mentor-range-input"
-                  type="range"
-                  min="${calculator.min}"
-                  max="${calculator.max}"
-                  step="10"
-                  value="${calculator.value}"
-                  data-price-range
-                />
-              </label>
-
-              <div class="mentor-calc-total">
-                <p>You earn</p>
-                <p class="mentor-calc-amount" data-monthly-earnings aria-live="polite">
-                  ${formatCurrency(monthlyEstimate)} per month
-                </p>
-                <p class="mentor-calc-note">
-                  Estimate uses the current live mentor pricing band and assumes
-                  steady weekly bookings.
-                </p>
               </div>
-
-              <a class="btn btn-mentor-apply" href="/auth/signup?role=MENTOR">
-                Apply to Become a Mentor →
-              </a>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="mentor-guarantee-strip">
-        Current mentor demand and pricing update automatically as profiles,
-        bookings, and public sessions go live.
-      </div>
     </section>
-  `.trim();
+  );
 }
 
-function buildSiteCtaSection(snapshot: PublicPlatformSnapshot) {
-  return `
-    <section class="site-cta" id="cta">
-      <div class="site-cta-shell">
-        <div class="site-cta-orb" aria-hidden="true"></div>
+function TrustStrip({
+  snapshot,
+}: {
+  snapshot: PublicPlatformSnapshot;
+}) {
+  return (
+    <section className="relative z-10 -mt-1 bg-[#FAF5FF] px-4 pb-2 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="overflow-hidden rounded-[1.5rem] border border-white/80 bg-white/75 shadow-[0_20px_60px_-40px_rgba(30,27,75,0.28)] backdrop-blur-xl">
+          <div className="grid grid-cols-2 divide-x divide-violet-100 sm:grid-cols-4">
+            <div className="px-4 py-6 sm:px-7 sm:py-7">
+              <p className="text-2xl font-bold tracking-[-0.03em] text-[#7C3AED]">
+                {formatNumber(snapshot.totalMentors)}
+              </p>
 
-        <div class="site-cta-content">
-          <p class="eyebrow site-cta-eyebrow">YOUR CLARITY IS ONE CONVERSATION AWAY</p>
-          <h2 class="site-cta-title">Find the senior friend you never had.</h2>
+              <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
+                Verified mentors
+              </p>
+            </div>
 
-          <div class="site-cta-actions">
-            <a class="btn btn-primary site-cta-primary" href="/find-mentor">Find My Mentor →</a>
-            <a class="btn btn-ghost site-cta-ghost" href="/auth/signup?role=MENTOR">Become a Mentor</a>
+            <div className="px-4 py-6 sm:px-7 sm:py-7">
+              <p className="text-2xl font-bold tracking-[-0.03em] text-[#7C3AED]">
+                {formatNumber(snapshot.totalStudents)}
+              </p>
+
+              <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
+                Students onboarded
+              </p>
+            </div>
+
+            <div className="border-t border-violet-100 px-4 py-6 sm:border-t-0 sm:px-7 sm:py-7">
+              <p className="text-2xl font-bold tracking-[-0.03em] text-[#7C3AED]">
+                {formatNumber(snapshot.completedSessions)}
+              </p>
+
+              <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
+                Sessions completed
+              </p>
+            </div>
+
+            <div className="border-t border-violet-100 px-4 py-6 sm:border-t-0 sm:px-7 sm:py-7">
+              <p className="text-2xl font-bold tracking-[-0.03em] text-[#7C3AED]">
+                {snapshot.introMinutes} min
+              </p>
+
+              <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
+                Free intro conversation
+              </p>
+            </div>
           </div>
-
-          <p class="site-cta-proof">
-            <span data-live-intro-copy>Free ${snapshot.introMinutes}-min intro call</span>
-            <span aria-hidden="true">·</span>
-            No commitment
-            <span aria-hidden="true">·</span>
-            <span data-live-floor-price>${escapeHtml(buildFloorPriceText(snapshot))}</span>
-          </p>
         </div>
       </div>
     </section>
-  `.trim();
+  );
 }
 
-function replaceLegacyBlock(source: string, pattern: RegExp, replacement: string) {
-  if (!pattern.test(source)) {
-    throw new Error(`Could not replace legacy block for pattern: ${pattern.source}`);
-  }
+function ProblemSection() {
+  const items = [
+    {
+      number: "01",
+      title: "Narrow exposure",
+      copy:
+        "Students often hear only a small set of options from school, family, or coaching circles.",
+    },
+    {
+      number: "02",
+      title: "Pressure-led choices",
+      copy:
+        "Stream and college decisions can get shaped by pressure before students understand their own fit.",
+    },
+    {
+      number: "03",
+      title: "Thin guidance access",
+      copy:
+        "One-to-one guidance is difficult to find exactly when students need it most.",
+    },
+    {
+      number: "04",
+      title: "Late clarity",
+      copy:
+        "The right questions often appear after important forms, deadlines, or decisions have already passed.",
+    },
+  ];
 
-  pattern.lastIndex = 0;
-  return source.replace(pattern, replacement);
+  return (
+    <section
+      id="how-it-works"
+      className="bg-white py-20 sm:py-24 lg:py-28"
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <div className="max-w-xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#7C3AED]">
+              The problem
+            </p>
+
+            <h2 className="mt-4 text-3xl font-bold leading-tight tracking-[-0.04em] text-[#1E1B4B] sm:text-4xl lg:text-5xl">
+              Big decisions are easier when someone has already been there.
+            </h2>
+
+            <p className="mt-5 text-base leading-7 text-[#5B6475]">
+              Mentra exists for the moment when students need more than
+              generic advice and less than a giant career-consulting process.
+            </p>
+          </div>
+
+          <div className="grid gap-px overflow-hidden rounded-[2rem] border border-violet-100 bg-violet-100 shadow-[0_20px_60px_-45px_rgba(30,27,75,0.25)] sm:grid-cols-2">
+            {items.map((item, index) => (
+              <article
+                key={item.number}
+                className={`group bg-white p-6 sm:p-7 ${
+                  index < 2 ? "border-b border-violet-100 sm:border-b-0" : ""
+                } ${
+                  index % 2 === 0 ? "sm:border-r sm:border-violet-100" : ""
+                } ${
+                  index >= 2 ? "border-t border-violet-100 sm:border-t-0" : ""
+                } transition duration-200 hover:bg-[#FAF5FF]`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <span className="text-3xl font-bold tracking-[-0.04em] text-violet-200 transition-colors duration-200 group-hover:text-violet-300">
+                    {item.number}
+                  </span>
+
+                  <ArrowRight className="size-4 text-slate-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[#7C3AED]" />
+                </div>
+
+                <h3 className="mt-10 text-lg font-semibold tracking-tight text-[#1E1B4B]">
+                  {item.title}
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-slate-500">
+                  {item.copy}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
-async function getLegacyMarkup(snapshot: PublicPlatformSnapshot) {
-  const html = await readLegacyFile("index.html");
-  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+function MentorsSection({
+  snapshot,
+}: {
+  snapshot: PublicPlatformSnapshot;
+}) {
+  return (
+    <section
+      id="mentors"
+      className="relative overflow-hidden bg-[#FAF5FF] py-20 sm:py-24 lg:py-28"
+    >
+      <div
+        className="pointer-events-none absolute right-0 top-0 h-80 w-80 rounded-full bg-[#EC4899]/[0.07] blur-[100px]"
+        aria-hidden="true"
+      />
 
-  if (!bodyMatch) {
-    throw new Error("Could not locate legacy landing page body markup.");
-  }
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 h-72 w-72 rounded-full bg-[#7C3AED]/[0.06] blur-[100px]"
+        aria-hidden="true"
+      />
 
-  let markup = bodyMatch[1]
-    .replace(/\s*<script\s+src="script\.js"><\/script>\s*/i, "")
-    .trim();
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#7C3AED]">
+              Meet your mentors
+            </p>
 
-  markup = replaceLegacyBlock(
-    markup,
-    /<section class="hero" id="top">[\s\S]*?<\/section>/,
-    buildHeroSection(snapshot),
-  );
-  markup = replaceLegacyBlock(
-    markup,
-    /<section class="problem-section section" id="problem">[\s\S]*?<\/section>/,
-    buildProblemSection(snapshot),
-  );
-  markup = replaceLegacyBlock(
-    markup,
-    /<section class="mentors-section section" id="mentors">[\s\S]*?<\/section>/,
-    buildMentorsSection(snapshot),
-  );
-  markup = replaceLegacyBlock(
-    markup,
-    /<section class="testimonials-section section" id="testimonials">[\s\S]*?<\/section>/,
-    buildTestimonialsSection(snapshot),
-  );
-  markup = replaceLegacyBlock(
-    markup,
-    /<section class="pricing-section section" id="pricing">[\s\S]*?<\/section>/,
-    buildPricingSection(snapshot),
-  );
-  markup = replaceLegacyBlock(
-    markup,
-    /<section class="mentor-income-section section" id="for-mentors">[\s\S]*?<\/section>/,
-    buildMentorIncomeSection(snapshot),
-  );
-  markup = replaceLegacyBlock(
-    markup,
-    /<section class="site-cta" id="cta">[\s\S]*?<\/section>/,
-    buildSiteCtaSection(snapshot),
-  );
-  markup = markup
-    .replace(/\s*<section class="section" id="tokens">[\s\S]*?<\/section>/, "")
-    .replace(/\s*<section class="section" id="type">[\s\S]*?<\/section>/, "")
-    .replace(/\s*<section class="section" id="components">[\s\S]*?<\/section>/, "")
-    .replace(/\s*<section class="section" id="atmosphere">[\s\S]*?<\/section>/, "");
-  markup = markup.replace(/© 2025 GuideMe/g, `© ${new Date().getFullYear()} GuideMe`);
+            <h2 className="mt-4 text-3xl font-bold leading-tight tracking-[-0.04em] text-[#1E1B4B] sm:text-4xl">
+              Real students. Real experience. Real guidance.
+            </h2>
 
-  return markup;
+            <p className="mt-4 text-base leading-7 text-[#5B6475]">
+              Every live mentor brings recent, relevant experience to the
+              decisions students are trying to make right now.
+            </p>
+          </div>
+
+          <Link
+            href="/find-mentor"
+            className="group inline-flex min-h-11 items-center gap-2 self-start rounded-full border border-violet-200 bg-white/80 px-5 text-sm font-semibold text-[#7C3AED] shadow-sm backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white lg:self-auto"
+          >
+            Explore mentors
+            <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+
+        {snapshot.featuredMentors.length > 0 ? (
+          <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {snapshot.featuredMentors.slice(0, 8).map((mentor) => {
+              const group = getMentorGroup(mentor);
+
+              return (
+                <article
+                  key={mentor.username ?? mentor.name}
+                  className="group flex flex-col rounded-[1.75rem] border border-violet-100 bg-white p-5 shadow-[0_12px_40px_-32px_rgba(30,27,75,0.30)] transition duration-200 hover:-translate-y-1 hover:border-violet-200 hover:shadow-[0_24px_55px_-32px_rgba(124,58,237,0.32)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div
+                      className={`flex size-12 items-center justify-center rounded-2xl text-sm font-bold ${
+                        group === "school"
+                          ? "bg-violet-50 text-[#7C3AED]"
+                          : "bg-orange-50 text-orange-700"
+                      }`}
+                    >
+                      {getMentorInitials(mentor.name)}
+                    </div>
+
+                    <div className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700">
+                      {mentor.availableThisWeek ? "Available" : "Profile live"}
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <p className="truncate text-[11px] font-semibold uppercase tracking-[0.13em] text-[#7C3AED]">
+                      {mentor.college ?? "Mentra mentor"}
+                    </p>
+
+                    <h3 className="mt-2 line-clamp-2 text-lg font-semibold tracking-tight text-[#1E1B4B]">
+                      {mentor.name}
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      {getMentorContext(mentor)}
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {[mentor.examLabels[0], mentor.topicLabels[0]]
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((label) => (
+                          <span
+                            key={label}
+                            className="rounded-full bg-violet-50 px-3 py-1.5 text-[11px] font-medium text-[#6D28D9]"
+                          >
+                            {label}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-auto pt-6">
+                    <div className="flex items-end justify-between gap-3 border-t border-slate-100 pt-4">
+                      <div>
+                        <p className="text-sm font-bold text-[#1E1B4B]">
+                          {getMentorPrice(mentor)}
+                          {mentor.priceMin && mentor.priceMin > 0 && (
+                            <span className="ml-1 text-xs font-medium text-slate-400">
+                              / session
+                            </span>
+                          )}
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-400">
+                          {getMentorProof(mentor)}
+                        </p>
+                      </div>
+
+                      <Link
+                        href={
+                          mentor.username
+                            ? `/mentor/${encodeURIComponent(
+                                mentor.username,
+                              )}`
+                            : "/find-mentor"
+                        }
+                        className="inline-flex size-10 items-center justify-center rounded-full bg-[#1E1B4B] text-white transition duration-200 group-hover:bg-[#7C3AED]"
+                        aria-label={`View ${mentor.name}'s profile`}
+                      >
+                        <ArrowRight className="size-4" />
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mt-12 rounded-[1.75rem] border border-dashed border-violet-200 bg-white/80 p-10 text-center shadow-sm backdrop-blur">
+            <Users className="mx-auto size-8 text-[#7C3AED]" />
+
+            <h3 className="mt-4 text-lg font-semibold text-[#1E1B4B]">
+              Mentor profiles are opening now.
+            </h3>
+
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+              Browse the mentor marketplace as profiles become available.
+            </p>
+
+            <Link
+              href="/find-mentor"
+              className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#7C3AED] px-5 text-sm font-semibold text-white shadow-[0_10px_28px_-18px_rgba(124,58,237,0.65)] transition hover:-translate-y-0.5 hover:bg-[#6D28D9]"
+            >
+              Find a Mentor
+              <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
 
-async function getLegacyScript() {
-  const script = await readLegacyFile("script.js");
+function TestimonialsSection({
+  snapshot,
+}: {
+  snapshot: PublicPlatformSnapshot;
+}) {
+  const reviews = snapshot.reviewSpotlights.slice(0, 6);
 
-  return `
-    (() => {
-      const root = document.querySelector("[data-guideme-landing]");
+  return (
+    <section
+      id="testimonials"
+      className="relative overflow-hidden bg-white py-20 sm:py-24 lg:py-28"
+    >
+      <div
+        className="pointer-events-none absolute left-1/2 top-20 h-80 w-80 -translate-x-1/2 rounded-full bg-violet-300/[0.08] blur-[110px]"
+        aria-hidden="true"
+      />
 
-      if (!root || root.dataset.legacyBound === "true") {
-        return;
-      }
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#7C3AED]">
+            Student stories
+          </p>
 
-      root.dataset.legacyBound = "true";
-      ${script}
-    })();
-  `;
+          <h2 className="mt-4 text-3xl font-bold tracking-[-0.04em] text-[#1E1B4B] sm:text-4xl">
+            Students who found clarity.
+          </h2>
+
+          <p className="mt-4 max-w-xl text-base leading-7 text-[#5B6475]">
+            The best proof is what happens after the conversation.
+          </p>
+        </div>
+
+        {reviews.length > 0 ? (
+          <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {reviews.map((review) => (
+              <article
+                key={`${review.studentFirstName}-${review.createdAt.toISOString()}`}
+                className="group relative overflow-hidden rounded-[1.75rem] border border-violet-100/80 bg-white/65 p-6 shadow-[0_20px_55px_-38px_rgba(30,27,75,0.30)] backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_26px_65px_-38px_rgba(124,58,237,0.30)]"
+              >
+                <div
+                  className="pointer-events-none absolute -right-10 -top-10 text-[9rem] font-serif leading-none text-violet-100/70"
+                  aria-hidden="true"
+                >
+                  “
+                </div>
+
+                <div className="relative">
+                  <div className="flex items-center gap-1 text-amber-500">
+                    {"★★★★★".slice(
+                      0,
+                      Math.max(1, Math.min(5, Math.round(review.rating))),
+                    )}
+                  </div>
+
+                  <p className="mt-6 text-[15px] leading-7 text-[#3D4A6B]">
+                    “
+                    {review.reviewText?.trim() ||
+                      `${review.studentFirstName} shared their experience after a Mentra session.`}
+                    ”
+                  </p>
+
+                  <div className="mt-8 flex items-center gap-3 border-t border-violet-100/80 pt-4">
+                    <div className="flex size-10 items-center justify-center rounded-full bg-violet-50 text-xs font-bold text-[#7C3AED]">
+                      {getReviewInitials(review)}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[#1E1B4B]">
+                        {review.studentFirstName}
+                        {review.studentCity
+                          ? `, ${review.studentCity}`
+                          : ""}
+                      </p>
+
+                      <p className="truncate text-xs text-slate-400">
+                        Mentored by {review.mentorName}
+                      </p>
+                    </div>
+
+                    <p className="ml-auto shrink-0 text-[11px] text-slate-400">
+                      {formatDate(review.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-12 rounded-[1.75rem] border border-dashed border-violet-200 bg-violet-50/40 p-10 text-center">
+            <p className="text-sm font-medium text-slate-600">
+              Public student reviews will appear here after the first
+              completed sessions.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PricingSection({
+  snapshot,
+}: {
+  snapshot: PublicPlatformSnapshot;
+}) {
+  const typicalPrice = getTypicalPrice(snapshot);
+  const priceRange = getPriceRange(snapshot);
+
+  const plans = [
+    {
+      label: "Free intro",
+      value: `Free ${snapshot.introMinutes}-min`,
+      description: "Start with zero commitment.",
+      features: [
+        "Meet the mentor first",
+        "Share your current confusion",
+        "Check communication fit",
+        "Decide next steps calmly",
+      ],
+      featured: false,
+    },
+    {
+      label: "Typical paid session",
+      value: typicalPrice,
+      description: "Current average from live platform data.",
+      features: [
+        "Real mentor pricing",
+        "No subscriptions",
+        "Book only when you need help",
+        "Clear session pricing",
+      ],
+      featured: true,
+    },
+    {
+      label: "Current live range",
+      value: priceRange,
+      description: "Across active mentor profiles.",
+      features: [
+        "Current public network",
+        "Compare mentor options",
+        "Pricing updates as profiles change",
+        "No manual range updates",
+      ],
+      featured: false,
+    },
+  ];
+
+  return (
+    <section
+      id="pricing"
+      className="relative overflow-hidden bg-[#FAF5FF] py-20 sm:py-24 lg:py-28"
+    >
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#7C3AED]/[0.06] blur-[120px]"
+        aria-hidden="true"
+      />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#7C3AED]">
+            Pricing
+          </p>
+
+          <h2 className="mt-4 text-3xl font-bold tracking-[-0.04em] text-[#1E1B4B] sm:text-4xl">
+            Pay only for what you need.
+          </h2>
+
+          <p className="mt-4 text-base leading-7 text-[#5B6475]">
+            Students start with a free intro and only pay when they decide a
+            longer session is useful.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-5 lg:grid-cols-3 lg:items-stretch">
+          {plans.map((plan) => (
+            <article
+              key={plan.label}
+              className={`relative flex flex-col rounded-[1.75rem] p-7 transition duration-200 sm:p-8 ${
+                plan.featured
+                  ? "border border-violet-300 bg-white shadow-[0_28px_70px_-40px_rgba(124,58,237,0.48)] lg:-translate-y-2"
+                  : "border border-violet-100 bg-white/80 shadow-sm backdrop-blur"
+              }`}
+            >
+              {plan.featured && (
+                <>
+                  <div
+                    className="pointer-events-none absolute -inset-px rounded-[1.75rem] bg-gradient-to-br from-[#7C3AED]/10 via-[#EC4899]/[0.06] to-[#F97316]/[0.04]"
+                    aria-hidden="true"
+                  />
+
+                  <div className="absolute right-6 top-6 rounded-full bg-violet-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#7C3AED]">
+                    Most chosen
+                  </div>
+                </>
+              )}
+
+              <div className="relative">
+                <p className="text-sm font-semibold text-[#7C3AED]">
+                  {plan.label}
+                </p>
+
+                <div className="mt-5 min-h-[48px] pr-16">
+                  <p className="text-3xl font-bold tracking-[-0.035em] text-[#1E1B4B]">
+                    {plan.value}
+                    {plan.featured && (
+                      <span className="ml-1 text-sm font-medium text-slate-400">
+                        / session
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <p className="mt-3 text-sm leading-6 text-slate-500">
+                  {plan.description}
+                </p>
+
+                <ul className="mt-7 space-y-3">
+                  {plan.features.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-start gap-2.5 text-sm text-[#4B5875]"
+                    >
+                      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-violet-50 text-[#7C3AED]">
+                        <Check className="size-3" />
+                      </span>
+
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                {plan.featured && (
+                  <Link
+                    href="/find-mentor"
+                    className="mt-8 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#7C3AED] text-sm font-semibold text-white shadow-[0_12px_30px_-18px_rgba(124,58,237,0.70)] transition hover:-translate-y-0.5 hover:bg-[#6D28D9]"
+                  >
+                    Find a mentor
+                    <ArrowRight className="size-4" />
+                  </Link>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MentorIncomeSection({
+  snapshot,
+}: {
+  snapshot: PublicPlatformSnapshot;
+}) {
+  const estimate = getMentorIncomeEstimate(snapshot);
+
+  return (
+    <section
+      id="for-mentors"
+      className="relative overflow-hidden bg-white py-20 sm:py-24 lg:py-28"
+    >
+      <div
+        className="pointer-events-none absolute -left-28 top-20 h-80 w-80 rounded-full bg-[#7C3AED]/[0.06] blur-[100px]"
+        aria-hidden="true"
+      />
+
+      <div
+        className="pointer-events-none absolute -right-24 bottom-10 h-72 w-72 rounded-full bg-[#EC4899]/[0.06] blur-[100px]"
+        aria-hidden="true"
+      />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+          <div className="max-w-xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#7C3AED]">
+              For mentors
+            </p>
+
+            <h2 className="mt-4 text-3xl font-bold leading-tight tracking-[-0.04em] text-[#1E1B4B] sm:text-4xl lg:text-5xl">
+              Turn your experience into income.
+            </h2>
+
+            <p className="mt-5 text-base leading-7 text-[#5B6475]">
+              You just figured something out that another student is about to
+              face. Share the path that worked for you and build meaningful
+              experience while doing it.
+            </p>
+
+            <div className="mt-8 space-y-4">
+              {[
+                "Help students make decisions with more context.",
+                "Build proof of communication and leadership.",
+                "Earn from sessions that fit your schedule.",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-start gap-3"
+                >
+                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-violet-50 text-[#7C3AED]">
+                    <Check className="size-3.5" />
+                  </span>
+
+                  <p className="text-sm leading-6 text-[#4B5875]">
+                    {item}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <Link
+              href="/auth/signup?role=MENTOR"
+              className="group mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-[#1E1B4B] px-6 text-sm font-semibold text-white shadow-[0_12px_30px_-20px_rgba(30,27,75,0.6)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#312E81]"
+            >
+              Apply to Become a Mentor
+              <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+
+          <div className="relative">
+            <div
+              className="pointer-events-none absolute -inset-8 rounded-[2.75rem] bg-gradient-to-br from-[#7C3AED]/10 via-[#EC4899]/[0.06] to-[#F97316]/[0.04] blur-2xl"
+              aria-hidden="true"
+            />
+
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/65 p-6 shadow-[0_30px_90px_-44px_rgba(30,27,75,0.35)] backdrop-blur-2xl sm:p-8">
+              <div className="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-gradient-to-br from-violet-300/20 via-pink-200/10 to-orange-200/5 blur-3xl" />
+
+              <div className="relative">
+                <div className="flex items-start justify-between gap-5">
+                  <div className="max-w-md">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7C3AED]">
+                      Earnings snapshot
+                    </p>
+
+                    <h3 className="mt-2 text-xl font-bold tracking-tight text-[#1E1B4B] sm:text-2xl">
+                      What consistent mentoring can look like
+                    </h3>
+                  </div>
+
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-violet-100 bg-white/90 text-[#7C3AED] shadow-sm">
+                    <GraduationCap className="size-5" />
+                  </div>
+                </div>
+
+                <div className="mt-8 rounded-[1.5rem] border border-violet-100/80 bg-white/90 p-6 shadow-sm">
+                  <p className="text-sm font-medium text-slate-500">
+                    Example at 4 sessions / week
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <p className="text-4xl font-bold tracking-[-0.04em] text-[#1E1B4B] sm:text-5xl">
+                      {formatCurrency(estimate)}
+                    </p>
+
+                    <span className="text-sm font-medium text-slate-400">
+                      / month
+                    </span>
+                  </div>
+
+                  <p className="mt-4 max-w-lg text-sm leading-6 text-slate-500">
+                    Estimate based on the current platform booking value and an
+                    80% mentor share.
+                  </p>
+
+                  <div className="mt-7 rounded-2xl bg-violet-50/80 p-4">
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+                      <span>Mentor share</span>
+                      <span className="text-[#7C3AED]">80%</span>
+                    </div>
+
+                    <div className="mt-3 h-3 overflow-hidden rounded-full bg-white shadow-inner">
+                      <div className="h-full w-[80%] rounded-full bg-gradient-to-r from-[#7C3AED] via-[#EC4899] to-[#F97316]" />
+                    </div>
+
+                    <div className="mt-3 flex justify-between text-[11px] text-slate-400">
+                      <span>Platform</span>
+                      <span>Mentor</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-start gap-3">
+                  <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <Check className="size-3.5" />
+                  </div>
+
+                  <p className="text-xs leading-5 text-slate-500">
+                    Actual earnings vary with session price, availability, and
+                    bookings.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCtaSection({
+  snapshot,
+}: {
+  snapshot: PublicPlatformSnapshot;
+}) {
+  return (
+    <section className="relative overflow-hidden bg-[#1E1B4B] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <div
+        className="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-[#7C3AED]/20 blur-[100px]"
+        aria-hidden="true"
+      />
+
+      <div
+        className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-[#EC4899]/15 blur-[110px]"
+        aria-hidden="true"
+      />
+
+      <div className="relative mx-auto max-w-5xl">
+        <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-white/[0.04] px-6 py-12 text-center shadow-[0_30px_90px_-50px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:px-10 sm:py-14">
+          <div
+            className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-[#EC4899]/50 to-transparent"
+            aria-hidden="true"
+          />
+
+          <div className="relative">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-200">
+              Your senior friend · your guide
+            </p>
+
+            <h2 className="mx-auto mt-5 max-w-3xl text-3xl font-bold leading-tight tracking-[-0.04em] text-white sm:text-4xl lg:text-5xl">
+              Find the person who can make your next decision clearer.
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-violet-100/70 sm:text-base">
+              Start with a free {snapshot.introMinutes}-minute conversation
+              and see whether the mentor feels right for you.
+            </p>
+
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link
+                href="/find-mentor"
+                className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-[#1E1B4B] shadow-[0_10px_30px_-18px_rgba(255,255,255,0.65)] transition duration-200 hover:-translate-y-0.5 hover:bg-violet-50"
+              >
+                Find My Senior Friend
+                <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </Link>
+
+              <Link
+                href="/auth/signup?role=MENTOR"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-6 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/10"
+              >
+                Become a Mentor
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HomepageFooter() {
+  return (
+    <footer className="border-t border-violet-100 bg-[#FAF5FF]">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+          <div>
+            <Link
+              href="/"
+              aria-label="Mentra home"
+              className="inline-flex w-[140px] items-center sm:w-[155px]"
+            >
+              <MentraLogo
+                variant="color"
+                size="sm"
+                className="w-full"
+              />
+            </Link>
+
+            <p className="mt-3 max-w-xs text-sm leading-6 text-slate-500">
+              Your senior friend · your guide.
+            </p>
+          </div>
+
+          <nav
+            aria-label="Footer navigation"
+            className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-slate-500"
+          >
+            <Link
+              href="/find-mentor"
+              className="transition-colors hover:text-[#1E1B4B]"
+            >
+              Find a Mentor
+            </Link>
+
+            <Link
+              href="#how-it-works"
+              className="transition-colors hover:text-[#1E1B4B]"
+            >
+              How it Works
+            </Link>
+
+            <Link
+              href="#pricing"
+              className="transition-colors hover:text-[#1E1B4B]"
+            >
+              Pricing
+            </Link>
+
+            <Link
+              href="#for-mentors"
+              className="transition-colors hover:text-[#1E1B4B]"
+            >
+              For Mentors
+            </Link>
+
+            <Link
+              href="/community"
+              className="transition-colors hover:text-[#1E1B4B]"
+            >
+              Community
+            </Link>
+          </nav>
+        </div>
+
+        <div className="mt-7 flex flex-col gap-3 border-t border-violet-100 pt-5 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} Mentra</p>
+
+          <div className="flex items-center gap-3">
+            <span>Privacy Policy</span>
+            <span aria-hidden="true">·</span>
+            <span>Terms of Service</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
 }
 
 export default async function Home() {
-  const [snapshot, reviews, legacyStyles, legacyScript] = await Promise.all([
+  const [snapshot, reviews] = await Promise.all([
     getPublicPlatformSnapshot(),
     getPublicReviewSpotlights(6),
-    readLegacyFile("styles.css"),
-    getLegacyScript(),
   ]);
 
-  // Ensure snapshot has the fresh reviews for buildTestimonialsMarkup
-  snapshot.reviewSpotlights = reviews;
-
-  const legacyMarkup = await getLegacyMarkup(snapshot);
+  const pageSnapshot: PublicPlatformSnapshot = {
+    ...snapshot,
+    reviewSpotlights: reviews,
+  };
 
   return (
-    <>
-      <style
-        data-guideme-legacy-styles
-        dangerouslySetInnerHTML={{ __html: legacyStyles }}
-      />
-      <div
-        className="guideme-landing"
-        data-guideme-landing
-        dangerouslySetInnerHTML={{ __html: legacyMarkup }}
-      />
-      <Script id="guideme-legacy-script" strategy="afterInteractive">
-        {legacyScript}
-      </Script>
-    </>
+    <main className="min-h-screen bg-[#FAF5FF] text-[#1E1B4B]">
+      <HomepageHeader />
+
+      <HeroSection snapshot={pageSnapshot} />
+
+      <TrustStrip snapshot={pageSnapshot} />
+
+      <ProblemSection />
+
+      <MentorsSection snapshot={pageSnapshot} />
+
+      <TestimonialsSection snapshot={pageSnapshot} />
+
+      <PricingSection snapshot={pageSnapshot} />
+
+      <MentorIncomeSection snapshot={pageSnapshot} />
+
+      <FinalCtaSection snapshot={pageSnapshot} />
+
+      <HomepageFooter />
+    </main>
   );
 }
