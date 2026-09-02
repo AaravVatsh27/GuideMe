@@ -73,39 +73,44 @@ function buildInitialDraft(data: {
     return draft;
   }
 
-  if (data.onboardingStep >= 1) {
+  if (profile.class) {
     draft.class = profile.class;
   }
-
-  if (data.onboardingStep >= 2) {
-    draft.board = profile.board ?? undefined;
+  if (profile.board) {
+    draft.board = profile.board;
   }
-
-  if (data.onboardingStep >= 3) {
+  if (profile.stream) {
     draft.stream = profile.stream;
   }
-
-  if (data.onboardingStep >= 2) {
-    draft.schoolingMode = profile.schoolingMode ?? undefined;
-    draft.coachingMode = profile.coachingMode ?? undefined;
+  if (profile.schoolingMode) {
+    draft.schoolingMode = profile.schoolingMode;
   }
-
-  if (data.onboardingStep >= 3) {
-    draft.targetExams = profile.targetExams ?? [];
+  if (profile.coachingMode) {
+    draft.coachingMode = profile.coachingMode;
   }
-
-  if (data.onboardingStep >= 4) {
-    draft.mentorshipNeeds = profile.mentorshipNeeds ?? [];
+  if (Array.isArray(profile.targetExams) && profile.targetExams.length > 0) {
+    draft.targetExams = profile.targetExams;
+  }
+  if (Array.isArray(profile.mentorshipNeeds) && profile.mentorshipNeeds.length > 0) {
+    draft.mentorshipNeeds = profile.mentorshipNeeds;
+  }
+  if (Array.isArray(profile.confusionTypes) && profile.confusionTypes.length > 0) {
     draft.confusionTypes = profile.confusionTypes;
   }
-
-  if (data.onboardingStep >= 5) {
-    draft.decisionStage = profile.decisionStage ?? undefined;
-    draft.currentConfusion = profile.currentConfusion ?? undefined;
-    draft.city = profile.city ?? "";
-    draft.state = (profile.state as IndianStateValue | null) ?? undefined;
-    draft.languagePreference =
-      (profile.languagePreference as LanguageValue | null) ?? undefined;
+  if (profile.decisionStage) {
+    draft.decisionStage = profile.decisionStage;
+  }
+  if (profile.currentConfusion) {
+    draft.currentConfusion = profile.currentConfusion;
+  }
+  if (profile.city) {
+    draft.city = profile.city;
+  }
+  if (profile.state) {
+    draft.state = profile.state as IndianStateValue;
+  }
+  if (profile.languagePreference) {
+    draft.languagePreference = profile.languagePreference as LanguageValue;
   }
 
   return draft;
