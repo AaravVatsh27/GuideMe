@@ -167,8 +167,63 @@ export const studentBoardStepSchema = z
   .object({
     class: classSchema,
     board: boardSchema.optional(),
+    schoolingMode: schoolingModeSchema.optional(),
+    coachingMode: coachingModeSchema.optional(),
   })
   .superRefine(validateStudentBoard);
+
+export const studentTargetExamsStepSchema = z.object({
+  class: classSchema,
+  stream: streamSchema.optional(),
+  targetExams: z.array(targetExamSchema).optional(),
+});
+
+export const studentMentorshipNeedsStepSchema = z.object({
+  class: classSchema,
+  stream: streamSchema.optional(),
+  targetExams: z.array(targetExamSchema).optional(),
+  mentorshipNeeds: z.array(mentorshipNeedSchema).max(5).optional(),
+  confusionTypes: z.array(confusionTypeSchema).max(3).optional(),
+});
+
+export const studentDecisionStageStepSchema = z.object({
+  class: classSchema,
+  board: boardSchema.optional(),
+  stream: streamSchema.optional(),
+  schoolingMode: schoolingModeSchema.optional(),
+  coachingMode: coachingModeSchema.optional(),
+  targetExams: z.array(targetExamSchema).optional(),
+  mentorshipNeeds: z.array(mentorshipNeedSchema).optional(),
+  decisionStage: decisionStageSchema.optional(),
+});
+
+export const studentCurrentConfusionStepSchema = z.object({
+  class: classSchema,
+  board: boardSchema.optional(),
+  stream: streamSchema.optional(),
+  schoolingMode: schoolingModeSchema.optional(),
+  coachingMode: coachingModeSchema.optional(),
+  targetExams: z.array(targetExamSchema).optional(),
+  mentorshipNeeds: z.array(mentorshipNeedSchema).optional(),
+  decisionStage: decisionStageSchema.optional(),
+  currentConfusion: currentConfusionSchema.optional(),
+});
+
+export const studentLocationStepSchema = z.object({
+  class: classSchema,
+  board: boardSchema.optional(),
+  stream: streamSchema.optional(),
+  schoolingMode: schoolingModeSchema.optional(),
+  coachingMode: coachingModeSchema.optional(),
+  targetExams: z.array(targetExamSchema).optional(),
+  mentorshipNeeds: z.array(mentorshipNeedSchema).optional(),
+  decisionStage: decisionStageSchema.optional(),
+  currentConfusion: currentConfusionSchema.optional(),
+  confusionTypes: z.array(confusionTypeSchema).optional(),
+  city: citySchema,
+  state: stateSchema,
+  languagePreference: languageSchema,
+});
 
 export const studentStreamStepSchema = z
   .object({
@@ -188,16 +243,20 @@ export const studentOnboardingSchema = z
   .object({
     class: classSchema,
     board: boardSchema.optional(),
-    stream: streamSchema,
-    confusionTypes: confusionTypesSchema,
+    stream: streamSchema.optional().default("UNDECIDED"),
+    schoolingMode: schoolingModeSchema.optional(),
+    coachingMode: coachingModeSchema.optional(),
+    targetExams: z.array(targetExamSchema).optional().default([]),
+    mentorshipNeeds: z.array(mentorshipNeedSchema).optional().default([]),
+    decisionStage: decisionStageSchema.optional(),
+    currentConfusion: currentConfusionSchema.optional(),
+    confusionTypes: z.array(confusionTypeSchema).optional().default([]),
     city: citySchema,
     state: stateSchema,
     languagePreference: languageSchema,
   })
   .superRefine((value, context) => {
     validateStudentBoard(value, context);
-    validateStudentStream(value, context);
-    validateStudentConfusions(value, context);
   });
 
 export const studentProfileUpdateSchema = z
