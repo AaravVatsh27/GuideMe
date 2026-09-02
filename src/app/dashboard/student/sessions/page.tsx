@@ -4,7 +4,14 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, RotateCcw, Video } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarClock,
+  CheckCircle2,
+  RotateCcw,
+  Video,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
@@ -62,6 +69,9 @@ const sessionGroups: Record<SessionTab, SessionStatus[]> = {
   cancelled: ["CANCELLED", "NO_SHOW"],
 };
 
+const sessionTabClass =
+  "min-h-10 flex-none rounded-xl px-4 text-sm font-semibold text-[#475569] opacity-100 transition-colors duration-200 hover:bg-violet-50 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 data-active:bg-violet-100 data-active:text-violet-900 data-active:shadow-sm dark:text-[#475569] dark:hover:bg-violet-50 dark:hover:text-violet-900 dark:data-active:bg-violet-100 dark:data-active:text-violet-900";
+
 async function fetchSessionsByStatus(status: SessionStatus) {
   const res = await fetch(`/api/sessions?status=${status}&limit=10&page=1`);
   if (!res.ok) throw new Error("Failed to load sessions");
@@ -80,6 +90,20 @@ async function fetchSessions(tab: SessionTab) {
 
     return tab === "upcoming" ? leftTime - rightTime : rightTime - leftTime;
   });
+}
+
+async function fetchSessionSummary() {
+  const [upcoming, completed, cancelled] = await Promise.all([
+    fetchSessions("upcoming"),
+    fetchSessions("past"),
+    fetchSessions("cancelled"),
+  ]);
+
+  return {
+    upcoming: upcoming.length,
+    completed: completed.length,
+    cancelled: cancelled.length,
+  };
 }
 
 async function cancelSession(sessionId: string) {
@@ -122,6 +146,13 @@ export default function StudentSessionsPage() {
     queryKey: queryKeys.sessions.student.list(tab),
     queryFn: () => fetchSessions(tab),
   });
+  const {
+    data: sessionSummary,
+    isLoading: isSummaryLoading,
+  } = useQuery({
+    queryKey: ["student-session-summary"],
+    queryFn: fetchSessionSummary,
+  });
 
   const cancelMutation = useMutation({
     mutationFn: cancelSession,
@@ -129,41 +160,109 @@ export default function StudentSessionsPage() {
       toast.success("Session cancelled");
       queryClient.invalidateQueries({ queryKey: queryKeys.sessions.student.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.student.dashboard });
+      queryClient.invalidateQueries({ queryKey: ["student-session-summary"] });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Unable to cancel session");
     },
   });
 
+  const showHeroAction = tab !== "upcoming" || data.length > 0;
+  const heroActionLabel = tab === "upcoming" ? "View session" : "Book another mentor";
+
   return (
     <div className="space-y-5">
-      <Card className="rounded-[1.75rem] border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(125,211,252,0.16),_transparent_24%),linear-gradient(135deg,_#ffffff_0%,_#f8fafc_60%,_#eef2ff_100%)]">
-        <CardContent className="p-6 sm:p-7">
-          <Badge variant="outline" className="border-slate-300 bg-white/80 text-slate-700">
-            Session timeline
-          </Badge>
-          <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <h2 className="text-3xl font-semibold tracking-tight text-slate-950">My sessions</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-                Track what is next, revisit summaries from finished calls, and keep refund status visible when plans change.
-              </p>
+      <Card className="rounded-2xl border-violet-100 bg-white shadow-sm shadow-violet-900/5">
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-2xl">
+                <Badge
+                  variant="outline"
+                  className="border-violet-200 bg-violet-50 text-violet-800"
+                >
+                  Session timeline
+                </Badge>
+
+                <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                  My sessions
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+                  Your mentor conversations, upcoming bookings, and session history — all in one place.
+                </p>
+              </div>
+
+              {showHeroAction ? (
+                <Link
+                  href={tab === "upcoming" ? "#session-list" : "/dashboard/student/find-mentor"}
+                  className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-5 text-sm font-semibold text-violet-900 shadow-sm transition-colors duration-200 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900 active:bg-violet-100 active:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+                >
+                  {heroActionLabel}
+                  <ArrowRight className="size-4" />
+                </Link>
+              ) : null}
             </div>
-            <Link href="/dashboard/student/find-mentor" className={buttonVariants({ variant: "outline" })}>
-              Book another mentor
-            </Link>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                  <CalendarClock className="size-4 text-violet-600" />
+                  Upcoming
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-950">
+                  {isSummaryLoading ? "—" : sessionSummary?.upcoming ?? 0}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                  <CheckCircle2 className="size-4 text-emerald-600" />
+                  Completed
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-950">
+                  {isSummaryLoading ? "—" : sessionSummary?.completed ?? 0}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-rose-100 bg-rose-50/40 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                  <XCircle className="size-4 text-rose-500" />
+                  Cancelled
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-950">
+                  {isSummaryLoading ? "—" : sessionSummary?.cancelled ?? 0}
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       <Tabs value={tab} onValueChange={(value) => setTab(value as SessionTab)}>
-        <TabsList variant="line" className="rounded-none p-0">
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="past">Past</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+        <TabsList className="w-fit max-w-full gap-1 rounded-2xl border border-violet-100 bg-white p-1 shadow-sm shadow-violet-900/5">
+          <TabsTrigger
+            value="upcoming"
+            className={sessionTabClass}
+          >
+            Upcoming
+          </TabsTrigger>
+          <TabsTrigger
+            value="past"
+            className={sessionTabClass}
+          >
+            Past
+          </TabsTrigger>
+          <TabsTrigger
+            value="cancelled"
+            className={sessionTabClass}
+          >
+            Cancelled
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
+      <div id="session-list">
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, index) => (
@@ -175,11 +274,65 @@ export default function StudentSessionsPage() {
           <CardContent className="p-5 text-sm text-red-600">Failed to load sessions.</CardContent>
         </Card>
       ) : data.length === 0 ? (
-        <Card className="rounded-[1.5rem] border-slate-200 bg-white">
-          <CardContent className="p-6 text-sm text-slate-600">
-            No sessions in this tab yet.
-          </CardContent>
-        </Card>
+        <div className={tab === "upcoming" ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]" : ""}>
+          <Card className="rounded-2xl border-violet-100 bg-white shadow-sm shadow-violet-900/5">
+            <CardContent className="p-6 sm:p-7">
+              {tab === "upcoming" ? (
+                <>
+                  <div className="flex size-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                    <CalendarClock className="size-5" />
+                  </div>
+                  <p className="mt-4 text-lg font-bold text-slate-950">No upcoming conversations</p>
+                  <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">
+                    Your next mentor session will appear here after booking.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-bold text-slate-950">No {tab} sessions</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Sessions in this tab will appear here when available.
+                  </p>
+                </>
+              )}
+              {tab === "upcoming" ? (
+                <Link
+                  href="/dashboard/student/find-mentor"
+                  className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#7C3AED] px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-12px_rgba(124,58,237,0.5)] transition-colors duration-200 hover:bg-[#6D28D9] hover:text-white hover:shadow-[0_12px_32px_-12px_rgba(124,58,237,0.65)] active:bg-[#5B21B6] active:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 sm:w-auto"
+                >
+                  Find a mentor
+                  <ArrowRight className="size-4" />
+                </Link>
+              ) : null}
+            </CardContent>
+          </Card>
+          {tab === "upcoming" ? (
+            <Card className="rounded-2xl border-violet-200 bg-violet-50/60 shadow-sm shadow-violet-900/5">
+              <CardContent className="flex h-full min-h-[280px] flex-col justify-between p-6 sm:p-7">
+                <div>
+                  <Badge
+                    variant="outline"
+                    className="border-violet-200 bg-white text-violet-800"
+                  >
+                    Next step
+                  </Badge>
+                  <p className="mt-4 text-xl font-bold text-slate-950">Find your next mentor</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">
+                    Explore mentors matched to your current goals and preferences, then choose a conversation that
+                    feels useful right now.
+                  </p>
+                </div>
+                <Link
+                  href="/dashboard/student/find-mentor"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-5 text-sm font-semibold text-violet-900 shadow-sm transition-colors duration-200 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900 active:border-violet-300 active:bg-violet-100 active:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+                >
+                  Find a mentor
+                  <ArrowRight className="size-4" />
+                </Link>
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
       ) : (
         data.map((session) => {
           const quickBookHref = getQuickBookHref(session.mentorId, tab === "upcoming" ? session.id : undefined);
@@ -338,6 +491,7 @@ export default function StudentSessionsPage() {
           );
         })
       )}
+      </div>
     </div>
   );
 }
