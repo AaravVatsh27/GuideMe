@@ -134,7 +134,6 @@ export function StudentShell({ children }: Props) {
                 aria-label="Notifications"
               >
                 <Bell className="size-4" />
-                <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-emerald-500" />
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-1.5 py-1 pr-3 text-left transition hover:border-slate-300">
@@ -165,18 +164,6 @@ export function StudentShell({ children }: Props) {
               </DropdownMenu>
             </div>
           </header>
-          <div className="mb-5 lg:hidden">
-            <DashboardAccountPanel
-              name={userName}
-              email={userEmail}
-              image={data?.user?.image}
-              initials={initials}
-              roleLabel="Student"
-              onboardingComplete={Boolean(data?.user?.onboardingComplete)}
-              profileHref="/dashboard/student/profile"
-              signOutRedirectTo="/auth/signin"
-            />
-          </div>
           {children}
         </div>
       </div>
