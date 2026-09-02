@@ -36,7 +36,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
     <AuthShell {...shellContent}>
       <Card className="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/92 py-0 shadow-card backdrop-blur">
         <CardHeader className="gap-4 border-b border-slate-200/80 px-6 py-7 sm:px-7">
-          <div className="flex size-14 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+          <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
             <MailCheck className="size-6" />
           </div>
           <div className="space-y-2">
