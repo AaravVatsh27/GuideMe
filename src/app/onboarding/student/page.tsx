@@ -1,4 +1,11 @@
 import { redirect } from "next/navigation";
+import {
+  CoachingMode,
+  DecisionStage,
+  MentorshipNeed,
+  SchoolingMode,
+  TargetExam,
+} from "@prisma/client";
 
 import { auth } from "@/Backend/auth";
 import { db } from "@/Backend/server/db";
@@ -18,6 +25,12 @@ type StudentOnboardingDraft = {
   class?: StudentClassValue;
   board?: BoardValue;
   stream?: StreamValue;
+  schoolingMode?: SchoolingMode;
+  coachingMode?: CoachingMode;
+  targetExams: TargetExam[];
+  mentorshipNeeds: MentorshipNeed[];
+  decisionStage?: DecisionStage;
+  currentConfusion?: string;
   confusionTypes: ConfusionTypeValue[];
   city: string;
   state?: IndianStateValue;
@@ -26,6 +39,8 @@ type StudentOnboardingDraft = {
 
 function getEmptyDraft(): StudentOnboardingDraft {
   return {
+    targetExams: [],
+    mentorshipNeeds: [],
     confusionTypes: [],
     city: "",
   };
@@ -37,6 +52,14 @@ function buildInitialDraft(data: {
     class: StudentClassValue;
     board: BoardValue | null;
     stream: StreamValue;
+    schoolingMode: SchoolingMode | null;
+    coachingMode: CoachingMode | null;
+    targetExam: TargetExam | null;
+    targetExams: TargetExam[];
+    mentorshipNeeds: MentorshipNeed[];
+    decisionStage: DecisionStage | null;
+    currentConfusion: string | null;
+    confusionType: ConfusionTypeValue | null;
     confusionTypes: ConfusionTypeValue[];
     city: string | null;
     state: string | null;
@@ -62,11 +85,23 @@ function buildInitialDraft(data: {
     draft.stream = profile.stream;
   }
 
+  if (data.onboardingStep >= 2) {
+    draft.schoolingMode = profile.schoolingMode ?? undefined;
+    draft.coachingMode = profile.coachingMode ?? undefined;
+  }
+
+  if (data.onboardingStep >= 3) {
+    draft.targetExams = profile.targetExams ?? [];
+  }
+
   if (data.onboardingStep >= 4) {
+    draft.mentorshipNeeds = profile.mentorshipNeeds ?? [];
     draft.confusionTypes = profile.confusionTypes;
   }
 
   if (data.onboardingStep >= 5) {
+    draft.decisionStage = profile.decisionStage ?? undefined;
+    draft.currentConfusion = profile.currentConfusion ?? undefined;
     draft.city = profile.city ?? "";
     draft.state = (profile.state as IndianStateValue | null) ?? undefined;
     draft.languagePreference =
@@ -96,6 +131,14 @@ export default async function StudentOnboardingPage() {
           class: true,
           board: true,
           stream: true,
+          schoolingMode: true,
+          coachingMode: true,
+          targetExam: true,
+          targetExams: true,
+          mentorshipNeeds: true,
+          decisionStage: true,
+          currentConfusion: true,
+          confusionType: true,
           confusionTypes: true,
           city: true,
           state: true,
