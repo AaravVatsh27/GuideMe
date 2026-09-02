@@ -1,6 +1,11 @@
 import { format } from "date-fns";
 import { getExamLabel } from "@/Backend/server/mentor-onboarding";
-import { SCHOOL_STREAM_OPTIONS, UG_FOCUS_OPTIONS } from "@/Backend/server/student-onboarding";
+import {
+  BOARD_OPTIONS,
+  CLASS_OPTIONS,
+  SCHOOL_STREAM_OPTIONS,
+  UG_FOCUS_OPTIONS,
+} from "@/Backend/server/student-onboarding";
 
 const ACRONYM_LABELS: Record<string, string> = {
   AI: "AI",
@@ -22,6 +27,13 @@ const ACRONYM_LABELS: Record<string, string> = {
   UPSC: "UPSC",
 };
 
+const ENUM_LABEL_OVERRIDES: Record<string, string> = {
+  SCIENCE_PCM: "Science — PCM",
+  SCIENCE_PCB: "Science — PCB",
+  STREAM_SELECTION: "Stream selection",
+  UNDECIDED: "Not sure yet",
+};
+
 export function formatCurrency(value: number | null | undefined) {
   return `INR ${(value ?? 0).toLocaleString("en-IN")}`;
 }
@@ -41,6 +53,10 @@ export function formatDateOnly(value: string | Date) {
 export function formatEnumLabel(value: string | null | undefined) {
   if (!value) {
     return "";
+  }
+
+  if (ENUM_LABEL_OVERRIDES[value]) {
+    return ENUM_LABEL_OVERRIDES[value];
   }
 
   return value
@@ -68,15 +84,13 @@ export function getInitials(name: string | null | undefined) {
   return parts.map((part) => part.charAt(0).toUpperCase()).join("");
 }
 
-const CLASS_LABELS: Record<string, string> = {
-  CLASS_10: "Class 10",
-  CLASS_11: "Class 11",
-  CLASS_12: "Class 12",
-  UG_1: "UG 1",
-  UG_2: "UG 2",
-  UG_3: "UG 3",
-  UG_4: "UG 4",
-};
+const CLASS_LABELS: Record<string, string> = Object.fromEntries(
+  CLASS_OPTIONS.map((option) => [option.value, option.label]),
+);
+
+const BOARD_LABELS: Record<string, string> = Object.fromEntries(
+  BOARD_OPTIONS.map((option) => [option.value, option.label]),
+);
 
 const MENTORSHIP_NEED_LABELS: Record<string, string> = {
   STREAM_SELECTION: "Stream selection",
@@ -104,13 +118,20 @@ const DECISION_STAGE_LABELS: Record<string, string> = {
 
 const STREAM_LABEL_MAP: Record<string, string> = (() => {
   const map: Record<string, string> = {
-    UNDECIDED: "Not sure yet / Confused",
+    UNDECIDED: "Not sure yet",
   };
   for (const option of [...SCHOOL_STREAM_OPTIONS, ...UG_FOCUS_OPTIONS]) {
     map[option.value] = option.label;
   }
+  map.SCIENCE_PCM = "Science — PCM";
+  map.SCIENCE_PCB = "Science — PCB";
+  map.UNDECIDED = "Not sure yet";
   return map;
 })();
+
+const TARGET_EXAM_LABELS: Record<string, string> = {
+  UNDECIDED: "Not sure yet",
+};
 
 type StudentProfileSubset = {
   class?: string | null;
@@ -126,10 +147,20 @@ type StudentProfileSubset = {
 export function formatAcademicContext(profile: StudentProfileSubset | null | undefined): string {
   if (!profile) return "";
   const parts: string[] = [];
-  if (profile.class) parts.push(CLASS_LABELS[profile.class] ?? profile.class);
-  if (profile.board) parts.push(profile.board);
-  if (profile.stream) parts.push(STREAM_LABEL_MAP[profile.stream] ?? profile.stream);
+  if (profile.class) parts.push(CLASS_LABELS[profile.class] ?? formatEnumLabel(profile.class));
+  if (profile.board) parts.push(BOARD_LABELS[profile.board] ?? formatEnumLabel(profile.board));
+  if (profile.stream) parts.push(STREAM_LABEL_MAP[profile.stream] ?? formatEnumLabel(profile.stream));
   return parts.join(" · ");
+}
+
+function formatTargetExamValue(value: string): string {
+  const mapped = TARGET_EXAM_LABELS[value];
+  if (mapped) {
+    return mapped;
+  }
+
+  const examLabel = getExamLabel(value);
+  return examLabel === value ? formatEnumLabel(value) : examLabel;
 }
 
 export function formatTargetExamLabel(profile: StudentProfileSubset | null | undefined): string {
@@ -139,9 +170,9 @@ export function formatTargetExamLabel(profile: StudentProfileSubset | null | und
     exams.push(profile.targetExam);
   }
   if (exams.length === 0) return "";
-  const first = getExamLabel(exams[0]);
+  const first = formatTargetExamValue(exams[0]);
   if (exams.length === 1) return first;
-  if (exams.length === 2) return `${first} · ${getExamLabel(exams[1])}`;
+  if (exams.length === 2) return `${first} · ${formatTargetExamValue(exams[1])}`;
   return `${first} +${exams.length - 1}`;
 }
 
@@ -167,6 +198,9 @@ export function buildHeroSubtitle(
   if (!profile) return "Your personalized guidance dashboard.";
   const examLabel = formatTargetExamLabel(profile);
   const decisionLabel = formatDecisionStage(profile.decisionStage);
+  if (examLabel === TARGET_EXAM_LABELS.UNDECIDED) {
+    return "You're exploring your academic direction.";
+  }
   if (decisionLabel && examLabel) {
     return `You're ${decisionLabel.toLowerCase()} with a focus on ${examLabel}.`;
   }
