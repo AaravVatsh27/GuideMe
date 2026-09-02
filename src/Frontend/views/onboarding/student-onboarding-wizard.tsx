@@ -35,6 +35,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { CoachingMode, DecisionStage, MentorshipNeed, SchoolingMode, TargetExam } from "@prisma/client";
 import { toast } from "sonner";
 
 import { DashboardAccountPanel } from "@/Frontend/views/dashboard/dashboard-account-panel";
@@ -83,12 +84,18 @@ type StudentOnboardingWizardProps = {
   savedStep: number;
 };
 
-type WizardStep = 1 | 2 | 3 | 4 | 5;
+type WizardStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 type StudentOnboardingDraft = {
   class?: StudentClassValue;
   board?: BoardValue;
   stream?: StreamValue;
+  schoolingMode?: SchoolingMode;
+  coachingMode?: CoachingMode;
+  targetExams: TargetExam[];
+  mentorshipNeeds: MentorshipNeed[];
+  decisionStage?: DecisionStage;
+  currentConfusion?: string;
   confusionTypes: ConfusionTypeValue[];
   city: string;
   state?: IndianStateValue;
@@ -102,8 +109,17 @@ type StoredWizardState = {
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 7;
 const MAX_CONFUSIONS = 3;
+const STEP_COPY = {
+  1: "Where are you right now?",
+  2: "Your academic setup",
+  3: "What are you preparing for?",
+  4: "What do you want help with?",
+  5: "Where are you in your decision?",
+  6: "What’s on your mind?",
+  7: "Where are you based?",
+} as const;
 const LOCATION_FIELD_CLASS_NAME =
   "h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-950 focus:ring-4 focus:ring-slate-950/5";
 
@@ -135,6 +151,8 @@ const ICON_MAP = {
 
 function getEmptyDraft(): StudentOnboardingDraft {
   return {
+    targetExams: [],
+    mentorshipNeeds: [],
     confusionTypes: [],
     city: "",
   };
@@ -173,6 +191,52 @@ function sanitizeDraft(
     nextDraft.stream = draft.stream;
   }
 
+  const validSchoolingModes = Object.values(SchoolingMode);
+  if (isValueInList(validSchoolingModes, draft.schoolingMode)) {
+    nextDraft.schoolingMode = draft.schoolingMode;
+  }
+
+  const validCoachingModes = Object.values(CoachingMode);
+  if (isValueInList(validCoachingModes, draft.coachingMode)) {
+    nextDraft.coachingMode = draft.coachingMode;
+  }
+
+  const validTargetExams = Object.values(TargetExam);
+  if (Array.isArray(draft.targetExams)) {
+    nextDraft.targetExams = Array.from(
+      new Set(
+        draft.targetExams.filter(
+          (value): value is TargetExam =>
+            isValueInList(validTargetExams, value),
+        ),
+      ),
+    );
+  }
+
+  const validMentorshipNeeds = Object.values(MentorshipNeed);
+  if (Array.isArray(draft.mentorshipNeeds)) {
+    nextDraft.mentorshipNeeds = Array.from(
+      new Set(
+        draft.mentorshipNeeds.filter(
+          (value): value is MentorshipNeed =>
+            isValueInList(validMentorshipNeeds, value),
+        ),
+      ),
+    );
+  }
+
+  const validDecisionStages = Object.values(DecisionStage);
+  if (isValueInList(validDecisionStages, draft.decisionStage)) {
+    nextDraft.decisionStage = draft.decisionStage;
+  }
+
+  if (typeof draft.currentConfusion === "string") {
+    const trimmed = draft.currentConfusion.trim();
+    if (trimmed.length > 0) {
+      nextDraft.currentConfusion = trimmed.slice(0, 500);
+    }
+  }
+
   const allowedConfusions = new Set(
     getConfusionOptions(nextDraft.class).map((option) => option.value),
   );
@@ -204,29 +268,15 @@ function sanitizeDraft(
 }
 
 function getNextStep(step: WizardStep, studentClass?: StudentClassValue): WizardStep {
-  if (step === 1 && studentClass && !requiresBoard(studentClass)) {
-    return 3;
-  }
-
   return Math.min(step + 1, TOTAL_STEPS) as WizardStep;
 }
 
 function getPreviousStep(step: WizardStep, studentClass?: StudentClassValue): WizardStep {
-  if (step === 3 && studentClass && !requiresBoard(studentClass)) {
-    return 1;
-  }
-
   return Math.max(step - 1, 1) as WizardStep;
 }
 
 function normalizeStep(step: number | undefined, draft: StudentOnboardingDraft): WizardStep {
-  const clampedStep = typeof step === "number" ? Math.min(Math.max(step, 1), TOTAL_STEPS) : 1;
-
-  if (!requiresBoard(draft.class) && clampedStep === 2) {
-    return 3;
-  }
-
-  return clampedStep as WizardStep;
+  return (typeof step === "number" ? Math.min(Math.max(step, 1), TOTAL_STEPS) : 1) as WizardStep;
 }
 
 function getResumeStep(savedStep: number, draft: StudentOnboardingDraft): WizardStep {
@@ -234,10 +284,7 @@ function getResumeStep(savedStep: number, draft: StudentOnboardingDraft): Wizard
     return 1;
   }
 
-  const nextSavedStep = getNextStep(
-    Math.min(Math.max(savedStep, 1), TOTAL_STEPS) as WizardStep,
-    draft.class,
-  );
+  const nextSavedStep = Math.min(Math.max(savedStep, 1), TOTAL_STEPS) as WizardStep;
   const firstIncompleteStep = getFirstIncompleteStep(draft);
 
   return Math.min(nextSavedStep, firstIncompleteStep) as WizardStep;
@@ -256,19 +303,7 @@ function getFirstIncompleteStep(draft: StudentOnboardingDraft): WizardStep {
     return 3;
   }
 
-  if (draft.confusionTypes.length === 0) {
-    return 4;
-  }
-
-  if (
-    draft.city.trim().length < 2 ||
-    !draft.state ||
-    !draft.languagePreference
-  ) {
-    return 5;
-  }
-
-  return 5;
+  return 7;
 }
 
 function isStepValid(step: WizardStep, draft: StudentOnboardingDraft) {
@@ -278,10 +313,14 @@ function isStepValid(step: WizardStep, draft: StudentOnboardingDraft) {
     case 2:
       return requiresBoard(draft.class) ? Boolean(draft.board) : true;
     case 3:
-      return Boolean(draft.stream);
+      return true;
     case 4:
-      return draft.confusionTypes.length > 0 && draft.confusionTypes.length <= MAX_CONFUSIONS;
+      return true;
     case 5:
+      return true;
+    case 6:
+      return true;
+    case 7:
       return (
         draft.city.trim().length >= 2 &&
         Boolean(draft.state) &&
@@ -381,22 +420,55 @@ export function StudentOnboardingWizard({
         return {
           class: currentDraft.class,
           board: currentDraft.board,
+          schoolingMode: currentDraft.schoolingMode,
+          coachingMode: currentDraft.coachingMode,
         };
       case 3:
         return {
           class: currentDraft.class,
           stream: currentDraft.stream,
+          targetExams: currentDraft.targetExams,
         };
       case 4:
         return {
           class: currentDraft.class,
           confusionTypes: currentDraft.confusionTypes,
+          mentorshipNeeds: currentDraft.mentorshipNeeds,
         };
       case 5:
         return {
           class: currentDraft.class,
           board: currentDraft.board,
           stream: currentDraft.stream,
+          schoolingMode: currentDraft.schoolingMode,
+          coachingMode: currentDraft.coachingMode,
+          targetExams: currentDraft.targetExams,
+          mentorshipNeeds: currentDraft.mentorshipNeeds,
+          decisionStage: currentDraft.decisionStage,
+        };
+      case 6:
+        return {
+          class: currentDraft.class,
+          board: currentDraft.board,
+          stream: currentDraft.stream,
+          schoolingMode: currentDraft.schoolingMode,
+          coachingMode: currentDraft.coachingMode,
+          targetExams: currentDraft.targetExams,
+          mentorshipNeeds: currentDraft.mentorshipNeeds,
+          decisionStage: currentDraft.decisionStage,
+          currentConfusion: currentDraft.currentConfusion,
+        };
+      case 7:
+        return {
+          class: currentDraft.class,
+          board: currentDraft.board,
+          stream: currentDraft.stream,
+          schoolingMode: currentDraft.schoolingMode,
+          coachingMode: currentDraft.coachingMode,
+          targetExams: currentDraft.targetExams,
+          mentorshipNeeds: currentDraft.mentorshipNeeds,
+          decisionStage: currentDraft.decisionStage,
+          currentConfusion: currentDraft.currentConfusion,
           confusionTypes: currentDraft.confusionTypes,
           city: currentDraft.city.trim(),
           state: currentDraft.state,
@@ -405,7 +477,7 @@ export function StudentOnboardingWizard({
     }
   }
 
-  async function persistStep(step: Exclude<WizardStep, 5>) {
+  async function persistStep(step: Exclude<WizardStep, 7>) {
     setSaveState("saving");
 
     const response = await fetch("/api/onboarding/student", {
@@ -485,7 +557,7 @@ export function StudentOnboardingWizard({
       return;
     }
 
-    if (currentStep === 5) {
+    if (currentStep === 7) {
       return;
     }
 
@@ -506,7 +578,7 @@ export function StudentOnboardingWizard({
   }
 
   async function handleComplete() {
-    if (!isStepValid(5, draft) || !draft.class || !draft.stream || !draft.state || !draft.languagePreference) {
+    if (!isStepValid(7, draft) || !draft.class || !draft.stream || !draft.state || !draft.languagePreference) {
       return;
     }
 
@@ -523,6 +595,12 @@ export function StudentOnboardingWizard({
           class: draft.class,
           board: requiresBoard(draft.class) ? draft.board : undefined,
           stream: draft.stream,
+          schoolingMode: draft.schoolingMode,
+          coachingMode: draft.coachingMode,
+          targetExams: draft.targetExams,
+          mentorshipNeeds: draft.mentorshipNeeds,
+          decisionStage: draft.decisionStage,
+          currentConfusion: draft.currentConfusion?.trim() || undefined,
           confusionTypes: draft.confusionTypes,
           city: draft.city.trim(),
           state: draft.state,
@@ -598,212 +676,153 @@ export function StudentOnboardingWizard({
     );
   }
 
+  const schoolModeOptions = Object.values(SchoolingMode);
+  const coachingModeOptions = Object.values(CoachingMode);
+  const targetExamOptions = Object.values(TargetExam);
+  const mentorshipOptions = Object.values(MentorshipNeed);
+  const decisionStageOptions = Object.values(DecisionStage);
+  const stepLabel = STEP_COPY[currentStep as keyof typeof STEP_COPY];
+
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.12),_transparent_32%),linear-gradient(135deg,_#f8fafc_0%,_#eef4ff_48%,_#ffffff_100%)] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-7xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/80 shadow-[0_32px_120px_-48px_rgba(15,23,42,0.45)] backdrop-blur xl:grid-cols-[0.96fr_minmax(430px,560px)]">
-        <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(94,234,212,0.2),_transparent_30%),linear-gradient(165deg,_#06101f_0%,_#0f172a_55%,_#15264b_100%)] px-6 py-8 text-slate-50 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
-          <div className="absolute inset-0">
-            <div className="absolute -left-16 top-14 size-40 rounded-full bg-teal-400/10 blur-3xl" />
-            <div className="absolute bottom-10 right-[-4rem] size-52 rounded-full bg-cyan-300/10 blur-3xl" />
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(124,58,237,0.12),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(236,72,153,0.12),_transparent_28%),linear-gradient(135deg,_#faf5ff_0%,_#f5f3ff_42%,_#ffffff_100%)] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-violet-200/80 bg-white/75 shadow-[0_30px_100px_-40px_rgba(124,58,237,0.35)] backdrop-blur-xl">
+        <header className="flex items-center justify-between border-b border-violet-100 bg-white/60 px-4 py-3 sm:px-7">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 via-fuchsia-500 to-pink-500 text-sm font-bold text-white shadow-sm">
+              M
+            </div>
+            <span className="text-lg font-semibold tracking-[-0.04em] text-slate-900">Mentra</span>
           </div>
+          <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-700">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            Saved automatically
+          </div>
+        </header>
 
-          <div className="relative flex h-full flex-col justify-between gap-10">
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-sm font-medium text-slate-100 backdrop-blur">
-                <span className="flex size-9 items-center justify-center rounded-full bg-teal-400/16 text-teal-200">
-                  <Compass className="size-4.5" />
-                </span>
-                Student onboarding
+        <div className="grid lg:grid-cols-[340px_minmax(0,1fr)]">
+          <aside className="border-b border-violet-100 bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.12),_transparent_35%),linear-gradient(135deg,_#f8f4ff_0%,_#fff8fb_100%)] p-5 sm:p-7 lg:border-b-0 lg:border-r">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-600">
+                  Your journey
+                </p>
+                <h2 className="font-display text-3xl leading-tight font-semibold tracking-[-0.06em] text-slate-900">
+                  Build your Mentra profile
+                </h2>
               </div>
 
-              <div className="space-y-4">
-                <p className="text-sm font-medium uppercase tracking-[0.28em] text-teal-200/90">
-                  Built around your next decision
-                </p>
-                <h1 className="font-display text-4xl leading-[0.95] font-bold text-white sm:text-5xl">
-                  GuideMe will shape your experience around where you are now.
-                </h1>
-                <p className="max-w-xl text-base leading-7 text-slate-300 sm:text-lg">
-                  A few focused answers are enough for us to match the right mentors, the right
-                  roadmap, and the right next move for {userName}.
-                </p>
+              <p className="text-sm leading-6 text-slate-600">
+                We use a few answers to understand what you&apos;re working toward — and connect
+                you with people who have relevant experience.
+              </p>
+
+              <div className="rounded-[22px] border border-violet-100 bg-white/70 p-4 shadow-[0_18px_40px_-28px_rgba(124,58,237,0.45)]">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Your profile
+                </div>
+                <div className="mt-4 space-y-3">
+                  {[
+                    "Academic",
+                    "Goals",
+                    "Mentorship",
+                    "Context",
+                  ].map((item, index) => {
+                    const isActive = index === Math.min(currentStep - 1, 3);
+                    return (
+                      <div key={item} className="flex items-center gap-3">
+                        <span
+                          className={cn(
+                            "inline-flex h-2.5 w-2.5 rounded-full",
+                            isActive ? "bg-violet-600" : "bg-violet-200",
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            "text-sm font-medium",
+                            isActive ? "text-slate-900" : "text-slate-500",
+                          )}
+                        >
+                          {item}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div className="rounded-[1.75rem] border border-white/12 bg-white/8 p-5 backdrop-blur">
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-100">
-                      Current progress
+              <div className="space-y-3 pt-1">
+                {Array.from({ length: TOTAL_STEPS }, (_, index) => {
+                  const stepNumber = index + 1;
+                  const isComplete = stepNumber < currentStep;
+                  const isCurrent = stepNumber === currentStep;
+                  return (
+                    <div key={stepNumber} className="flex items-center gap-3">
+                      <div
+                        className={cn(
+                          "flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold",
+                          isComplete
+                            ? "bg-violet-600 text-white"
+                            : isCurrent
+                              ? "border border-violet-300 bg-violet-50 text-violet-700"
+                              : "border border-violet-100 bg-white text-slate-400",
+                        )}
+                      >
+                        {stepNumber}
+                      </div>
+                      <div className="text-sm text-slate-600">
+                        {STEP_COPY[stepNumber as keyof typeof STEP_COPY]}
+                      </div>
                     </div>
-                    <div className="mt-2 text-3xl font-semibold text-white">
-                      Step {currentStep} of {TOTAL_STEPS}
-                    </div>
-                  </div>
-                  <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-teal-100">
-                    {Math.round((currentStep / TOTAL_STEPS) * 100)}%
-                  </div>
-                </div>
-
-                <div className="h-3 overflow-hidden rounded-full bg-white/10">
-                  <motion.div
-                    animate={{ width: getProgressWidth(currentStep) }}
-                    transition={{ duration: 0.32, ease: "easeOut" }}
-                    className="h-full rounded-full bg-gradient-to-r from-teal-300 via-cyan-300 to-white"
-                  />
-                </div>
+                  );
+                })}
               </div>
             </div>
+          </aside>
 
-            <div className="space-y-4">
-              <div className="rounded-[1.75rem] border border-white/12 bg-white/8 p-5 backdrop-blur">
-                <div className="mb-4 text-xs font-semibold uppercase tracking-[0.22em] text-teal-100">
-                  Your snapshot
-                </div>
-                <div className="grid gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/25 p-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-300">Class</div>
-                    <div className="mt-2 text-base font-semibold text-white">
-                      {classOption?.label ?? "Not selected yet"}
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/25 p-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-300">
-                      Board / focus
-                    </div>
-                    <div className="mt-2 text-base font-semibold text-white">
-                      {boardOption?.label ?? streamOption?.label ?? "Still deciding"}
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/25 p-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-300">
-                      Top confusion
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {draft.confusionTypes.length > 0 ? (
-                        draft.confusionTypes.map((value) => (
-                          <span
-                            key={value}
-                            className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-sm text-white"
-                          >
-                            {getConfusionOption(value, draft.class)?.label ?? value}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-slate-300">Nothing picked yet</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/12 bg-slate-950/30 p-4">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-100">
-                  <CheckCircle2 className="size-4 text-teal-200" />
-                  Progress sync
-                </div>
-                <p className="text-sm leading-6 text-slate-300">
-                  {saveState === "saving"
-                    ? "Saving your latest step to your account..."
-                    : saveState === "saved" && lastSavedStep > 0
-                      ? `Saved through step ${lastSavedStep}. Local draft backup stays on this device too.`
-                      : saveState === "error"
-                        ? "We could not sync the last step to your account. Your local draft is still preserved on this device."
-                        : "We will keep completed steps synced to your account and keep a local draft backup on this device."}
+          <section className="flex items-center justify-center p-4 sm:p-7 lg:p-8">
+            <div className="w-full max-w-2xl">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-600">
+                  STEP {currentStep} OF {TOTAL_STEPS}
                 </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="flex items-center justify-center px-4 py-8 sm:px-8 sm:py-10 lg:px-12">
-          <div className="w-full max-w-xl space-y-4">
-            <DashboardAccountPanel
-              name={displayName}
-              email={userEmail}
-              image={userImage}
-              initials={accountInitials}
-              roleLabel="Student"
-              onboardingComplete={Boolean(data?.user?.onboardingComplete)}
-              profileHref="/profile"
-              signOutRedirectTo="/auth/signin"
-            />
-            <Card className="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/92 py-0 shadow-card backdrop-blur">
-              <CardHeader className="gap-4 border-b border-slate-200/80 px-6 py-7 sm:px-7">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                      Step {currentStep} of {TOTAL_STEPS}
-                    </p>
-                    <div className="flex gap-1.5">
-                      {Array.from({ length: TOTAL_STEPS }, (_, index) => {
-                        const stepNumber = (index + 1) as WizardStep;
-
-                        return (
-                          <span
-                            key={stepNumber}
-                            className={cn(
-                              "h-2 w-9 rounded-full transition-colors",
-                              stepNumber < currentStep && "bg-slate-950",
-                              stepNumber === currentStep && "bg-teal-500",
-                              stepNumber > currentStep && "bg-slate-200",
-                            )}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {!isSuccess ? (
-                    <>
-                      <CardTitle className="font-display text-3xl font-bold text-slate-950">
-                        {currentStep === 1 && "What class are you in?"}
-                        {currentStep === 2 && "Which board are you in?"}
-                        {currentStep === 3 && getStepThreeQuestion(draft.class)}
-                        {currentStep === 4 && "What are you most confused about?"}
-                        {currentStep === 5 && "Where are you from?"}
-                      </CardTitle>
-                      <CardDescription className="text-sm leading-6 text-slate-600">
-                        {currentStep === 1 &&
-                          "Pick the stage you are currently in so the rest of the journey adapts around it."}
-                        {currentStep === 2 &&
-                          "This helps us understand the syllabus context and exam rhythm you are working with."}
-                        {currentStep === 3 &&
-                          "Choose the stream or focus that best reflects your current reality."}
-                        {currentStep === 4 &&
-                          "Pick up to 3 areas where you want the most clarity from mentors."}
-                        {currentStep === 5 &&
-                          "Tell us your location and preferred language so recommendations feel local and natural."}
-                      </CardDescription>
-                    </>
-                  ) : null}
+                <div className="flex items-center gap-1.5">
+                  {Array.from({ length: TOTAL_STEPS }, (_, index) => {
+                    const stepNumber = index + 1 as WizardStep;
+                    const active = stepNumber === currentStep;
+                    const complete = stepNumber < currentStep;
+                    return (
+                      <span
+                        key={stepNumber}
+                        className={cn(
+                          "h-1.5 rounded-full transition-all",
+                          complete ? "w-8 bg-violet-500" : active ? "w-10 bg-violet-600" : "w-7 bg-violet-100",
+                        )}
+                      />
+                    );
+                  })}
                 </div>
-              </CardHeader>
+              </div>
 
-              <CardContent className="px-6 py-7 sm:px-7">
+              <div className="rounded-[26px] border border-violet-100 bg-white/80 p-4 shadow-[0_24px_70px_-40px_rgba(124,58,237,0.45)] sm:p-6">
                 <AnimatePresence mode="wait" custom={direction}>
                   {isSuccess ? (
                     <motion.div
                       key="success"
-                      initial={{ opacity: 0, scale: 0.94 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.94 }}
-                      transition={{ duration: 0.28, ease: "easeOut" }}
+                      initial={{ opacity: 0, y: 18 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -18 }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
                       className="space-y-6 py-6 text-center"
                     >
-                      <motion.div
-                        initial={{ scale: 0.7, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: "spring", stiffness: 220, damping: 18 }}
-                        className="mx-auto flex size-20 items-center justify-center rounded-full bg-teal-50 text-teal-600"
-                      >
-                        <CheckCircle2 className="size-10" />
-                      </motion.div>
+                      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-violet-100 text-violet-600">
+                        <CheckCircle2 className="h-10 w-10" />
+                      </div>
                       <div className="space-y-2">
-                        <h3 className="font-display text-3xl font-bold text-slate-950">
-                          All set.
+                        <h3 className="font-display text-3xl font-semibold tracking-[-0.06em] text-slate-900">
+                          You&apos;re all set.
                         </h3>
                         <p className="text-sm leading-6 text-slate-600">
-                          Your student profile is saved. We are taking you to your dashboard now.
+                          Your student profile is saved and we&apos;re taking you to your dashboard.
                         </p>
                       </div>
                     </motion.div>
@@ -811,51 +830,50 @@ export function StudentOnboardingWizard({
                     <motion.div
                       key={`step-${currentStep}`}
                       custom={direction}
-                      initial={{ opacity: 0, x: direction > 0 ? 32 : -32 }}
+                      initial={{ opacity: 0, x: direction > 0 ? 24 : -24 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: direction > 0 ? -32 : 32 }}
-                      transition={{ duration: 0.26, ease: "easeOut" }}
-                      className="space-y-4"
+                      exit={{ opacity: 0, x: direction > 0 ? -24 : 24 }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
                     >
+                      <div className="mb-6 space-y-2">
+                        <h3 className="font-display text-3xl leading-tight font-semibold tracking-[-0.06em] text-slate-900">
+                          {STEP_COPY[currentStep as keyof typeof STEP_COPY]}
+                        </h3>
+                        <p className="text-sm leading-6 text-slate-600">
+                          {currentStep === 1 && "Tell us where you are in your academic journey."}
+                          {currentStep === 2 && "We use this to understand your academic setup and coaching context."}
+                          {currentStep === 3 && "Select the exams you are currently working toward."}
+                          {currentStep === 4 && "Choose up to 5 areas where you want mentor support."}
+                          {currentStep === 5 && "This helps us understand how ready you are to act."}
+                          {currentStep === 6 && "Optional — tell us what feels hardest right now."}
+                          {currentStep === 7 && "A quick final profile detail to personalize recommendations."}
+                        </p>
+                      </div>
+
                       {currentStep === 1 ? (
                         <div className="grid gap-4 sm:grid-cols-2">
                           {CLASS_OPTIONS.map((option) => {
                             const Icon = ICON_MAP[option.icon];
                             const isActive = draft.class === option.value;
-
                             return (
                               <button
                                 key={option.value}
                                 type="button"
                                 onClick={() => handleClassSelect(option.value)}
                                 className={cn(
-                                  "rounded-[1.5rem] border p-5 text-left transition hover:-translate-y-0.5 hover:shadow-card",
+                                  "rounded-[22px] border p-4 text-left transition-all duration-200",
                                   isActive
-                                    ? "border-slate-950 bg-slate-950 text-white"
-                                    : "border-slate-200 bg-white text-slate-900 hover:border-slate-950",
+                                    ? "border-violet-600 bg-violet-600 text-white shadow-[0_18px_44px_-20px_rgba(124,58,237,0.8)]"
+                                    : "border-violet-100 bg-violet-50/40 text-slate-800 hover:border-violet-200 hover:bg-violet-50",
                                 )}
                               >
-                                <div className="flex items-start gap-4">
-                                  <span
-                                    className={cn(
-                                      "flex size-12 shrink-0 items-center justify-center rounded-2xl",
-                                      isActive ? "bg-white/12 text-white" : "bg-slate-950 text-white",
-                                    )}
-                                  >
-                                    <Icon className="size-5" />
+                                <div className="flex items-start gap-3">
+                                  <span className={cn("flex h-11 w-11 items-center justify-center rounded-2xl", isActive ? "bg-white/14 text-white" : "bg-white text-violet-600") }>
+                                    <Icon className="h-5 w-5" />
                                   </span>
-                                  <div className="space-y-2">
-                                    <div className="font-display text-xl font-semibold">
-                                      {option.label}
-                                    </div>
-                                    <p
-                                      className={cn(
-                                        "text-sm leading-6",
-                                        isActive ? "text-slate-200" : "text-slate-600",
-                                      )}
-                                    >
-                                      {option.description}
-                                    </p>
+                                  <div>
+                                    <div className="font-display text-xl font-semibold tracking-[-0.05em]">{option.label}</div>
+                                    <p className={cn("mt-2 text-sm leading-6", isActive ? "text-violet-100" : "text-slate-600")}>{option.description}</p>
                                   </div>
                                 </div>
                               </button>
@@ -865,151 +883,162 @@ export function StudentOnboardingWizard({
                       ) : null}
 
                       {currentStep === 2 ? (
-                        <div className="grid gap-4">
-                          {BOARD_OPTIONS.map((option) => {
-                            const Icon = ICON_MAP[option.icon];
-                            const isActive = draft.board === option.value;
-
-                            return (
-                              <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => handleBoardSelect(option.value)}
-                                className={cn(
-                                  "rounded-[1.5rem] border p-5 text-left transition hover:-translate-y-0.5 hover:shadow-card",
-                                  isActive
-                                    ? "border-slate-950 bg-slate-950 text-white"
-                                    : "border-slate-200 bg-white text-slate-900 hover:border-slate-950",
-                                )}
-                              >
-                                <div className="flex items-start gap-4">
-                                  <span
-                                    className={cn(
-                                      "flex size-11 shrink-0 items-center justify-center rounded-2xl",
-                                      isActive ? "bg-white/12 text-white" : "bg-slate-100 text-slate-900",
-                                    )}
-                                  >
-                                    <Icon className="size-5" />
-                                  </span>
-                                  <div>
-                                    <div className="font-display text-xl font-semibold">
-                                      {option.label}
-                                    </div>
-                                    <p
+                        <div className="space-y-5">
+                          {requiresBoard(draft.class) ? (
+                            <div className="space-y-3">
+                              <div className="text-sm font-semibold text-slate-900">Board</div>
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                {BOARD_OPTIONS.map((option) => {
+                                  const isActive = draft.board === option.value;
+                                  return (
+                                    <button
+                                      key={option.value}
+                                      type="button"
+                                      onClick={() => handleBoardSelect(option.value)}
                                       className={cn(
-                                        "mt-2 text-sm leading-6",
-                                        isActive ? "text-slate-200" : "text-slate-600",
+                                        "rounded-[18px] border px-4 py-3 text-left text-sm transition",
+                                        isActive
+                                          ? "border-violet-600 bg-violet-600 text-white"
+                                          : "border-violet-100 bg-violet-50/30 text-slate-700 hover:border-violet-200",
                                       )}
                                     >
-                                      {option.description}
-                                    </p>
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })}
+                                      {option.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ) : null}
+
+                          <div className="space-y-3">
+                            <div className="text-sm font-semibold text-slate-900">
+                              {requiresBoard(draft.class) ? "How are you currently studying?" : "How are you currently learning?"}
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              {schoolModeOptions.map((option) => {
+                                const isActive = draft.schoolingMode === option;
+                                return (
+                                  <button
+                                    key={option}
+                                    type="button"
+                                    onClick={() => updateDraft((current) => ({ ...current, schoolingMode: isActive ? undefined : option }))}
+                                    className={cn(
+                                      "rounded-[18px] border px-4 py-3 text-left text-sm transition",
+                                      isActive
+                                        ? "border-violet-600 bg-violet-600 text-white"
+                                        : "border-violet-100 bg-violet-50/30 text-slate-700 hover:border-violet-200",
+                                    )}
+                                  >
+                                    {option.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className="text-sm font-semibold text-slate-900">
+                              {requiresBoard(draft.class) ? "Are you taking coaching?" : "Is coaching part of your plan?"}
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              {coachingModeOptions.map((option) => {
+                                const isActive = draft.coachingMode === option;
+                                return (
+                                  <button
+                                    key={option}
+                                    type="button"
+                                    onClick={() => updateDraft((current) => ({ ...current, coachingMode: isActive ? undefined : option }))}
+                                    className={cn(
+                                      "rounded-[18px] border px-4 py-3 text-left text-sm transition",
+                                      isActive
+                                        ? "border-violet-600 bg-violet-600 text-white"
+                                        : "border-violet-100 bg-violet-50/30 text-slate-700 hover:border-violet-200",
+                                    )}
+                                  >
+                                    {option.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       ) : null}
 
                       {currentStep === 3 ? (
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          {getStepThreeOptions(draft.class).map((option) => {
-                            const Icon = ICON_MAP[option.icon];
-                            const isActive = draft.stream === option.value;
-
-                            return (
-                              <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => handleStreamSelect(option.value)}
-                                className={cn(
-                                  "rounded-[1.5rem] border p-5 text-left transition hover:-translate-y-0.5 hover:shadow-card",
-                                  isActive
-                                    ? "border-teal-500 bg-teal-50 text-slate-950"
-                                    : "border-slate-200 bg-white text-slate-900 hover:border-slate-950",
-                                )}
-                              >
-                                <div className="flex items-start gap-4">
-                                  <span
-                                    className={cn(
-                                      "flex size-11 shrink-0 items-center justify-center rounded-2xl",
-                                      isActive ? "bg-teal-500 text-white" : "bg-slate-100 text-slate-900",
-                                    )}
-                                  >
-                                    <Icon className="size-5" />
-                                  </span>
-                                  <div>
-                                    <div className="font-display text-lg font-semibold">
-                                      {option.label}
-                                    </div>
-                                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                                      {option.description}
-                                    </p>
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })}
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between rounded-[20px] border border-violet-100 bg-violet-50/40 px-4 py-3 text-sm text-slate-700">
+                            <span>Selected</span>
+                            <span className="font-semibold text-violet-700">{draft.targetExams.length}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2.5">
+                            {targetExamOptions.map((option) => {
+                              const isActive = draft.targetExams.includes(option);
+                              return (
+                                <button
+                                  key={option}
+                                  type="button"
+                                  onClick={() =>
+                                    updateDraft((current) => ({
+                                      ...current,
+                                      targetExams: current.targetExams.includes(option)
+                                        ? current.targetExams.filter((item) => item !== option)
+                                        : [...current.targetExams, option],
+                                    }))
+                                  }
+                                  className={cn(
+                                    "rounded-full border px-3.5 py-2 text-sm font-medium transition",
+                                    isActive
+                                      ? "border-violet-600 bg-violet-600 text-white"
+                                      : "border-violet-100 bg-violet-50/40 text-slate-700 hover:border-violet-200",
+                                  )}
+                                >
+                                  {option.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       ) : null}
 
                       {currentStep === 4 ? (
                         <div className="space-y-4">
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                            {draft.confusionTypes.length} of {MAX_CONFUSIONS} selected
+                          <div className="rounded-[20px] border border-violet-100 bg-violet-50/40 px-4 py-3 text-sm text-slate-700">
+                            Choose up to 5. {draft.mentorshipNeeds.length} selected
                           </div>
-                          <div className="grid gap-4">
-                            {confusionOptions.map((option) => {
-                              const Icon = ICON_MAP[option.icon];
-                              const isActive = draft.confusionTypes.includes(option.value);
-
+                          <div className="flex flex-wrap gap-2.5">
+                            {mentorshipOptions.map((option) => {
+                              const isActive = draft.mentorshipNeeds.includes(option);
                               return (
                                 <button
-                                  key={option.value}
+                                  key={option}
                                   type="button"
-                                  onClick={() => handleConfusionToggle(option.value)}
+                                  onClick={() =>
+                                    updateDraft((current) => {
+                                      const exists = current.mentorshipNeeds.includes(option);
+                                      if (exists) {
+                                        return {
+                                          ...current,
+                                          mentorshipNeeds: current.mentorshipNeeds.filter((item) => item !== option),
+                                        };
+                                      }
+                                      if (current.mentorshipNeeds.length >= 5) {
+                                        toast.error("Choose up to 5 mentorship areas.");
+                                        return current;
+                                      }
+                                      return {
+                                        ...current,
+                                        mentorshipNeeds: [...current.mentorshipNeeds, option],
+                                      };
+                                    })
+                                  }
                                   className={cn(
-                                    "rounded-[1.5rem] border p-5 text-left transition hover:-translate-y-0.5 hover:shadow-card",
+                                    "rounded-full border px-3.5 py-2 text-sm font-medium transition",
                                     isActive
-                                      ? "border-slate-950 bg-slate-950 text-white"
-                                      : "border-slate-200 bg-white text-slate-900 hover:border-slate-950",
+                                      ? "border-violet-600 bg-violet-600 text-white"
+                                      : "border-violet-100 bg-violet-50/40 text-slate-700 hover:border-violet-200",
                                   )}
                                 >
-                                  <div className="flex items-start gap-4">
-                                    <span
-                                      className={cn(
-                                        "flex size-11 shrink-0 items-center justify-center rounded-2xl",
-                                        isActive ? "bg-white/12 text-white" : "bg-slate-100 text-slate-900",
-                                      )}
-                                    >
-                                      <Icon className="size-5" />
-                                    </span>
-                                    <div className="flex-1">
-                                      <div className="flex items-start justify-between gap-4">
-                                        <div className="font-display text-lg font-semibold">
-                                          {option.label}
-                                        </div>
-                                        <span
-                                          className={cn(
-                                            "flex size-7 shrink-0 items-center justify-center rounded-full border",
-                                            isActive
-                                              ? "border-white/30 bg-white/10 text-white"
-                                              : "border-slate-200 bg-white text-transparent",
-                                          )}
-                                        >
-                                          <Check className="size-4" />
-                                        </span>
-                                      </div>
-                                      <p
-                                        className={cn(
-                                          "mt-2 text-sm leading-6",
-                                          isActive ? "text-slate-200" : "text-slate-600",
-                                        )}
-                                      >
-                                        {option.description}
-                                      </p>
-                                    </div>
-                                  </div>
+                                  {option.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())}
                                 </button>
                               );
                             })}
@@ -1018,50 +1047,73 @@ export function StudentOnboardingWizard({
                       ) : null}
 
                       {currentStep === 5 ? (
+                        <div className="grid gap-3">
+                          {decisionStageOptions.map((option) => {
+                            const isActive = draft.decisionStage === option;
+                            return (
+                              <button
+                                key={option}
+                                type="button"
+                                onClick={() => updateDraft((current) => ({ ...current, decisionStage: isActive ? undefined : option }))}
+                                className={cn(
+                                  "rounded-[20px] border px-4 py-4 text-left transition",
+                                  isActive
+                                    ? "border-violet-600 bg-violet-600 text-white"
+                                    : "border-violet-100 bg-violet-50/40 text-slate-700 hover:border-violet-200",
+                                )}
+                              >
+                                {option.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+
+                      {currentStep === 6 ? (
+                        <div className="space-y-3">
+                          <textarea
+                            value={draft.currentConfusion ?? ""}
+                            onChange={(event) =>
+                              updateDraft((current) => ({
+                                ...current,
+                                currentConfusion: event.target.value.slice(0, 500),
+                              }))
+                            }
+                            rows={6}
+                            placeholder="I’m in Class 11 PCM with regular school + coaching. I’m preparing for JEE but I’m not sure how to balance school and coaching..."
+                            className="w-full rounded-[22px] border border-violet-100 bg-violet-50/30 px-4 py-3 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
+                          />
+                          <div className="flex items-center justify-between text-xs text-slate-500">
+                            <span>Optional</span>
+                            <span>{(draft.currentConfusion ?? "").length}/500</span>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {currentStep === 7 ? (
                         <div className="space-y-5">
                           <div className="space-y-2">
-                            <label
-                              htmlFor="student-state"
-                              className="text-sm font-semibold text-slate-900"
-                            >
-                              State
-                            </label>
+                            <label className="text-sm font-semibold text-slate-900">State</label>
                             <select
-                              id="student-state"
-                              autoComplete="address-level1"
                               value={draft.state ?? ""}
                               onChange={(event) =>
                                 updateDraft((current) => ({
                                   ...current,
-                                  state: event.target.value
-                                    ? (event.target.value as IndianStateValue)
-                                    : undefined,
+                                  state: event.target.value ? (event.target.value as IndianStateValue) : undefined,
                                 }))
                               }
-                              className={LOCATION_FIELD_CLASS_NAME}
+                              className="h-12 w-full rounded-[18px] border border-violet-100 bg-violet-50/30 px-4 text-sm text-slate-800 focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
                             >
                               <option value="">Select your state</option>
                               {INDIAN_STATE_VALUES.map((state) => (
-                                <option key={state} value={state}>
-                                  {state}
-                                </option>
+                                <option key={state} value={state}>{state}</option>
                               ))}
                             </select>
-                            <p className="text-sm text-slate-500">
-                              Pick your state first for more relevant city suggestions.
-                            </p>
                           </div>
 
                           <div className="space-y-2">
-                            <label
-                              htmlFor="student-city"
-                              className="text-sm font-semibold text-slate-900"
-                            >
-                              City
-                            </label>
+                            <label className="text-sm font-semibold text-slate-900">City</label>
                             <Input
-                              id="student-city"
-                              autoComplete="address-level2"
                               value={cityValue}
                               onChange={(event) =>
                                 updateDraft((current) => ({
@@ -1069,95 +1121,43 @@ export function StudentOnboardingWizard({
                                   city: event.target.value,
                                 }))
                               }
-                              placeholder={
-                                draft.state
-                                  ? `Search cities in ${draft.state}`
-                                  : "Type your city or choose your state first"
-                              }
-                              className="h-12 rounded-xl border-slate-200 bg-white px-4 text-slate-950 shadow-sm placeholder:text-slate-400"
+                              placeholder={draft.state ? `Search cities in ${draft.state}` : "Type your city"}
+                              className="h-12 rounded-[18px] border-violet-100 bg-violet-50/30 px-4 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10"
                             />
-                            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                  Quick suggestions
-                                </div>
-                                <div className="text-xs font-medium text-slate-500">
-                                  {draft.state ?? "All India"}
-                                </div>
+                            {citySuggestions.length > 0 ? (
+                              <div className="flex flex-wrap gap-2 pt-2">
+                                {citySuggestions.map((city) => (
+                                  <button
+                                    key={city}
+                                    type="button"
+                                    onClick={() => updateDraft((current) => ({ ...current, city }))}
+                                    className={cn(
+                                      "rounded-full border border-violet-100 bg-violet-50/30 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-violet-200",
+                                      city.toLowerCase() === normalizedCityValue ? "border-violet-500 bg-violet-600 text-white" : "",
+                                    )}
+                                  >
+                                    {city}
+                                  </button>
+                                ))}
                               </div>
-                              {citySuggestions.length > 0 ? (
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  {citySuggestions.map((city) => {
-                                    const isActive = city.toLowerCase() === normalizedCityValue;
-
-                                    return (
-                                      <button
-                                        key={city}
-                                        type="button"
-                                        onClick={() =>
-                                          updateDraft((current) => ({
-                                            ...current,
-                                            city,
-                                          }))
-                                        }
-                                        className={cn(
-                                          "rounded-full border px-3 py-1.5 text-sm font-medium transition",
-                                          isActive
-                                            ? "border-slate-950 bg-slate-950 text-white"
-                                            : "border-slate-200 bg-white text-slate-700 hover:border-slate-950 hover:text-slate-950",
-                                        )}
-                                      >
-                                        {city}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <p className="mt-3 text-sm leading-6 text-slate-500">
-                                  No quick matches found. You can still type your city manually.
-                                </p>
-                              )}
-                            </div>
-                            <p className="text-sm text-slate-500">
-                              {draft.state
-                                ? `Showing cities for ${draft.state}. If yours is missing, type it manually.`
-                                : normalizedCityValue.length > 0
-                                  ? "Showing matching cities across India. Pick a state for tighter results."
-                                  : "Type to search across India, or choose a state to narrow the list."}
-                            </p>
-                            {!cityMatchesSelectedState && draft.state ? (
-                              <p className="text-sm text-amber-600">
-                                {cityValue} does not match our quick suggestions for {draft.state}.
-                                You can keep typing if it is correct.
-                              </p>
                             ) : null}
                           </div>
 
                           <div className="space-y-2">
-                            <label
-                              htmlFor="student-language"
-                              className="text-sm font-semibold text-slate-900"
-                            >
-                              Language preference
-                            </label>
+                            <label className="text-sm font-semibold text-slate-900">Preferred language</label>
                             <select
-                              id="student-language"
                               value={draft.languagePreference ?? ""}
                               onChange={(event) =>
                                 updateDraft((current) => ({
                                   ...current,
-                                  languagePreference: event.target.value
-                                    ? (event.target.value as LanguageValue)
-                                    : undefined,
+                                  languagePreference: event.target.value ? (event.target.value as LanguageValue) : undefined,
                                 }))
                               }
-                              className={LOCATION_FIELD_CLASS_NAME}
+                              className="h-12 w-full rounded-[18px] border border-violet-100 bg-violet-50/30 px-4 text-sm text-slate-800 focus:border-violet-400 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
                             >
-                              <option value="">Choose your preferred language</option>
+                              <option value="">Choose a language</option>
                               {LANGUAGE_VALUES.map((language) => (
-                                <option key={language} value={language}>
-                                  {language}
-                                </option>
+                                <option key={language} value={language}>{language}</option>
                               ))}
                             </select>
                           </div>
@@ -1166,48 +1166,39 @@ export function StudentOnboardingWizard({
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </CardContent>
+              </div>
 
               {!isSuccess ? (
-                <CardFooter className="justify-between gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-5 sm:px-7">
-                  <div className="flex items-center gap-3">
+                <div className="mt-6 flex items-center justify-between gap-3">
+                  <div className="flex-1">
                     {currentStep > 1 ? (
                       <Button
                         type="button"
                         variant="outline"
                         onClick={goToPreviousStep}
                         disabled={isBusy}
-                        className="h-12 rounded-xl border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+                        className="h-12 rounded-[16px] border-violet-100 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-violet-50"
                       >
                         Back
                       </Button>
                     ) : null}
                   </div>
 
-                  {currentStep < 5 ? (
-                    <Button
-                      type="button"
-                      onClick={() => void goToNextStep()}
-                      disabled={!canContinue || isBusy}
-                      className="h-12 rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white hover:bg-slate-900"
-                    >
-                      {saveState === "saving" ? "Saving step..." : "Next"}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={handleComplete}
-                      disabled={!canContinue || isBusy}
-                      className="h-12 rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white hover:bg-slate-900"
-                    >
-                      {isSubmitting ? "Saving your profile..." : "Complete onboarding"}
-                    </Button>
-                  )}
-                </CardFooter>
+                  <Button
+                    type="button"
+                    onClick={currentStep === TOTAL_STEPS ? handleComplete : () => void goToNextStep()}
+                    disabled={!canContinue || isBusy}
+                    className="h-12 rounded-[16px] bg-gradient-to-r from-violet-600 via-violet-600 to-fuchsia-500 px-5 text-sm font-semibold text-white shadow-[0_18px_30px_-20px_rgba(124,58,237,0.7)] hover:opacity-95"
+                  >
+                    {currentStep === TOTAL_STEPS
+                      ? isSubmitting ? "Saving your profile..." : "Complete onboarding"
+                      : saveState === "saving" ? "Saving step..." : "Continue →"}
+                  </Button>
+                </div>
               ) : null}
-            </Card>
-          </div>
-        </section>
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   );
