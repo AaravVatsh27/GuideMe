@@ -15,6 +15,7 @@ import {
   formatCurrency,
   formatDateTime,
   formatDecisionStage,
+  formatEnumLabel,
   formatMentorshipNeeds,
   formatShortDateTime,
   formatTargetExamLabel,
@@ -338,35 +339,40 @@ export default function StudentDashboardPage() {
               Your current focus
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-1 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              {academicContext && (
-                <Badge variant="outline" className="border-violet-200 bg-violet-50/50 text-slate-800 font-medium text-xs py-1 px-3">
-                  {academicContext}
-                </Badge>
-              )}
-              {targetExamLabel && (
-                <Badge variant="outline" className="border-violet-200 bg-violet-50/50 text-slate-800 font-medium text-xs py-1 px-3">
-                  Target: {targetExamLabel}
-                </Badge>
-              )}
-              {decisionStageLabel && (
-                <Badge variant="outline" className="border-violet-200 bg-violet-50/50 text-slate-800 font-medium text-xs py-1 px-3">
-                  {decisionStageLabel}
-                </Badge>
-              )}
+          <CardContent className="space-y-4 p-4 pt-1">
+            <div className="space-y-1">
+              <p className="text-base font-bold tracking-tight text-slate-950">
+                {academicContext || "Academic profile in progress"}
+              </p>
+              <p className="text-sm font-medium text-slate-700">Exploring your academic direction</p>
             </div>
 
-            {profileData.studentProfile.currentConfusion && (
-              <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-700">
-                  Exploring your next academic direction
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-700">
+            <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-700">Supporting context</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {targetExamLabel && (
+                  <span className="inline-flex items-center rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs font-medium text-violet-700">
+                    Target area: {targetExamLabel}
+                  </span>
+                )}
+                {decisionStageLabel && (
+                  <span className="inline-flex items-center rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs font-medium text-violet-700">
+                    Stage: {decisionStageLabel}
+                  </span>
+                )}
+                {focusTags.map((tag) => (
+                  <span key={tag} className="inline-flex items-center rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs font-medium text-violet-700">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              {profileData.studentProfile.currentConfusion && (
+                <p className="mt-2 text-xs leading-relaxed text-slate-700">
                   {truncateSentence(profileData.studentProfile.currentConfusion, 140)}
                 </p>
-              </div>
-            )}
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -543,7 +549,7 @@ export default function StudentDashboardPage() {
                     </div>
                     {item.mentor.mentorProfile?.tier ? (
                       <Badge variant="outline" className="border-violet-200 bg-white text-violet-700 text-[10px] py-0.5">
-                        {item.mentor.mentorProfile.tier}
+                        {formatEnumLabel(item.mentor.mentorProfile.tier)}
                       </Badge>
                     ) : null}
                   </div>
@@ -629,7 +635,7 @@ export default function StudentDashboardPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className="border-violet-200 bg-white text-violet-700 text-[10px]">
-                        {session.type}
+                        {formatEnumLabel(session.type)}
                       </Badge>
                       <Badge variant="outline" className="border-violet-200 bg-white text-violet-700 text-[10px]">
                         <Star className="mr-1 size-3 text-amber-500" />
