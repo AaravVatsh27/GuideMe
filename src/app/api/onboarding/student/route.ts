@@ -21,6 +21,14 @@ import {
   studentOnboardingSchema,
   studentStreamStepSchema,
 } from "@/Backend/validations/student";
+import {
+  type CoachingMode,
+  type DecisionStage,
+  type MentorshipNeed,
+  type ParentalPressure,
+  type SchoolingMode,
+  type TargetExam,
+} from "@prisma/client";
 
 const STUDENT_DASHBOARD_PATH = "/dashboard/student";
 const STUDENT_DRAFT_STREAM = "UNDECIDED";
@@ -36,10 +44,19 @@ type ExistingStudentState = {
     class: StudentClassValue;
     board: BoardValue | null;
     stream: StreamValue;
+    schoolingMode: SchoolingMode | null;
+    coachingMode: CoachingMode | null;
+    targetExam: TargetExam | null;
+    targetExams: TargetExam[];
+    mentorshipNeeds: MentorshipNeed[];
+    decisionStage: DecisionStage | null;
+    currentConfusion: string | null;
+    confusionType: ConfusionTypeValue | null;
     confusionTypes: ConfusionTypeValue[];
     city: string | null;
     state: string | null;
     languagePreference: string | null;
+    parentalPressure: ParentalPressure | null;
   } | null;
 };
 
@@ -63,14 +80,33 @@ function buildPersistedStudentProfile(
   step: number,
   stepData: Record<string, unknown>,
 ) {
+  const profile = existing ?? {
+    class: stepData.class as StudentClassValue,
+    board: null,
+    stream: STUDENT_DRAFT_STREAM as StreamValue,
+    schoolingMode: null,
+    coachingMode: null,
+    targetExam: null,
+    targetExams: [],
+    mentorshipNeeds: [],
+    decisionStage: null,
+    currentConfusion: null,
+    confusionType: null,
+    confusionTypes: [],
+    city: null,
+    state: null,
+    languagePreference: null,
+    parentalPressure: null,
+  };
+
   const studentClass = stepData.class as StudentClassValue;
   const allowedStreams = new Set(getAllowedStreamValues(studentClass));
   const allowedConfusions = new Set(
     getConfusionOptions(studentClass).map((option) => option.value),
   );
 
-  const fallbackStream = allowedStreams.has(existing?.stream ?? STUDENT_DRAFT_STREAM)
-    ? (existing?.stream ?? STUDENT_DRAFT_STREAM)
+  const fallbackStream = allowedStreams.has(profile.stream ?? STUDENT_DRAFT_STREAM)
+    ? (profile.stream ?? STUDENT_DRAFT_STREAM)
     : STUDENT_DRAFT_STREAM;
 
   const nextStream =
@@ -81,21 +117,65 @@ function buildPersistedStudentProfile(
   const nextConfusions =
     step >= 4 && Array.isArray(stepData.confusionTypes)
       ? (stepData.confusionTypes as ConfusionTypeValue[])
-      : (existing?.confusionTypes ?? []).filter((value) => allowedConfusions.has(value));
+      : (profile.confusionTypes ?? []).filter((value) => allowedConfusions.has(value));
+
+  const nextTargetExams = Array.isArray(stepData.targetExams)
+    ? (stepData.targetExams as TargetExam[])
+    : (profile.targetExams ?? []);
+
+  const nextMentorshipNeeds = Array.isArray(stepData.mentorshipNeeds)
+    ? (stepData.mentorshipNeeds as MentorshipNeed[])
+    : (profile.mentorshipNeeds ?? []);
+
+  const nextSchoolingMode =
+    typeof stepData.schoolingMode !== "undefined" && stepData.schoolingMode !== null
+      ? (stepData.schoolingMode as SchoolingMode)
+      : profile.schoolingMode ?? null;
+
+  const nextCoachingMode =
+    typeof stepData.coachingMode !== "undefined" && stepData.coachingMode !== null
+      ? (stepData.coachingMode as CoachingMode)
+      : profile.coachingMode ?? null;
+
+  const nextDecisionStage =
+    typeof stepData.decisionStage !== "undefined" && stepData.decisionStage !== null
+      ? (stepData.decisionStage as DecisionStage)
+      : profile.decisionStage ?? null;
+
+  const nextCurrentConfusion =
+    typeof stepData.currentConfusion === "undefined"
+      ? profile.currentConfusion ?? null
+      : stepData.currentConfusion === "" || stepData.currentConfusion === null
+        ? null
+        : String(stepData.currentConfusion).trim() || null;
+
+  const nextTargetExam =
+    typeof stepData.targetExam !== "undefined" && stepData.targetExam !== null
+      ? (stepData.targetExam as TargetExam)
+      : nextTargetExams[0] ?? profile.targetExam ?? null;
 
   return {
+    ...profile,
     class: studentClass,
     board: requiresBoard(studentClass)
       ? step >= 2
-        ? ((stepData.board as BoardValue | undefined) ?? null)
-        : (existing?.board ?? null)
+        ? ((stepData.board as BoardValue | undefined) ?? profile.board ?? null)
+        : (profile.board ?? null)
       : null,
     stream: nextStream,
-    confusionType: nextConfusions[0] ?? null,
+    schoolingMode: nextSchoolingMode,
+    coachingMode: nextCoachingMode,
+    targetExam: nextTargetExam,
+    targetExams: nextTargetExams,
+    mentorshipNeeds: nextMentorshipNeeds,
+    decisionStage: nextDecisionStage,
+    currentConfusion: nextCurrentConfusion,
+    confusionType: nextConfusions[0] ?? profile.confusionType ?? null,
     confusionTypes: nextConfusions,
-    city: existing?.city ?? null,
-    state: existing?.state ?? null,
-    languagePreference: existing?.languagePreference ?? null,
+    city: profile.city ?? null,
+    state: profile.state ?? null,
+    languagePreference: profile.languagePreference ?? null,
+    parentalPressure: profile.parentalPressure ?? null,
   };
 }
 
@@ -151,10 +231,19 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
           class: true,
           board: true,
           stream: true,
+          schoolingMode: true,
+          coachingMode: true,
+          targetExam: true,
+          targetExams: true,
+          mentorshipNeeds: true,
+          decisionStage: true,
+          currentConfusion: true,
+          confusionType: true,
           confusionTypes: true,
           city: true,
           state: true,
           languagePreference: true,
+          parentalPressure: true,
         },
       },
     },
@@ -168,7 +257,7 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
   const persistedProfile = buildPersistedStudentProfile(
     existing.studentProfile,
     parsedRequest.data.step,
-    validatedStep.data,
+    parsedRequest.data.data,
   );
 
   await db.$transaction(async (tx) => {
@@ -225,6 +314,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
     );
   }
 
+  const rawData = payload as Record<string, unknown>;
   const result = await db.$transaction(async (tx) => {
     const profile = await tx.studentProfile.upsert({
       where: {
@@ -235,31 +325,91 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
         class: parsed.data.class,
         board: parsed.data.board ?? null,
         stream: parsed.data.stream,
+        schoolingMode:
+          typeof rawData.schoolingMode === "string" ? (rawData.schoolingMode as SchoolingMode) : null,
+        coachingMode:
+          typeof rawData.coachingMode === "string" ? (rawData.coachingMode as CoachingMode) : null,
+        targetExam:
+          typeof rawData.targetExam === "string" 
+            ? (rawData.targetExam as TargetExam)
+            : Array.isArray(rawData.targetExams) && rawData.targetExams.length > 0
+              ? (rawData.targetExams[0] as TargetExam)
+              : null,
+        targetExams: Array.isArray(rawData.targetExams)
+          ? (rawData.targetExams as TargetExam[])
+          : [],
+        mentorshipNeeds: Array.isArray(rawData.mentorshipNeeds)
+          ? (rawData.mentorshipNeeds as MentorshipNeed[])
+          : [],
+        decisionStage:
+          typeof rawData.decisionStage === "string" ? (rawData.decisionStage as DecisionStage) : null,
+        currentConfusion:
+          typeof rawData.currentConfusion === "string" && rawData.currentConfusion.trim().length > 0
+            ? rawData.currentConfusion.trim()
+            : null,
         confusionType: parsed.data.confusionTypes[0] ?? null,
         confusionTypes: parsed.data.confusionTypes,
         city: parsed.data.city,
         state: parsed.data.state,
         languagePreference: parsed.data.languagePreference,
+        parentalPressure:
+          typeof rawData.parentalPressure === "string"
+            ? (rawData.parentalPressure as ParentalPressure)
+            : null,
       },
       update: {
         class: parsed.data.class,
         board: parsed.data.board ?? null,
         stream: parsed.data.stream,
+        schoolingMode:
+          typeof rawData.schoolingMode === "string" ? (rawData.schoolingMode as SchoolingMode) : undefined,
+        coachingMode:
+          typeof rawData.coachingMode === "string" ? (rawData.coachingMode as CoachingMode) : undefined,
+        targetExam:
+          typeof rawData.targetExam === "string"
+            ? (rawData.targetExam as TargetExam)
+            : Array.isArray(rawData.targetExams) && rawData.targetExams.length > 0
+              ? (rawData.targetExams[0] as TargetExam)
+              : undefined,
+        targetExams: Array.isArray(rawData.targetExams)
+          ? (rawData.targetExams as TargetExam[])
+          : undefined,
+        mentorshipNeeds: Array.isArray(rawData.mentorshipNeeds)
+          ? (rawData.mentorshipNeeds as MentorshipNeed[])
+          : undefined,
+        decisionStage:
+          typeof rawData.decisionStage === "string" ? (rawData.decisionStage as DecisionStage) : undefined,
+        currentConfusion:
+          typeof rawData.currentConfusion === "string"
+            ? (rawData.currentConfusion.trim() || null)
+            : undefined,
         confusionType: parsed.data.confusionTypes[0] ?? null,
         confusionTypes: parsed.data.confusionTypes,
         city: parsed.data.city,
         state: parsed.data.state,
         languagePreference: parsed.data.languagePreference,
+        parentalPressure:
+          typeof rawData.parentalPressure === "string"
+            ? (rawData.parentalPressure as ParentalPressure)
+            : undefined,
       },
       select: {
         class: true,
         board: true,
         stream: true,
+        schoolingMode: true,
+        coachingMode: true,
+        targetExam: true,
+        targetExams: true,
+        mentorshipNeeds: true,
+        decisionStage: true,
+        currentConfusion: true,
         confusionType: true,
         confusionTypes: true,
         city: true,
         state: true,
         languagePreference: true,
+        parentalPressure: true,
       },
     });
 
