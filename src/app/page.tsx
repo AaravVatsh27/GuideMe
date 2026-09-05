@@ -1305,6 +1305,13 @@ function HomepageFooter() {
             >
               Community
             </Link>
+
+            <Link
+              href="/admin/signin"
+              className="transition-colors hover:text-[#1E1B4B]"
+            >
+              Admin / HR Login
+            </Link>
           </nav>
         </div>
 
