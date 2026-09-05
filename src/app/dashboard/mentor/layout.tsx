@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/Backend/auth";
 
 import { MentorShell } from "@/Frontend/views/dashboard/mentor/mentor-shell";
+
+export const metadata: Metadata = {
+  title: { absolute: "Mentra — Dashboard" },
+};
 
 export default async function MentorDashboardLayout({
   children,
