@@ -9,6 +9,7 @@ import { Button } from "@/Frontend/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
 import { Input } from "@/Frontend/components/ui/input";
 import { Label } from "@/Frontend/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/Frontend/components/ui/select";
 import { cn } from "@/Backend/server/utils";
 
 import type { MentorDashboardData } from "./mentor-dashboard-data";
@@ -154,46 +155,50 @@ export function MentorAvailabilityPageClient({ mentorId, availability }: Props) 
   }
 
   return (
-    <div className="space-y-5">
-      <Card className="rounded-[1.75rem] border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.14),_transparent_24%),linear-gradient(135deg,_#ffffff_0%,_#f8fafc_60%,_#ecfeff_100%)]">
-        <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-end sm:justify-between sm:p-7">
+    <div className="min-w-0 max-w-full space-y-4 bg-[#FAF5FF] scroll-mt-24">
+      <Card className="rounded-2xl border-violet-100 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.10),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(236,72,153,0.08),transparent_30%),linear-gradient(135deg,#ffffff_0%,#faf5ff_55%,#fdf2f8_100%)]">
+        <CardContent className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="max-w-2xl">
-            <Badge variant="outline" className="border-slate-300 bg-white/80 text-slate-700">
+            <Badge variant="outline" className="border-violet-200 bg-white/90 text-violet-800">
               Weekly schedule
             </Badge>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">Availability</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-              Toggle recurring one-hour blocks between 8am and 10pm. Teal is open, gray is closed, amber is already booked.
+            <h2 className="mt-3 text-[clamp(1.75rem,3vw,2.25rem)] font-bold tracking-[-0.03em] text-slate-950">Availability</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+              Set the hours students can book and keep your weekly schedule ready at a glance.
             </p>
           </div>
-          <Button onClick={saveChanges} disabled={isSaving}>
+          <Button
+            onClick={saveChanges}
+            disabled={isSaving}
+            className="h-10 rounded-full bg-[#7C3AED] font-semibold text-white shadow-[0_8px_24px_-12px_rgba(124,58,237,0.5)] hover:bg-[#6D28D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/10"
+          >
             <Save className="size-4" />
             {isSaving ? "Saving..." : "Save changes"}
           </Button>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-        <Card className="rounded-[1.75rem] border-slate-200 bg-white">
-          <CardHeader className="pb-3">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.8fr)_minmax(280px,0.8fr)]">
+        <Card className="min-w-0 overflow-hidden rounded-2xl border border-[#E9D5FF] bg-white shadow-sm shadow-violet-900/5">
+          <CardHeader className="p-4 pb-2 sm:p-5 sm:pb-2">
             <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
-              <CalendarRange className="size-5 text-teal-700" />
+              <CalendarRange className="size-5 text-violet-600" />
               Weekly grid calendar
             </CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <div className="min-w-[840px]">
-              <div className="grid grid-cols-[92px_repeat(7,minmax(92px,1fr))] gap-2">
+          <CardContent className="min-w-0 max-w-full overflow-x-auto px-4 pb-4 sm:px-5">
+            <div className="w-full min-w-[620px] xl:min-w-0">
+              <div className="grid min-w-0 grid-cols-[72px_repeat(7,minmax(0,1fr))] gap-1.5">
                 <div />
                 {dayLabels.map((day) => (
-                  <div key={day.value} className="rounded-2xl bg-slate-50 px-3 py-2 text-center text-sm font-semibold text-slate-700">
-                    {day.fullLabel}
+                  <div key={day.value} className="min-w-0 rounded-xl bg-violet-50 px-1.5 py-2 text-center text-xs font-semibold text-violet-900 sm:px-2 sm:text-sm">
+                    {day.label}
                   </div>
                 ))}
 
                 {hours.map((hour) => (
                   <div key={hour} className="contents">
-                    <div className="flex items-center rounded-2xl px-2 text-sm font-medium text-slate-600">
+                    <div className="flex items-center rounded-xl px-1 text-xs font-medium text-slate-600 sm:px-2 sm:text-sm">
                       {hourLabel(hour)}
                     </div>
                     {dayLabels.map((day) => {
@@ -208,12 +213,12 @@ export function MentorAvailabilityPageClient({ mentorId, availability }: Props) 
                           disabled={isBooked}
                           onClick={() => toggleSlot(day.value, hour)}
                           className={cn(
-                            "h-12 rounded-2xl border text-sm font-medium transition",
+                            "h-9 min-w-0 w-full rounded-xl border px-2 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/10 sm:text-sm",
                             isBooked
                               ? "cursor-not-allowed border-amber-200 bg-amber-100 text-amber-900"
                               : isSelected
-                                ? "border-teal-600 bg-teal-500 text-white shadow-[0_18px_36px_-24px_rgba(13,148,136,0.8)]"
-                                : "border-slate-200 bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50",
+                              ? "border-[#7C3AED] bg-[#7C3AED] text-white hover:bg-[#6D28D9]"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
                           )}
                         >
                           {isBooked ? "Booked" : isSelected ? "Open" : "Closed"}
@@ -227,34 +232,39 @@ export function MentorAvailabilityPageClient({ mentorId, availability }: Props) 
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
-          <Card className="rounded-[1.5rem] border-slate-200 bg-white">
-            <CardHeader>
+        <div className="space-y-3">
+          <Card className="min-w-0 overflow-hidden rounded-2xl border border-[#E9D5FF] bg-white p-6 shadow-sm shadow-violet-900/5">
+            <CardHeader className="p-0">
               <CardTitle className="text-lg text-slate-950">Batch settings</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-0">
               <div className="space-y-2">
-                <Label htmlFor="buffer-minutes">Buffer time</Label>
-                <select
-                  id="buffer-minutes"
+                <Label htmlFor="buffer-minutes" className="text-sm font-medium text-slate-900">Buffer time</Label>
+                <Select
                   value={localSettings.bufferMinutes}
-                  onChange={(event) =>
-                    setLocalSettings((current) => ({
-                      ...current,
-                      bufferMinutes: event.target.value as LocalSettings["bufferMinutes"],
-                    }))
-                  }
-                  className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 shadow-xs outline-none"
+                  onValueChange={(value) => {
+                    if (value === "0" || value === "15" || value === "30") {
+                      setLocalSettings((current) => ({ ...current, bufferMinutes: value }));
+                    }
+                  }}
                 >
-                  <option value="0">0 min</option>
-                  <option value="15">15 min</option>
-                  <option value="30">30 min</option>
-                </select>
+                  <SelectTrigger
+                    id="buffer-minutes"
+                    className="!h-10 !w-full !rounded-xl !border-input !bg-white !px-3.5 !text-sm !font-medium !text-[#1E1B4B] !shadow-none focus:!border-[#7C3AED] focus:!ring-2 focus:!ring-[#7C3AED]/10"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">0 min</SelectItem>
+                    <SelectItem value="15">15 min</SelectItem>
+                    <SelectItem value="30">30 min</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="vacation-start">Vacation mode start</Label>
+                  <Label htmlFor="vacation-start" className="text-sm font-medium text-slate-900">Vacation mode start</Label>
                   <Input
                     id="vacation-start"
                     type="date"
@@ -262,10 +272,12 @@ export function MentorAvailabilityPageClient({ mentorId, availability }: Props) 
                     onChange={(event) =>
                       setLocalSettings((current) => ({ ...current, vacationStart: event.target.value }))
                     }
+                    style={{ colorScheme: "light" }}
+                    className="!h-10 !w-full !rounded-xl !border !border-slate-200 !bg-white !px-3.5 !text-sm !font-medium !text-[#1E1B4B] !shadow-none !outline-none placeholder:!text-slate-400 focus:!border-[#7C3AED] focus:!ring-2 focus:!ring-[#7C3AED]/10"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="vacation-end">Vacation mode end</Label>
+                  <Label htmlFor="vacation-end" className="text-sm font-medium text-slate-900">Vacation mode end</Label>
                   <Input
                     id="vacation-end"
                     type="date"
@@ -273,29 +285,31 @@ export function MentorAvailabilityPageClient({ mentorId, availability }: Props) 
                     onChange={(event) =>
                       setLocalSettings((current) => ({ ...current, vacationEnd: event.target.value }))
                     }
+                    style={{ colorScheme: "light" }}
+                    className="!h-10 !w-full !rounded-xl !border !border-slate-200 !bg-white !px-3.5 !text-sm !font-medium !text-[#1E1B4B] !shadow-none !outline-none placeholder:!text-slate-400 focus:!border-[#7C3AED] focus:!ring-2 focus:!ring-[#7C3AED]/10"
                   />
                 </div>
-                <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
                   {vacationSummary}
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-[1.5rem] border-slate-200 bg-white">
-            <CardHeader>
+          <Card className="min-w-0 overflow-hidden rounded-2xl border-violet-100 bg-white shadow-sm shadow-violet-900/5">
+            <CardHeader className="p-4 pb-2 sm:p-5 sm:pb-2">
               <CardTitle className="text-lg text-slate-950">Grid summary</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+            <CardContent className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Open slots</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950">{selectedCount}</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-950">{selectedCount}</p>
               </div>
-              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Booked slots</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950">{bookedCount}</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-950">{bookedCount}</p>
               </div>
-              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600 sm:col-span-2">
                 Buffer time is currently set to {localSettings.bufferMinutes} minutes between sessions.
               </div>
             </CardContent>
