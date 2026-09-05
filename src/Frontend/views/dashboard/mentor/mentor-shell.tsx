@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
-import { DashboardAccountPanel } from "@/Frontend/views/dashboard/dashboard-account-panel";
+import { MentraLogo } from "@/components/brand/MentraLogo";
 import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/Frontend/components/ui/dropdown-menu";
 import { cn } from "@/Backend/server/utils";
@@ -32,6 +32,15 @@ const navItems = [
   { href: "/dashboard/mentor/reviews", label: "Reviews", icon: Star },
   { href: "/dashboard/mentor/profile", label: "Profile", icon: User },
 ] as const satisfies ReadonlyArray<{ href: Route; label: string; icon: LucideIcon }>;
+
+const mobileNavLabels: Record<(typeof navItems)[number]["href"], string> = {
+  "/dashboard/mentor": "Home",
+  "/dashboard/mentor/sessions": "Sessions",
+  "/dashboard/mentor/availability": "Slots",
+  "/dashboard/mentor/earnings": "Earnings",
+  "/dashboard/mentor/reviews": "Reviews",
+  "/dashboard/mentor/profile": "Profile",
+};
 
 const pageDateFormatter = new Intl.DateTimeFormat("en-IN", {
   weekday: "long",
@@ -56,72 +65,83 @@ export function MentorShell({ children }: Props) {
     navItems[0];
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.1),_transparent_24%),linear-gradient(180deg,_#f8fafc_0%,_#f0fdfa_46%,_#ffffff_100%)]">
+    <div className="relative isolate min-h-screen bg-[#FAF5FF]">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[#FAF5FF]" aria-hidden="true" />
       <div className="mx-auto flex max-w-7xl gap-5 px-4 py-4 sm:px-6 lg:px-8">
-        <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-72 shrink-0 flex-col rounded-[2rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] backdrop-blur lg:flex">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">GuideMe</p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">Mentor dashboard</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Run sessions, hold availability, and keep payouts visible from one control room.
-            </p>
-          </div>
+        <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-[304px] shrink-0 flex-col overflow-hidden rounded-[2rem] border border-violet-100 bg-white/95 p-5 shadow-[0_24px_80px_-40px_rgba(76,29,149,0.28)] backdrop-blur lg:flex">
+          <div className="flex min-h-0 flex-1 flex-col">
+            {/* Brand */}
+            <div className="min-w-0">
+              <div className="h-[48px] w-[82px] overflow-hidden">
+                <MentraLogo size="sm" showTagline={false} />
+              </div>
+              <h2 className="mt-3 text-lg font-bold tracking-tight text-slate-950">
+                Dashboard
+              </h2>
+              <p className="mt-1 text-sm leading-5 text-slate-600">
+                Manage your sessions, availability, profile, and mentor growth in one place.
+              </p>
+            </div>
 
-          <div className="mt-6">
-            <DashboardAccountPanel
-              name={userName}
-              email={userEmail}
-              image={data?.user?.image}
-              initials={initials}
-              roleLabel="Mentor"
-              onboardingComplete={Boolean(data?.user?.onboardingComplete)}
-              profileHref="/dashboard/mentor/profile"
-              signOutRedirectTo="/auth/signin"
-            />
-          </div>
+            {/* Account card */}
+            <div className="mt-5 mb-4 rounded-2xl border border-violet-100 border-b border-[#E9D5FF] bg-violet-50/40 p-4 pb-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <MentorAvatar src={data?.user?.image} alt={userName} fallback={initials} className="size-11 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-950">{userName}</p>
+                  <span className="mt-0.5 inline-flex rounded-full border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-800">
+                    Mentor
+                  </span>
+                  <p className="mt-0.5 max-w-full truncate text-xs text-slate-600">{userEmail}</p>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <Link href="/dashboard/mentor/profile" className="inline-flex h-9 min-h-9 items-center justify-center rounded-xl border border-violet-200 bg-white px-3 text-xs font-semibold text-violet-900 transition-colors hover:bg-violet-50">
+                  Profile
+                </Link>
+                <button type="button" onClick={() => signOut({ redirectTo: "/auth/signin" })} className="inline-flex h-9 min-h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+                  Sign out
+                </button>
+              </div>
+            </div>
 
-          <nav className="mt-8 space-y-1.5">
-            {navItems.map((item) => {
-              const isActive =
-                pathname === item.href || (item.href !== "/dashboard/mentor" && pathname.startsWith(item.href));
+            {/* Nav */}
+            <nav className="space-y-0.5">
+              {navItems.map((item) => {
+                const isActive =
+                  pathname === item.href || (item.href !== "/dashboard/mentor" && pathname.startsWith(item.href));
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition",
-                    isActive
-                      ? "bg-slate-950 text-white shadow-[0_16px_40px_-28px_rgba(15,23,42,0.85)]"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
-                  )}
-                >
-                  <span
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
                     className={cn(
-                      "flex size-10 items-center justify-center rounded-xl border",
-                      isActive ? "border-white/10 bg-white/10" : "border-slate-200 bg-white",
+                      "flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-[rgba(124,58,237,0.10)] text-[#7C3AED]"
+                        : "text-slate-600 hover:bg-violet-50 hover:text-violet-900",
                     )}
                   >
-                    <item.icon className="size-4" />
-                  </span>
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+                    <item.icon className={cn("size-4 shrink-0", isActive ? "text-[#7C3AED]" : "text-slate-500")} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
 
-          <div className="mt-auto rounded-[1.5rem] bg-slate-950 p-5 text-white">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Keep quality high</p>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
-              Fast replies, clean prep, and reliable attendance compound into better rank and repeat bookings.
+          <div className="mt-5 shrink-0 rounded-2xl bg-[linear-gradient(135deg,#7C3AED_0%,#9333EA_55%,#EC4899_100%)] p-4 text-white shadow-[0_16px_40px_-24px_rgba(124,58,237,0.65)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/75">Keep quality high</p>
+            <p className="mt-2 text-sm leading-5 text-white/90">
+              Your rank grows with every great session.
             </p>
           </div>
         </aside>
 
         <div className="min-w-0 flex-1 pb-28 lg:pb-0">
-          <header className="sticky top-4 z-20 mb-5 flex items-center justify-between gap-4 rounded-[1.5rem] border border-slate-200/80 bg-white/90 px-4 py-4 shadow-sm backdrop-blur">
+          <header className="sticky top-4 z-20 mb-5 flex items-center justify-between gap-4 rounded-[1.5rem] border border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">GuideMe</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-700">Mentra</p>
               <div className="mt-1 flex flex-wrap items-center gap-3">
                 <h1 className="truncate text-lg font-semibold tracking-tight text-slate-950">{activeItem.label}</h1>
                 <span className="hidden text-sm text-slate-500 sm:inline">{pageDateFormatter.format(new Date())}</span>
@@ -134,7 +154,6 @@ export function MentorShell({ children }: Props) {
                 aria-label="Notifications"
               >
                 <Bell className="size-4" />
-                <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-teal-500" />
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-1.5 py-1 pr-3 text-left transition hover:border-slate-300">
@@ -166,16 +185,24 @@ export function MentorShell({ children }: Props) {
             </div>
           </header>
           <div className="mb-5 lg:hidden">
-            <DashboardAccountPanel
-              name={userName}
-              email={userEmail}
-              image={data?.user?.image}
-              initials={initials}
-              roleLabel="Mentor"
-              onboardingComplete={Boolean(data?.user?.onboardingComplete)}
-              profileHref="/dashboard/mentor/profile"
-              signOutRedirectTo="/auth/signin"
-            />
+            <div className="w-full rounded-2xl border border-violet-100 bg-violet-50/40 p-3.5">
+              <div className="flex min-w-0 items-center gap-3">
+                <MentorAvatar src={data?.user?.image} alt={userName} fallback={initials} className="size-12 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-950">{userName}</p>
+                  <span className="mt-1 inline-flex rounded-full border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-800">Mentor</span>
+                  <p className="mt-1 truncate text-xs text-slate-600">{userEmail}</p>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">Signed in</span>
+                {data?.user?.onboardingComplete ? <span className="inline-flex max-w-full rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-700">Onboarding complete</span> : null}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <Link href="/dashboard/mentor/profile" className="inline-flex min-h-10 items-center justify-center rounded-xl border border-violet-200 bg-white px-3 text-xs font-semibold text-violet-900 transition-colors hover:bg-violet-50">Profile</Link>
+                <button type="button" onClick={() => signOut({ redirectTo: "/auth/signin" })} className="inline-flex min-h-10 items-center justify-center rounded-xl border border-violet-200 bg-white px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-violet-50 hover:text-violet-900">Sign out</button>
+              </div>
+            </div>
           </div>
           {children}
         </div>
@@ -196,7 +223,7 @@ export function MentorShell({ children }: Props) {
               )}
             >
               <item.icon className="size-4" />
-              {item.label}
+              {mobileNavLabels[item.href]}
             </Link>
           );
         })}
