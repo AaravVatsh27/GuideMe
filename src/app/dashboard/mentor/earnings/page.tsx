@@ -1,7 +1,12 @@
 import { Card, CardContent } from "@/Frontend/components/ui/card";
+import type { Metadata } from "next";
 
 import { MentorEarningsPageClient } from "@/Frontend/views/dashboard/mentor/mentor-earnings-page-client";
 import { getMentorDashboardData } from "@/Frontend/views/dashboard/mentor/mentor-dashboard-data";
+
+export const metadata: Metadata = {
+  title: { absolute: "Mentra — Earnings" },
+};
 
 export default async function MentorEarningsPage() {
   const data = await getMentorDashboardData();
