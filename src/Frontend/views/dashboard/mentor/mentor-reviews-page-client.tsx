@@ -110,33 +110,33 @@ export function MentorReviewsPageClient({ mentorId, reviews }: Props) {
 
   return (
     <div className="space-y-5">
-      <Card className="rounded-[1.75rem] border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.14),_transparent_24%),linear-gradient(135deg,_#ffffff_0%,_#f8fafc_60%,_#ecfeff_100%)]">
-        <CardContent className="p-6 sm:p-7">
-          <Badge variant="outline" className="border-slate-300 bg-white/80 text-slate-700">
+      <Card className="rounded-2xl border-violet-100 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.10),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(236,72,153,0.08),transparent_30%),linear-gradient(135deg,#ffffff_0%,#faf5ff_55%,#fdf2f8_100%)]">
+        <CardContent className="px-5 py-5 sm:px-6 sm:py-6">
+          <Badge variant="outline" className="border-violet-200 bg-white/90 text-violet-800">
             Student feedback
           </Badge>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">Reviews</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-            Filter by score, reply publicly to feedback, and surface reviews that should go to admin moderation.
+          <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Reviews</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+            See what students say about your mentoring sessions.
           </p>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
-        <Card className="rounded-[1.5rem] border-slate-200 bg-white">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <Card className="min-w-0 overflow-hidden rounded-2xl border-violet-100 bg-white shadow-sm shadow-violet-900/5">
           <CardHeader>
-            <CardTitle className="text-lg text-slate-950">Aggregate stats</CardTitle>
+            <CardTitle className="text-lg font-semibold text-slate-950">Rating distribution</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-1 px-5 pb-5 pt-0">
             {reviews.distribution.map((item) => (
-              <div key={item.rating} className="space-y-2">
+              <div key={item.rating} className="space-y-1 py-2">
                 <div className="flex items-center justify-between text-sm text-slate-700">
                   <span>{item.rating}★</span>
                   <span>{item.count}</span>
                 </div>
                 <div className="h-2 rounded-full bg-slate-100">
                   <div
-                    className="h-2 rounded-full bg-teal-500"
+                    className="h-2 rounded-full bg-violet-600"
                     style={{ width: `${(item.count / maxDistribution) * 100}%` }}
                   />
                 </div>
@@ -147,17 +147,34 @@ export function MentorReviewsPageClient({ mentorId, reviews }: Props) {
 
         <div className="space-y-4">
           <Tabs value={filter} onValueChange={(value) => setFilter(value as Filter)}>
-            <TabsList variant="line" className="rounded-none p-0">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="5">5★</TabsTrigger>
-              <TabsTrigger value="4">4★</TabsTrigger>
-              <TabsTrigger value="3">3★ and below</TabsTrigger>
+            <TabsList variant="line" className="flex h-auto flex-wrap gap-2 rounded-none p-0">
+              <TabsTrigger value="all" className="min-h-10 rounded-xl px-3 text-sm font-medium text-[#1E1B4B] opacity-100 hover:bg-violet-50 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 data-[state=active]:bg-violet-100 data-[state=active]:font-semibold data-[state=active]:text-violet-900">
+                All
+              </TabsTrigger>
+              <TabsTrigger value="5" className="min-h-10 rounded-xl px-3 text-sm font-medium text-[#1E1B4B] opacity-100 hover:bg-violet-50 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 data-[state=active]:bg-violet-100 data-[state=active]:font-semibold data-[state=active]:text-violet-900">
+                5★
+              </TabsTrigger>
+              <TabsTrigger value="4" className="min-h-10 rounded-xl px-3 text-sm font-medium text-[#1E1B4B] opacity-100 hover:bg-violet-50 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 data-[state=active]:bg-violet-100 data-[state=active]:font-semibold data-[state=active]:text-violet-900">
+                4★
+              </TabsTrigger>
+              <TabsTrigger value="3" className="min-h-10 rounded-xl px-3 text-sm font-medium text-[#1E1B4B] opacity-100 hover:bg-violet-50 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 data-[state=active]:bg-violet-100 data-[state=active]:font-semibold data-[state=active]:text-violet-900">
+                3★ and below
+              </TabsTrigger>
             </TabsList>
           </Tabs>
 
           {filteredReviews.length === 0 ? (
-            <Card className="rounded-[1.5rem] border-slate-200 bg-white">
-              <CardContent className="p-6 text-sm text-slate-600">No reviews match this filter.</CardContent>
+            <Card className="min-w-0 overflow-hidden rounded-2xl border-violet-100 bg-white shadow-sm shadow-violet-900/5">
+              <CardContent className="p-5">
+                <p className="text-sm font-semibold text-slate-950">
+                  {reviews.items.length === 0 && filter === "all" ? "No reviews yet" : "No reviews match this filter."}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">
+                  {reviews.items.length === 0 && filter === "all"
+                    ? "Student feedback will appear here after your first completed session."
+                    : "Try another rating filter to see more feedback."}
+                </p>
+              </CardContent>
             </Card>
           ) : (
             filteredReviews.map((review) => {
@@ -166,8 +183,8 @@ export function MentorReviewsPageClient({ mentorId, reviews }: Props) {
               const isFlagging = flaggingReviewIds.includes(review.id);
 
               return (
-                <Card key={review.id} className="rounded-[1.5rem] border-slate-200 bg-white">
-                  <CardContent className="space-y-4 p-5">
+                <Card key={review.id} className="min-w-0 overflow-hidden rounded-2xl border-violet-100 bg-white shadow-sm shadow-violet-900/5">
+                  <CardContent className="space-y-4 p-4 sm:p-5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex items-start gap-3">
                         <Avatar className="size-11">
@@ -191,6 +208,7 @@ export function MentorReviewsPageClient({ mentorId, reviews }: Props) {
                           size="sm"
                           onClick={() => flagReview(review.id)}
                           disabled={isFlagged || isFlagging}
+                          className="min-h-10 border-violet-200 bg-white text-violet-900 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20"
                         >
                           <Flag className="size-4" />
                           {isFlagged ? "Flagged" : isFlagging ? "Flagging..." : "Flag review"}
@@ -202,7 +220,7 @@ export function MentorReviewsPageClient({ mentorId, reviews }: Props) {
 
                     <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4">
                       <div className="mb-3 flex items-center gap-2">
-                        <MessageSquare className="size-4 text-teal-700" />
+                        <MessageSquare className="size-4 text-violet-600" />
                         <p className="text-sm font-medium text-slate-950">Public response</p>
                       </div>
                       <Textarea
@@ -217,10 +235,14 @@ export function MentorReviewsPageClient({ mentorId, reviews }: Props) {
                           }))
                         }
                         placeholder="Reply to this review. This will appear on your public profile."
-                        className="min-h-28 bg-white"
+                        className="min-h-28 w-full rounded-xl border border-slate-200 bg-white text-sm leading-6 text-slate-950 shadow-none placeholder:text-slate-400 focus-visible:border-violet-400 focus-visible:ring-2 focus-visible:ring-violet-500/20"
                       />
                       <div className="mt-3 flex justify-end">
-                        <Button size="sm" onClick={() => saveResponse(review.id)}>
+                        <Button
+                          size="sm"
+                          onClick={() => saveResponse(review.id)}
+                          className="min-h-10 bg-[#7C3AED] text-white hover:bg-[#6D28D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20"
+                        >
                           Save response
                         </Button>
                       </div>
