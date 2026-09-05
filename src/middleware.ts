@@ -26,6 +26,17 @@ export default auth((request) => {
   const session = request.auth;
   const user = session?.user;
 
+  if (pathname === "/admin/signin") {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-mentra-admin-signin", "1");
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
   if (!user) {
     const signInUrl = new URL("/auth/signin", nextUrl);
     signInUrl.searchParams.set("callbackUrl", `${pathname}${search}`);
