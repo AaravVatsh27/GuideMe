@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { CalendarClock, Download, FileText, MapPin, Star, Video } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/Frontend/components/ui/avatar";
@@ -35,13 +36,13 @@ function getStatusBadgeClass(status: string) {
     case "ONGOING":
       return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "COMPLETED":
-      return "border-slate-300 bg-slate-100 text-slate-700";
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "CANCELLED":
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-rose-200 bg-rose-50 text-rose-700";
     case "NO_SHOW":
-      return "border-red-200 bg-red-50 text-red-700";
+      return "border-rose-200 bg-rose-50 text-rose-700";
     default:
-      return "border-sky-200 bg-sky-50 text-sky-700";
+      return "border-violet-200 bg-violet-50 text-violet-700";
   }
 }
 
@@ -98,11 +99,11 @@ export function MentorSessionsPageClient({ sessions }: Props) {
     action: React.ReactNode,
   ) {
     return (
-      <Card key={session.id} className="rounded-[1.5rem] border-slate-200 bg-white">
-        <CardContent className="p-5">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+      <Card key={session.id} className="min-w-0 overflow-hidden rounded-2xl border border-[#E9D5FF] bg-white">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0 flex-1">
-              <div className="flex items-start gap-4">
+              <div className="flex min-w-0 items-start gap-3">
                 <Avatar className="size-12">
                   <AvatarImage src={session.student.image ?? ""} alt={session.student.name} />
                   <AvatarFallback>{getInitials(session.student.name)}</AvatarFallback>
@@ -118,7 +119,7 @@ export function MentorSessionsPageClient({ sessions }: Props) {
                     </Badge>
                   </div>
 
-                  <div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-600">
+                  <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">
                     {session.student.classLabel ? (
                       <span className="flex items-center gap-2">
                         <FileText className="size-4 text-slate-500" />
@@ -170,12 +171,28 @@ export function MentorSessionsPageClient({ sessions }: Props) {
         </div>
       </div>,
       session.meetingLink ? (
-        <a href={session.meetingLink} target="_blank" rel="noreferrer" className={buttonVariants({ size: "sm" })}>
+        <a
+          href={session.meetingLink}
+          target="_blank"
+          rel="noreferrer"
+          className={buttonVariants({
+            size: "sm",
+            className: "h-10 rounded-full bg-[#7C3AED] text-white hover:bg-[#6D28D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20",
+          })}
+        >
           <Video className="size-4" />
           Join
         </a>
       ) : (
-        <span className={buttonVariants({ variant: "outline", size: "sm" })}>Room pending</span>
+        <span
+          className={buttonVariants({
+            variant: "outline",
+            size: "sm",
+            className: "h-10 rounded-full border-violet-200 bg-white text-violet-900 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900",
+          })}
+        >
+          Room pending
+        </span>
       ),
     );
   }
@@ -202,7 +219,13 @@ export function MentorSessionsPageClient({ sessions }: Props) {
         </div>
       </div>,
       session.review?.rating ? (
-        <span className={buttonVariants({ variant: "outline", size: "sm" })}>
+        <span
+          className={buttonVariants({
+            variant: "outline",
+            size: "sm",
+            className: "h-10 rounded-full border-violet-200 bg-white text-violet-900 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900",
+          })}
+        >
           <Star className="size-4" />
           {session.review.rating} / 5
         </span>
@@ -245,37 +268,77 @@ export function MentorSessionsPageClient({ sessions }: Props) {
     tab === "upcoming" ? sessions.upcoming.length : tab === "completed" ? sessions.completed.length : sessions.cancelled.length;
 
   return (
-    <div className="space-y-5">
-      <Card className="rounded-[1.75rem] border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.14),_transparent_24%),linear-gradient(135deg,_#ffffff_0%,_#f8fafc_60%,_#f0fdfa_100%)]">
-        <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-end sm:justify-between sm:p-7">
+    <div className="min-w-0 max-w-full space-y-4 bg-[#FAF5FF]">
+      <Card className="overflow-hidden rounded-2xl border border-[#E9D5FF] bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.10),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(236,72,153,0.08),transparent_30%),linear-gradient(135deg,#ffffff_0%,#faf5ff_55%,#fdf2f8_100%)]">
+        <CardContent className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="max-w-2xl">
-            <Badge variant="outline" className="border-slate-300 bg-white/80 text-slate-700">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7C3AED]">
               Session operations
-            </Badge>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">My sessions</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-              Keep the upcoming queue actionable, export session records fast, and review the quality signals attached to finished calls.
+            </p>
+            <h2 className="mt-3 text-[clamp(1.75rem,3vw,2.25rem)] font-bold tracking-[-0.03em] text-slate-950">My sessions</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+              Manage upcoming mentor conversations and review completed sessions in one place.
             </p>
           </div>
-          <Button variant="outline" onClick={downloadCsv}>
+          <Button
+            variant="outline"
+            onClick={downloadCsv}
+            className="min-h-10 rounded-full border-violet-200 bg-white px-4 text-sm font-semibold text-violet-900 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20"
+          >
             <Download className="size-4" />
             Export sessions as CSV
           </Button>
         </CardContent>
       </Card>
 
-      <Tabs value={tab} onValueChange={(value) => setTab(value as SessionTab)}>
-        <TabsList variant="line" className="rounded-none p-0">
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+      <Tabs value={tab} onValueChange={(value) => setTab(value as SessionTab)} className="min-w-0">
+        <TabsList variant="line" className="max-w-full flex-wrap rounded-none p-0">
+          <TabsTrigger value="upcoming" className="min-h-10 rounded-xl px-3 font-medium !text-[#1E1B4B] opacity-100 hover:bg-violet-50 hover:!text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 data-active:bg-violet-100 data-active:!text-violet-900 data-active:font-semibold">
+            Upcoming
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="min-h-10 rounded-xl px-3 font-medium !text-[#1E1B4B] opacity-100 hover:bg-violet-50 hover:!text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 data-active:bg-violet-100 data-active:!text-violet-900 data-active:font-semibold">
+            Completed
+          </TabsTrigger>
+          <TabsTrigger value="cancelled" className="min-h-10 rounded-xl px-3 font-medium !text-[#1E1B4B] opacity-100 hover:bg-violet-50 hover:!text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 data-active:bg-violet-100 data-active:!text-violet-900 data-active:font-semibold">
+            Cancelled
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
       {activeCount === 0 ? (
-        <Card className="rounded-[1.5rem] border-slate-200 bg-white">
-          <CardContent className="p-6 text-sm text-slate-600">No sessions in this tab yet.</CardContent>
-        </Card>
+        <div className={cn("min-w-0", tab === "upcoming" && "grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]")}>
+          <Card className="min-w-0 overflow-hidden rounded-2xl border border-[#E9D5FF] bg-white">
+            <CardContent className="p-4 sm:p-5">
+              <h3 className="text-lg font-semibold text-slate-950">
+                {tab === "upcoming" ? "No upcoming sessions" : tab === "completed" ? "No completed sessions yet" : "No cancelled sessions"}
+              </h3>
+              <p className="mt-2 text-sm leading-5 text-slate-600">
+                {tab === "upcoming"
+                  ? "Your next mentor conversation will appear here after a student books a session."
+                  : tab === "completed"
+                    ? "Completed conversations and their summaries will appear here."
+                    : "Cancelled sessions will appear here when a booking is cancelled."}
+              </p>
+            </CardContent>
+          </Card>
+          {tab === "upcoming" ? (
+            <Card className="min-w-0 overflow-hidden rounded-2xl border border-[#E9D5FF] bg-white">
+              <CardContent className="p-4 sm:p-5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7C3AED]">Next step</p>
+                <h3 className="mt-2 text-lg font-semibold text-slate-950">Open your availability</h3>
+                <p className="mt-2 text-sm leading-5 text-slate-600">
+                  Students can only book times that are open on your schedule.
+                </p>
+                <Link
+                  href="/dashboard/mentor/availability"
+                  className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full bg-[#7C3AED] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#6D28D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20"
+                >
+                  Manage availability
+                </Link>
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
       ) : tab === "upcoming" ? (
         sessions.upcoming.map(renderUpcomingSession)
       ) : tab === "completed" ? (
