@@ -37,7 +37,7 @@ export function DashboardAccountPanel({
           <AvatarImage src={image ?? ""} alt={name} />
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 w-full flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-semibold text-slate-950">{name}</p>
             <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-700">
@@ -45,7 +45,7 @@ export function DashboardAccountPanel({
             </Badge>
           </div>
           <p className="mt-1 truncate text-sm text-slate-600">{email || "Signed in account"}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex w-full flex-wrap gap-2">
             <Badge
               variant="outline"
               className="border-emerald-200 bg-emerald-50 text-emerald-800"
@@ -53,7 +53,7 @@ export function DashboardAccountPanel({
               <ShieldCheck className="mr-1 size-3.5" />
               Signed in
             </Badge>
-            <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-700">
+            <Badge variant="outline" className="w-full justify-start whitespace-nowrap border-slate-300 bg-slate-50 text-slate-700">
               <UserRound className="mr-1 size-3.5" />
               {onboardingComplete ? "Onboarding complete" : "Onboarding pending"}
             </Badge>
