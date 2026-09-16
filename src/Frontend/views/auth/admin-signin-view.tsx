@@ -21,8 +21,31 @@ type AdminSignInViewProps = {
 export function AdminSignInView({ emailEnabled }: AdminSignInViewProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+
+  async function handlePasswordSignIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setIsPending(true);
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+      redirectTo: "/admin",
+    });
+
+    setIsPending(false);
+
+    if (!result || result.error) {
+      setError("Those credentials were not accepted. Try again.");
+      return;
+    }
+
+    router.push("/admin");
+  }
 
   async function handleEmailSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,6 +94,42 @@ export function AdminSignInView({ emailEnabled }: AdminSignInViewProps) {
       </CardHeader>
 
       <CardContent className="space-y-4 p-5 pt-2 sm:p-6 sm:pt-3">
+        <form onSubmit={(event) => void handlePasswordSignIn(event)} className="space-y-3">
+          <label htmlFor="admin-signin-email" className="text-sm font-medium text-[#1E1B4B]">
+            Work email
+          </label>
+          <Input
+            id="admin-signin-email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@company.com"
+            autoComplete="username"
+            disabled={isPending}
+            className="h-10 rounded-xl border-slate-200 bg-white text-[#1E1B4B] focus-visible:border-[#7C3AED] focus-visible:ring-2 focus-visible:ring-[#7C3AED]/10"
+          />
+          <label htmlFor="admin-signin-password" className="text-sm font-medium text-[#1E1B4B]">
+            Password
+          </label>
+          <Input
+            id="admin-signin-password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            disabled={isPending}
+            className="h-10 rounded-xl border-slate-200 bg-white text-[#1E1B4B] focus-visible:border-[#7C3AED] focus-visible:ring-2 focus-visible:ring-[#7C3AED]/10"
+          />
+          {error ? <p className="text-sm text-rose-600" role="alert">{error}</p> : null}
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="h-10 w-full rounded-xl bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
+          >
+            {isPending ? "Signing in..." : "Sign in"}
+          </Button>
+        </form>
+
         <Button
           type="button"
           onClick={() => void handleGoogleSignIn()}
@@ -98,7 +157,7 @@ export function AdminSignInView({ emailEnabled }: AdminSignInViewProps) {
           <div className="relative">
             <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
             <Input
-              id="admin-signin-email"
+              id="admin-signin-magic-link-email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}

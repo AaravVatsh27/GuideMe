@@ -12,6 +12,7 @@ model User {
   phone                  String?                 @unique
   name                   String
   image                  String?
+  passwordHash           String?
   role                   Role                    @default(STUDENT)
   emailVerified          Boolean                 @default(false)
   phoneVerified          Boolean                 @default(false)

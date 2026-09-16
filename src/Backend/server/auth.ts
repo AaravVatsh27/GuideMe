@@ -1,6 +1,10 @@
 import type { NextAuthConfig } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
+import { compare } from "bcryptjs";
+
+import { db } from "@/Backend/server/db";
 
 const AUTH_ROLES = ["STUDENT", "MENTOR", "ADMIN"] as const;
 export const isEmailAuthEnabled = Boolean(
@@ -51,6 +55,60 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
         }),
       ]
     : []),
+  Credentials({
+    name: "Admin password",
+    credentials: {
+      email: { label: "Email", type: "email" },
+      password: { label: "Password", type: "password" },
+    },
+    async authorize(credentials) {
+      const email =
+        typeof credentials?.email === "string"
+          ? credentials.email.trim().toLowerCase()
+          : "";
+      const password =
+        typeof credentials?.password === "string" ? credentials.password : "";
+
+      if (!email || !password) {
+        return null;
+      }
+
+      const user = await db.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          image: true,
+          passwordHash: true,
+          role: true,
+          onboardingComplete: true,
+          isActive: true,
+          deletedAt: true,
+        },
+      });
+
+      if (
+        !user ||
+        user.role !== "ADMIN" ||
+        !user.isActive ||
+        user.deletedAt ||
+        !user.passwordHash ||
+        !(await compare(password, user.passwordHash))
+      ) {
+        return null;
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        image: user.image,
+        role: user.role,
+        onboardingComplete: user.onboardingComplete,
+      };
+    },
+  }),
 ];
 
 export const authConfig = {
