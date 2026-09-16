@@ -255,10 +255,33 @@
     animation-play-state: paused;
   }
 
+  /* Soft dimensional accents used in public-facing hero areas. */
+  .mentra-hero-depth {
+    isolation: isolate;
+  }
+
+  .mentra-clay-pill {
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    background: linear-gradient(145deg, #fffdfd, #e9dcff);
+    box-shadow:
+      inset 2px 2px 5px rgba(255, 255, 255, 0.9),
+      inset -5px -7px 12px rgba(124, 58, 237, 0.12),
+      0 17px 28px -19px rgba(76, 29, 149, 0.42);
+  }
+
+  .mentra-clay-card {
+    border-color: rgba(255, 255, 255, 0.85);
+    box-shadow:
+      inset 1px 1px 0 rgba(255, 255, 255, 0.92),
+      0 28px 62px -42px rgba(76, 29, 149, 0.52),
+      0 8px 17px -14px rgba(124, 58, 237, 0.24);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .mentra-college-marquee-track {
       animation: none;
     }
+
   }
 }
 
@@ -272,11 +295,44 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    max-width: 100%;
   }
 
   body {
     min-height: 100vh;
+    overflow-x: hidden;
+    max-width: 100%;
     @apply bg-background text-foreground;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  table {
+    max-width: 100%;
+  }
+
+  pre,
+  code {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  input,
+  textarea,
+  select {
+    max-width: 100%;
+  }
+
+  @media (max-width: 639px) {
+    h1 {
+      overflow-wrap: anywhere;
+    }
   }
 
   button,

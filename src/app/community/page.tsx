@@ -1,21 +1,34 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
+  BarChart2,
+  BookOpen,
+  Briefcase,
   CalendarDays,
   CheckCircle2,
-  Compass,
+  Cpu,
+  HeartHandshake,
   MapPin,
   MessageCircle,
+  Palette,
+  Scale,
   ShieldCheck,
+  Sparkles,
+  Stethoscope,
   Users,
 } from "lucide-react";
 
+import { cn } from "@/Backend/server/utils";
+import { HomepageHeader } from "@/components/brand/HomepageHeader";
+import { HomepageFooter } from "@/components/brand/HomepageFooter";
+
 export const metadata: Metadata = {
-  title: "Community",
+  title: "Student Community | Mentra",
   description:
-    "Join GuideMe's WhatsApp community for Indian students choosing streams, exams, colleges, and mentors.",
+    "Join Mentra's WhatsApp community for Indian students choosing streams, exams, colleges, and mentors.",
 };
 
 const whatsappCommunityUrl =
@@ -35,14 +48,54 @@ const cityGroups = [
 ];
 
 const streamGroups = [
-  { name: "PCM Students", count: "2,400", note: "JEE, boards, branches" },
-  { name: "PCB Students", count: "1,900", note: "NEET, bio paths, backup plans" },
-  { name: "Commerce Students", count: "1,350", note: "CA, CUET, finance paths" },
-  { name: "Arts Students", count: "980", note: "Humanities, design, policy" },
-  { name: "Engineering UG", count: "1,180", note: "GATE, internships, careers" },
-  { name: "Medical UG", count: "740", note: "College life and clinical years" },
-  { name: "Law UG ⚖️", count: "520", note: "CLAT, NLUs, internships" },
-  { name: "Management UG", count: "610", note: "BBA, IPMAT, CAT early prep" },
+  {
+    name: "PCM Students",
+    count: "2,400",
+    note: "JEE, boards, branches & prep",
+    icon: BookOpen,
+  },
+  {
+    name: "PCB Students",
+    count: "1,900",
+    note: "NEET, bio paths, backup plans",
+    icon: Stethoscope,
+  },
+  {
+    name: "Commerce Students",
+    count: "1,350",
+    note: "CA, CUET, finance & consulting",
+    icon: Briefcase,
+  },
+  {
+    name: "Arts & Humanities",
+    count: "980",
+    note: "Design, psychology, policy & civil services",
+    icon: Palette,
+  },
+  {
+    name: "Engineering UG",
+    count: "1,180",
+    note: "GATE, internships, placements & tech careers",
+    icon: Cpu,
+  },
+  {
+    name: "Medical UG",
+    count: "740",
+    note: "Campus life, clinical postings & PG prep",
+    icon: HeartHandshake,
+  },
+  {
+    name: "Law UG",
+    count: "520",
+    note: "CLAT, top NLUs, mooting & law internships",
+    icon: Scale,
+  },
+  {
+    name: "Management UG",
+    count: "610",
+    note: "BBA, IPMAT, internships & CAT early prep",
+    icon: BarChart2,
+  },
 ];
 
 const events = [
@@ -54,7 +107,7 @@ const events = [
   },
   {
     title: "JEE vs Other Options",
-    audience: "Open panel with mentors",
+    audience: "Open panel with seniors",
     date: "Aug 24",
     mentor: "Panel: IIT, BITS, Ashoka seniors",
   },
@@ -67,10 +120,10 @@ const events = [
 ];
 
 const stats = [
-  { value: "10,000+", label: "Students" },
-  { value: "50+", label: "Cities" },
-  { value: "8", label: "Stream Groups" },
-  { value: "Weekly", label: "Events" },
+  { value: "10,000+", label: "Active Students", sublabel: "Across India" },
+  { value: "50+", label: "College Cities", sublabel: "Local chapters" },
+  { value: "8", label: "Stream Groups", sublabel: "Dedicated circles" },
+  { value: "Weekly", label: "Live Events", sublabel: "Mentor Q&As" },
 ];
 
 function WhatsAppButton({
@@ -85,236 +138,535 @@ function WhatsAppButton({
       href={whatsappCommunityUrl}
       target="_blank"
       rel="noreferrer"
-      className={`inline-flex items-center justify-center gap-2 rounded-lg bg-[#f4a429] px-5 py-3 text-sm font-extrabold text-[#111827] shadow-[0_14px_34px_rgba(244,164,41,0.22)] transition hover:-translate-y-0.5 hover:bg-amber-300 ${className}`}
+      className={cn(
+        "group inline-flex items-center justify-center gap-2 rounded-full bg-[#7C3AED] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-10px_rgba(124,58,237,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#6D28D9] active:scale-[0.98]",
+        className
+      )}
     >
-      {children}
-      <ArrowRight className="size-4" />
+      <MessageCircle className="size-4 shrink-0 transition-transform group-hover:scale-110" />
+      <span>{children}</span>
+      <ArrowRight className="size-3.5 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
     </a>
   );
 }
 
 export default function CommunityPage() {
   return (
-    <main className="min-h-screen bg-[#040913] text-[#edf3fb]">
-      <section className="relative overflow-hidden border-b border-[#02c39a]/20">
-        <div className="absolute left-1/2 top-[-18rem] h-[34rem] w-[48rem] -translate-x-1/2 rounded-full bg-[#028090]/18 blur-3xl" />
-        <div className="absolute right-[-10rem] top-32 h-80 w-80 rounded-full bg-[#f4a429]/12 blur-3xl" />
+    <div className="relative min-h-screen overflow-x-hidden bg-[#FAF5FF] text-[#1E1B4B]">
+      {/* Branded Header */}
+      <HomepageHeader />
 
-        <div className="relative mx-auto grid min-h-[88svh] max-w-7xl content-center gap-12 px-4 py-28 sm:px-6 lg:grid-cols-[1.04fr_0.96fr] lg:px-8">
-          <div>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-lg border border-[#02c39a]/35 bg-[#02c39a]/10 px-3 py-2 text-sm font-bold text-[#9ff7dd] transition hover:border-[#02c39a]/70"
-            >
-              <Compass className="size-4" />
-              GuideMe Community
-            </Link>
+      {/* Subtle ambient gradient orbs */}
+      <div
+        className="pointer-events-none absolute -left-32 top-14 h-[28rem] w-[28rem] rounded-full bg-[#7C3AED]/10 blur-[110px]"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -right-32 top-24 h-[32rem] w-[32rem] rounded-full bg-[#EC4899]/10 blur-[120px]"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute left-1/2 top-[55%] h-[24rem] w-[24rem] -translate-x-1/2 rounded-full bg-[#F97316]/[0.05] blur-[110px]"
+        aria-hidden="true"
+      />
 
-            <h1 className="mt-8 max-w-3xl text-5xl font-black leading-[1.02] text-white sm:text-7xl">
-              You&apos;re not figuring this out alone.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-[#edf3fb]/72">
-              Join thousands of students navigating the same confusion - stream
-              selection, exam prep, college choices. Find your people.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <WhatsAppButton>Join WhatsApp Community</WhatsAppButton>
-              <a
-                href="#city-groups"
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#028090]/70 px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:border-[#02c39a] hover:bg-[#02c39a]/10"
-              >
-                Find your city
-                <MapPin className="size-4" />
-              </a>
-            </div>
-
-            <div className="mt-8 flex max-w-2xl flex-wrap gap-3 text-sm text-[#edf3fb]/68">
-              <span className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
-                <ShieldCheck className="size-4 text-[#02c39a]" />
-                A safe space for honest questions
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
-                <MessageCircle className="size-4 text-[#f4a429]" />
-                WhatsApp-first for Indian students
-              </span>
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="rounded-lg border border-[#028090]/45 bg-[#0f1b2d]/88 p-5 shadow-[0_28px_80px_rgba(0,0,0,0.34)]">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div>
-                  <p className="text-sm font-bold text-[#02c39a]">GuideMe WhatsApp</p>
-                  <p className="mt-1 text-xs text-[#edf3fb]/48">Live groups, city chapters, mentor circles</p>
+      <main className="relative">
+        {/* Hero Section */}
+        <section className="mentra-hero-depth relative overflow-hidden border-b border-violet-100/80 pt-12 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+              {/* Left copy */}
+              <div>
+                <div className="mentra-clay-pill inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold text-[#6D28D9] backdrop-blur-sm">
+                  <Users className="size-3.5 text-[#7C3AED]" />
+                  <span>Mentra Student Community</span>
                 </div>
-                <span className="rounded-lg bg-[#02c39a]/15 px-3 py-1 text-xs font-bold text-[#9ff7dd]">
-                  Online now
-                </span>
+
+                <h1 className="mt-5 text-balance text-4xl font-extrabold leading-[1.08] tracking-[-0.04em] text-[#1E1B4B] sm:text-5xl lg:text-6xl">
+                  You&apos;re not figuring this out{" "}
+                  <span className="bg-gradient-to-r from-[#7C3AED] via-[#EC4899] to-[#F97316] bg-clip-text text-transparent">
+                    alone.
+                  </span>
+                </h1>
+
+                <p className="mt-5 max-w-2xl text-base sm:text-lg leading-relaxed text-slate-600">
+                  Join thousands of students navigating the same confusion — stream
+                  selection, exam prep, college choices, and branch realities. Find your people and learn from seniors who have walked your road.
+                </p>
+
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <WhatsAppButton>Join WhatsApp Community</WhatsAppButton>
+
+                  <a
+                    href="#city-groups"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-violet-200 bg-white/90 px-5 py-3 text-sm font-semibold text-[#1E1B4B] shadow-xs transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50/70"
+                  >
+                    <MapPin className="size-4 text-[#7C3AED]" />
+                    <span>Find your city</span>
+                  </a>
+                </div>
+
+                <div className="mt-8 flex max-w-2xl flex-wrap items-center gap-3 text-xs sm:text-sm font-medium text-slate-600">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-white/85 px-3.5 py-1.5 shadow-xs">
+                    <ShieldCheck className="size-4 text-emerald-600" />
+                    <span>A safe space for honest questions</span>
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-white/85 px-3.5 py-1.5 shadow-xs">
+                    <MessageCircle className="size-4 text-[#7C3AED]" />
+                    <span>WhatsApp-first for Indian students</span>
+                  </span>
+                </div>
               </div>
 
-              <div className="mt-5 space-y-3">
-                {[
-                  ["Class 10 PCM or Commerce?", "Ask seniors who picked both paths."],
-                  ["Mumbai JEE group", "Meet people studying around you."],
-                  ["Life at IIT tonight", "Mentor alumni panel starts at 8 PM."],
-                ].map(([title, copy]) => (
-                  <div key={title} className="rounded-lg border border-white/10 bg-[#08182a] p-4">
-                    <p className="font-bold text-white">{title}</p>
-                    <p className="mt-1 text-sm leading-6 text-[#edf3fb]/58">{copy}</p>
+              {/* Right Live Preview Card */}
+              <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+                <div
+                  className="pointer-events-none absolute -inset-4 rounded-3xl bg-gradient-to-br from-[#7C3AED]/15 via-[#EC4899]/10 to-[#F97316]/10 blur-2xl"
+                  aria-hidden="true"
+                />
+
+                <div className="mentra-clay-card relative rounded-3xl border bg-white/95 p-5 transition-transform duration-500 hover:-translate-y-1 sm:p-6 backdrop-blur-xl">
+                  {/* Community Hero Image Banner */}
+                  <div className="relative mb-5 overflow-hidden rounded-2xl border border-violet-100/90 shadow-xs group">
+                    <Image
+                      src="/community/community-hero.jpg"
+                      alt="Indian college student community collaborating on campus"
+                      width={640}
+                      height={360}
+                      className="w-full object-cover aspect-[16/9] transition-transform duration-500 group-hover:scale-[1.03]"
+                      priority
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1E1B4B]/80 via-transparent to-black/20 pointer-events-none" />
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="font-semibold text-white drop-shadow-sm">Campus Chapters Live</span>
+                      </div>
+                      <span className="rounded-full bg-white/25 px-2.5 py-0.5 text-[10.5px] font-semibold backdrop-blur-md">
+                        10,000+ Active Students
+                      </span>
+                    </div>
                   </div>
-                ))}
+
+                  <div className="flex items-center justify-between border-b border-violet-100 pb-4">
+                    <div>
+                      <p className="text-sm font-bold text-[#1E1B4B]">
+                        Mentra Community Hub
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Live groups · City chapters · Mentor circles
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Active now
+                    </span>
+                  </div>
+
+                  <div className="mt-5 space-y-3">
+                    {[
+                      {
+                        title: "Class 10: PCM vs Commerce?",
+                        copy: "Ask seniors who chose both paths and are now in top colleges.",
+                        tag: "Stream Decision",
+                      },
+                      {
+                        title: "Mumbai & Pune JEE Circle",
+                        copy: "Connect with students studying for JEE around you.",
+                        tag: "City Chapter",
+                      },
+                      {
+                        title: "Life at IIT Bombay — Ask Alumni",
+                        copy: "Live mentor session starts tonight at 8:00 PM IST.",
+                        tag: "Weekly Panel",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.title}
+                        className="rounded-2xl border border-violet-100/80 bg-violet-50/40 p-4 transition-all hover:bg-violet-50/80 hover:border-violet-200"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-bold text-[#1E1B4B]">
+                            {item.title}
+                          </p>
+                          <span className="shrink-0 rounded-full border border-violet-200/70 bg-white px-2 py-0.5 text-[10px] font-semibold text-[#7C3AED]">
+                            {item.tag}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-xs sm:text-[13px] leading-5 text-slate-600">
+                          {item.copy}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-violet-100">
+                    <a
+                      href={whatsappCommunityUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex w-full items-center justify-center gap-2 rounded-full border border-violet-200 bg-white py-2.5 text-xs sm:text-sm font-semibold text-[#7C3AED] shadow-xs transition hover:bg-violet-50"
+                    >
+                      <Sparkles className="size-3.5" />
+                      <span>Explore all 20+ community channels</span>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="border-b border-white/10 bg-[#071120]">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px px-4 py-10 sm:px-6 md:grid-cols-4 lg:px-8">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-lg bg-[#0f1b2d] p-5 text-center">
-              <p className="text-3xl font-black text-white sm:text-4xl">{stat.value}</p>
-              <p className="mt-2 text-sm font-bold text-[#edf3fb]/58">{stat.label}</p>
+        {/* Stats Counter Strip */}
+        <section className="border-b border-violet-100/70 bg-white/70 py-10 backdrop-blur-sm">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 sm:px-6 md:grid-cols-4 lg:px-8">
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-2xl border border-violet-100/80 bg-white/90 p-5 text-center shadow-xs transition hover:-translate-y-0.5 hover:border-violet-200"
+              >
+                <p className="text-3xl font-extrabold tracking-tight text-[#1E1B4B] sm:text-4xl">
+                  {stat.value}
+                </p>
+                <p className="mt-1 text-sm font-bold text-[#7C3AED]">
+                  {stat.label}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {stat.sublabel}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Community Moments & Campus Life Showcase */}
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-18 lg:px-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="max-w-2xl">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#7C3AED]">
+                Life Inside The Community
+              </span>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#1E1B4B] sm:text-4xl">
+                Real students. Real seniors. Real conversations.
+              </h2>
+              <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600">
+                From college lawn meetups to late-night WhatsApp study rooms, see how Mentra brings juniors and seniors together across India.
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
 
-      <section id="city-groups" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
-          <p className="text-sm font-black text-[#02c39a]">City Groups</p>
-          <h2 className="mt-3 text-4xl font-black text-white">Find students near you.</h2>
-          <p className="mt-4 leading-7 text-[#edf3fb]/62">
-            Local groups make the big decisions feel smaller: coaching centers,
-            college visits, form deadlines, meetups, and seniors from your city.
-          </p>
-        </div>
-
-        <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cityGroups.map((group) => (
             <a
-              key={group.city}
-              href={whatsappCommunityUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="group rounded-lg border border-[#028090]/35 bg-[#0f1b2d] p-5 transition hover:-translate-y-1 hover:border-[#02c39a] hover:bg-[#102940]"
+              href="#city-groups"
+              className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#7C3AED] transition hover:text-[#6D28D9]"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-2xl font-black text-white">{group.city}</p>
-                  <p className="mt-2 text-sm text-[#edf3fb]/52">
-                    {group.comingSoon ? group.count : `${group.count} members`}
+              <span>Explore active city meetups</span>
+              <ArrowRight className="size-4" />
+            </a>
+          </div>
+
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {/* Photo Card 1: Lawn Meetups */}
+            <div className="group relative overflow-hidden rounded-3xl border border-violet-100/90 bg-white p-3.5 shadow-[0_4px_24px_-6px_rgba(30,27,75,0.08)] transition-all duration-300 hover:-translate-y-1.5 hover:border-violet-300 hover:shadow-[0_20px_45px_-12px_rgba(124,58,237,0.18)]">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-violet-50">
+                <Image
+                  src="/community/campus-lawn-circle.jpg"
+                  alt="Students participating in campus lawn study circle"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1E1B4B]/85 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-3.5 left-4 right-4 text-white">
+                  <span className="inline-block rounded-full bg-amber-400/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-950">
+                    City Chapters
+                  </span>
+                  <p className="mt-1 text-base font-bold text-white drop-shadow-sm">
+                    Delhi & Mumbai Campus Circles
                   </p>
                 </div>
-                <MapPin className="size-5 text-[#f4a429]" />
               </div>
-              <p className="mt-6 inline-flex items-center gap-1.5 text-sm font-extrabold text-[#7cf0d8]">
-                {group.comingSoon ? "Request city" : "Join Group"}
-                <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />
-              </p>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-y border-white/10 bg-[#071120]">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-          <div className="max-w-2xl">
-            <p className="text-sm font-black text-[#f4a429]">Stream Communities</p>
-            <h2 className="mt-3 text-4xl font-black text-white">Talk to people choosing the same path.</h2>
-            <p className="mt-4 leading-7 text-[#edf3fb]/62">
-              No one should have to ask serious questions in random comment sections.
-              These groups are moderated, warm, and specific to your next choice.
-            </p>
-          </div>
-
-          <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {streamGroups.map((group) => (
-              <a
-                key={group.name}
-                href={whatsappCommunityUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group min-h-44 rounded-lg border border-white/10 bg-[#0f1b2d] p-5 transition hover:-translate-y-1 hover:border-[#02c39a] hover:shadow-[0_20px_55px_rgba(2,128,144,0.18)]"
-              >
-                <Users className="size-5 text-[#02c39a]" />
-                <h3 className="mt-5 text-xl font-black text-white">{group.name}</h3>
-                <p className="mt-2 text-sm font-bold text-[#f4a429]">{group.count} members</p>
-                <p className="mt-3 text-sm leading-6 text-[#edf3fb]/56">{group.note}</p>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-sm font-black text-[#02c39a]">GuideMe Sessions</p>
-            <h2 className="mt-3 text-4xl font-black text-white">Monthly online events and local meetups.</h2>
-            <p className="mt-4 leading-7 text-[#edf3fb]/62">
-              Come for the Q&A, stay for the students who are asking the same
-              questions you were scared to say out loud.
-            </p>
-          </div>
-          <WhatsAppButton className="sm:self-center">Get event updates</WhatsAppButton>
-        </div>
-
-        <div className="mt-9 grid gap-4 lg:grid-cols-3">
-          {events.map((event) => (
-            <article key={event.title} className="rounded-lg border border-[#028090]/35 bg-[#0f1b2d] p-5">
-              <div className="flex items-center justify-between gap-4">
-                <span className="rounded-lg bg-[#f4a429]/14 px-3 py-1 text-sm font-black text-[#ffd58a]">
-                  {event.date}
-                </span>
-                <CalendarDays className="size-5 text-[#02c39a]" />
+              <div className="p-3.5">
+                <p className="text-xs sm:text-[13px] leading-relaxed text-slate-600">
+                  Weekend student meetups to discuss coaching choices, college visits, and form deadlines with seniors who walked the road.
+                </p>
               </div>
-              <h3 className="mt-5 text-2xl font-black text-white">{event.title}</h3>
-              <p className="mt-2 text-sm font-bold text-[#edf3fb]/62">{event.audience}</p>
-              <p className="mt-4 min-h-12 text-sm leading-6 text-[#edf3fb]/56">{event.mentor}</p>
-              <a
-                href={whatsappCommunityUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#02c39a]/55 px-4 py-3 text-sm font-extrabold text-[#9ff7dd] transition hover:border-[#02c39a] hover:bg-[#02c39a]/10"
-              >
-                Register on WhatsApp
-                <ArrowRight className="size-4" />
-              </a>
-            </article>
-          ))}
-        </div>
-      </section>
+            </div>
 
-      <section className="border-t border-white/10 bg-[#071120]">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-          <div className="rounded-lg border border-[#f4a429]/28 bg-[#f4a429]/10 p-6">
-            <CheckCircle2 className="size-8 text-[#f4a429]" />
-            <h2 className="mt-5 text-4xl font-black text-white">Once a mentee, now a mentor.</h2>
-            <p className="mt-4 leading-7 text-[#edf3fb]/66">
-              After getting guidance as a student, come back as a mentor. That
-              circular community model keeps GuideMe practical, current, and kind.
-            </p>
-          </div>
-
-          <div className="grid content-center gap-4">
-            {[
-              "Students ask honestly in a safe space.",
-              "Mentors and alumni answer from lived experience.",
-              "Guided students return to help the next batch.",
-            ].map((item) => (
-              <div key={item} className="flex gap-4 rounded-lg border border-white/10 bg-[#0f1b2d] p-5">
-                <ShieldCheck className="mt-1 size-5 shrink-0 text-[#02c39a]" />
-                <p className="text-lg font-bold leading-7 text-[#edf3fb]">{item}</p>
+            {/* Photo Card 2: 1:1 Senior Guidance */}
+            <div className="group relative overflow-hidden rounded-3xl border border-violet-100/90 bg-white p-3.5 shadow-[0_4px_24px_-6px_rgba(30,27,75,0.08)] transition-all duration-300 hover:-translate-y-1.5 hover:border-violet-300 hover:shadow-[0_20px_45px_-12px_rgba(124,58,237,0.18)]">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-violet-50">
+                <Image
+                  src="/community/senior-junior-mentorship.jpg"
+                  alt="Senior mentor Anjali advising junior Rahul on campus steps"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1E1B4B]/85 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-3.5 left-4 right-4 text-white">
+                  <span className="inline-block rounded-full bg-violet-400/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-950">
+                    1:1 Mentorship
+                  </span>
+                  <p className="mt-1 text-base font-bold text-white drop-shadow-sm">
+                    Branch & Career Guidance
+                  </p>
+                </div>
               </div>
-            ))}
-            <div className="pt-3">
-              <WhatsAppButton>Join the circle</WhatsAppButton>
+              <div className="p-3.5">
+                <p className="text-xs sm:text-[13px] leading-relaxed text-slate-600">
+                  Direct answers about course load, campus life, and placement realities from verified seniors at premier colleges.
+                </p>
+              </div>
+            </div>
+
+            {/* Photo Card 3: Late night doubt jams */}
+            <div className="group relative overflow-hidden rounded-3xl border border-violet-100/90 bg-white p-3.5 shadow-[0_4px_24px_-6px_rgba(30,27,75,0.08)] transition-all duration-300 hover:-translate-y-1.5 hover:border-violet-300 hover:shadow-[0_20px_45px_-12px_rgba(124,58,237,0.18)]">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-violet-50">
+                <Image
+                  src="/community/mentor-guidance.jpg"
+                  alt="Senior mentor explaining engineering concepts in library study session"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1E1B4B]/85 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-3.5 left-4 right-4 text-white">
+                  <span className="inline-block rounded-full bg-emerald-400/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-950">
+                    Study Jams
+                  </span>
+                  <p className="mt-1 text-base font-bold text-white drop-shadow-sm">
+                    JEE, NEET & CA Circles
+                  </p>
+                </div>
+              </div>
+              <div className="p-3.5">
+                <p className="text-xs sm:text-[13px] leading-relaxed text-slate-600">
+                  Late-night doubt-solving and strategy sessions before exam milestones with mentors who scored in top percentiles.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+
+        {/* City Groups Section */}
+        <section
+          id="city-groups"
+          className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        >
+          <div className="max-w-2xl">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#7C3AED]">
+              City Chapters
+            </span>
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#1E1B4B] sm:text-4xl">
+              Find students near you.
+            </h2>
+            <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600">
+              Local groups make the big decisions feel smaller: coaching centers,
+              college visits, form deadlines, meetups, and seniors from your city.
+            </p>
+          </div>
+
+          <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {cityGroups.map((group) => (
+              <a
+                key={group.city}
+                href={whatsappCommunityUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="group flex flex-col justify-between rounded-3xl border border-violet-100/90 bg-white p-6 shadow-[0_4px_20px_-4px_rgba(30,27,75,0.06)] transition-all duration-200 hover:-translate-y-1 hover:border-violet-300 hover:shadow-[0_16px_36px_-12px_rgba(124,58,237,0.18)]"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold tracking-tight text-[#1E1B4B] transition-colors group-hover:text-[#7C3AED]">
+                      {group.city}
+                    </h3>
+                    <p className="mt-1 text-xs sm:text-sm font-medium text-slate-500">
+                      {group.comingSoon ? group.count : `${group.count} active members`}
+                    </p>
+                  </div>
+                  <div className="flex size-10 items-center justify-center rounded-2xl border border-violet-100 bg-violet-50 text-[#7C3AED]">
+                    <MapPin className="size-4.5" />
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#7C3AED]">
+                  <span>{group.comingSoon ? "Request city" : "Join City Group"}</span>
+                  <ArrowRight className="size-3.5 transition-transform duration-150 group-hover:translate-x-1" />
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {/* Stream Communities Section */}
+        <section className="border-y border-violet-100/80 bg-white/60 py-16 sm:py-20 backdrop-blur-sm">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#7C3AED]">
+                Stream Communities
+              </span>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#1E1B4B] sm:text-4xl">
+                Talk to students choosing your exact path.
+              </h2>
+              <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600">
+                No one should have to ask serious questions in random comment sections.
+                These groups are moderated, warm, and specific to your next choice.
+              </p>
+            </div>
+
+            <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {streamGroups.map((group) => {
+                const Icon = group.icon;
+                return (
+                  <a
+                    key={group.name}
+                    href={whatsappCommunityUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group flex flex-col justify-between rounded-3xl border border-violet-100/90 bg-white p-6 shadow-[0_4px_20px_-4px_rgba(30,27,75,0.06)] transition-all duration-200 hover:-translate-y-1 hover:border-violet-300 hover:shadow-[0_16px_36px_-12px_rgba(124,58,237,0.18)]"
+                  >
+                    <div>
+                      <div className="flex size-10 items-center justify-center rounded-2xl border border-violet-100 bg-violet-50 text-[#7C3AED]">
+                        <Icon className="size-5" />
+                      </div>
+                      <h3 className="mt-4 text-lg font-bold tracking-tight text-[#1E1B4B] transition-colors group-hover:text-[#7C3AED]">
+                        {group.name}
+                      </h3>
+                      <p className="mt-1 text-xs font-semibold text-[#7C3AED]">
+                        {group.count} members
+                      </p>
+                      <p className="mt-2 text-xs leading-5 text-slate-500">
+                        {group.note}
+                      </p>
+                    </div>
+
+                    <div className="mt-6 flex items-center gap-1 text-xs font-semibold text-slate-600 transition group-hover:text-[#7C3AED]">
+                      <span>Join Chapter</span>
+                      <ArrowRight className="size-3 transition-transform duration-150 group-hover:translate-x-1" />
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Live Sessions & Events */}
+        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="max-w-2xl">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#7C3AED]">
+                Mentra Sessions & Events
+              </span>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#1E1B4B] sm:text-4xl">
+                Monthly online events and local meetups.
+              </h2>
+              <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600">
+                Come for the Q&A, stay for the students who are asking the same
+                questions you were scared to say out loud.
+              </p>
+            </div>
+
+            <WhatsAppButton className="sm:self-center">
+              Get event updates
+            </WhatsAppButton>
+          </div>
+
+          <div className="mt-9 grid gap-6 lg:grid-cols-3">
+            {events.map((event) => (
+              <article
+                key={event.title}
+                className="group flex flex-col justify-between rounded-3xl border border-violet-100/90 bg-white p-6 shadow-[0_4px_20px_-4px_rgba(30,27,75,0.06)] transition-all duration-200 hover:-translate-y-1 hover:border-violet-300 hover:shadow-[0_16px_36px_-12px_rgba(124,58,237,0.18)]"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-900">
+                      <CalendarDays className="size-3.5 text-amber-600" />
+                      <span>{event.date}</span>
+                    </span>
+                    <span className="rounded-full border border-violet-100 bg-violet-50/70 px-2.5 py-0.5 text-[11px] font-semibold text-[#7C3AED]">
+                      {event.audience}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-4 text-xl font-bold tracking-tight text-[#1E1B4B] transition-colors group-hover:text-[#7C3AED]">
+                    {event.title}
+                  </h3>
+                  <p className="mt-2 min-h-10 text-xs sm:text-sm leading-6 text-slate-600">
+                    {event.mentor}
+                  </p>
+                </div>
+
+                <a
+                  href={whatsappCommunityUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full border border-violet-200 bg-white py-2.5 text-xs sm:text-sm font-semibold text-[#7C3AED] shadow-xs transition hover:border-[#7C3AED] hover:bg-violet-50"
+                >
+                  <span>Register on WhatsApp</span>
+                  <ArrowRight className="size-3.5" />
+                </a>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* Circular Community Model Banner */}
+        <section className="border-t border-violet-100/80 bg-white/70 py-16 sm:py-20 backdrop-blur-sm">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+            <div className="overflow-hidden rounded-3xl border border-violet-100/90 bg-white shadow-xs">
+              <div className="relative aspect-[16/10] w-full overflow-hidden bg-violet-50">
+                <Image
+                  src="/community/senior-junior-mentorship.jpg"
+                  alt="Senior mentor Anjali and junior mentee Rahul on campus steps"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 45vw"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1E1B4B]/85 via-[#1E1B4B]/25 to-transparent pointer-events-none" />
+                <div className="absolute bottom-4 left-5 right-5 text-white">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-md">
+                    <CheckCircle2 className="size-3.5 text-emerald-400" />
+                    <span>The Mentra Giving-Back Circle</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 sm:p-8">
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1E1B4B]">
+                  Once a mentee, now a mentor.
+                </h2>
+                <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600">
+                  After getting guidance as a student, come back as a senior mentor. That circular community model keeps Mentra authentic, practical, current, and genuinely kind.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid content-center gap-4">
+              {[
+                "Students ask honestly in a safe space with zero judgment.",
+                "Mentors and seniors answer directly from recent lived experience.",
+                "Guided students return as verified college mentors for the next batch.",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-start gap-4 rounded-2xl border border-violet-100/90 bg-white p-5 shadow-xs"
+                >
+                  <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-600" />
+                  <p className="text-sm sm:text-base font-semibold text-[#1E1B4B]">
+                    {item}
+                  </p>
+                </div>
+              ))}
+
+              <div className="pt-2">
+                <WhatsAppButton>Join the circle</WhatsAppButton>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <HomepageFooter />
+    </div>
   );
 }

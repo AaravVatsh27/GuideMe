@@ -31,6 +31,22 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
     return NextResponse.json({ error: "Invalid role selection" }, { status: 400 });
   }
 
+  const currentUser = await db.user.findUnique({
+    where: { id: userId },
+    select: { onboardingComplete: true },
+  });
+
+  if (!currentUser) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  if (currentUser.onboardingComplete) {
+    return NextResponse.json(
+      { error: "Account setup is already complete" },
+      { status: 409 },
+    );
+  }
+
   const user = await db.user.update({
     where: { id: userId },
     data: { role: parsed.data.role },

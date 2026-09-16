@@ -12,80 +12,75 @@ type AuthShellProps = {
 
 export function AuthShell({ children }: AuthShellProps) {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#FAF5FF] text-[#1E1B4B]">
-      {/* Ambient brand atmosphere */}
+    <main className="relative min-h-dvh overflow-hidden bg-[#F6F8FC] text-[#172033]">
       <div
-        className="pointer-events-none absolute -left-40 -top-40 h-[30rem] w-[30rem] rounded-full bg-[#7C3AED]/[0.07] blur-[110px]"
+        className="pointer-events-none absolute -left-40 -top-40 h-[30rem] w-[30rem] rounded-full bg-[#4F46E5]/[0.08] blur-[110px]"
         aria-hidden="true"
       />
 
       <div
-        className="pointer-events-none absolute -right-40 bottom-[-8rem] h-[32rem] w-[32rem] rounded-full bg-[#EC4899]/[0.06] blur-[120px]"
+        className="pointer-events-none absolute -right-40 bottom-[-8rem] h-[32rem] w-[32rem] rounded-full bg-[#0EA5E9]/[0.06] blur-[120px]"
         aria-hidden="true"
       />
 
-      <div className="relative min-h-[100svh] px-4 py-5 pb-16 sm:px-6 sm:py-8 sm:pb-16 lg:px-8 lg:pb-20">
-        {/* Top brand bar */}
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
+      <div className="relative min-h-dvh px-4 py-5 pb-12 sm:px-6 sm:py-7 sm:pb-14 lg:px-8 lg:pb-16">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between border-b border-slate-200/70 pb-5 sm:pb-6">
           <Link
             href="/"
             aria-label="Mentra home"
-            className="inline-flex w-[120px] items-center sm:w-[135px]"
+            className="inline-flex min-h-11 items-center rounded-lg transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
           >
             <MentraLogo
               variant="color"
+              layout="horizontal"
               size="sm"
-              className="w-full"
             />
           </Link>
 
-          <div className="hidden items-center gap-2 text-sm text-slate-500 sm:flex">
+          <div className="hidden items-center gap-2 text-sm text-slate-600 sm:flex">
             <span>New to Mentra?</span>
 
             <Link
               href="/auth/signup"
-              className="font-semibold text-[#7C3AED] transition-colors hover:text-[#6D28D9]"
+              className="rounded-md font-semibold text-[#4F46E5] underline-offset-4 transition-colors hover:text-[#3730A3] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
             >
               Create an account
             </Link>
           </div>
         </div>
 
-        {/* Main split layout */}
-        <div className="mx-auto flex w-full max-w-6xl items-start py-12 lg:py-20">
-          <div className="grid w-full overflow-hidden rounded-[2rem] border border-white/80 bg-white/45 shadow-[0_35px_100px_-50px_rgba(30,27,75,0.32)] backdrop-blur-2xl lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="mx-auto flex w-full max-w-6xl items-start py-8 sm:py-12 lg:py-16">
+          <div className="grid w-full overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/70 shadow-[0_28px_80px_-46px_rgba(15,23,42,0.38)] backdrop-blur-2xl lg:grid-cols-[0.9fr_1.1fr]">
 
-            {/* Brand/editorial side */}
-            <div className="relative hidden overflow-hidden border-r border-violet-100/70 bg-gradient-to-br from-[#F5F0FF]/90 via-white/45 to-[#FFF4F8]/80 p-10 lg:flex lg:flex-col lg:justify-between xl:p-14">
+            <div className="relative hidden overflow-hidden border-r border-slate-200/80 bg-gradient-to-br from-[#EEF2FF]/90 via-white/60 to-[#F0F9FF]/85 p-10 lg:flex lg:flex-col lg:justify-between xl:p-14">
               <div
-                className="pointer-events-none absolute -bottom-24 -left-20 h-80 w-80 rounded-full bg-[#7C3AED]/10 blur-[100px]"
+                className="pointer-events-none absolute -bottom-24 -left-20 h-80 w-80 rounded-full bg-[#4F46E5]/10 blur-[100px]"
                 aria-hidden="true"
               />
 
               <div
-                className="pointer-events-none absolute -right-24 top-[-5rem] h-72 w-72 rounded-full bg-[#EC4899]/10 blur-[100px]"
+                className="pointer-events-none absolute -right-24 top-[-5rem] h-72 w-72 rounded-full bg-[#0EA5E9]/10 blur-[100px]"
                 aria-hidden="true"
               />
 
               <div className="relative">
-                <div className="flex size-16 items-center justify-center rounded-2xl bg-white/75 shadow-sm ring-1 ring-violet-100/80 backdrop-blur">
+                <div className="flex size-16 items-center justify-center rounded-2xl bg-white/85 shadow-sm ring-1 ring-slate-200/80 backdrop-blur">
                   <MentraLogo
                     variant="color"
+                    layout="icon"
                     size="sm"
-                    showTagline={false}
-                    className="w-11"
                   />
                 </div>
 
-                <p className="mt-10 max-w-md text-sm font-semibold uppercase tracking-[0.2em] text-[#7C3AED]">
+                <p className="mt-10 max-w-md text-sm font-semibold uppercase tracking-[0.2em] text-[#4F46E5]">
                   Your senior friend · your guide
                 </p>
 
-                <h2 className="mt-5 max-w-lg text-[2.65rem] font-bold leading-[1.05] tracking-[-0.045em] text-[#1E1B4B] xl:text-[2.85rem]">
+                <h2 className="mt-5 max-w-lg text-[2.65rem] font-bold leading-[1.05] tracking-[-0.045em] text-[#172033] xl:text-[2.85rem]">
                   Guidance starts with the right person.
                 </h2>
 
-                <p className="mt-6 max-w-md text-base leading-7 text-[#5B6475]">
+                <p className="mt-6 max-w-md text-base leading-7 text-slate-600">
                   Talk to someone who has already walked the road you are
                   trying to navigate.
                 </p>
@@ -99,10 +94,10 @@ export function AuthShell({ children }: AuthShellProps) {
                 ].map((item) => (
                   <div
                     key={item}
-                    className="flex items-center gap-3 text-sm font-medium text-[#4B5875]"
+                    className="flex items-center gap-3 text-sm font-medium text-slate-700"
                   >
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white text-[#7C3AED] shadow-sm ring-1 ring-violet-100">
-                      <span className="size-1.5 rounded-full bg-[#7C3AED]" />
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white text-[#4F46E5] shadow-sm ring-1 ring-slate-200">
+                      <span className="size-1.5 rounded-full bg-[#4F46E5]" />
                     </span>
 
                     {item}
@@ -111,8 +106,7 @@ export function AuthShell({ children }: AuthShellProps) {
               </div>
             </div>
 
-            {/* Authentication side */}
-            <div className="flex items-center justify-center bg-white/72 p-6 backdrop-blur-xl sm:p-8 lg:p-12">
+            <div className="flex items-center justify-center bg-white/80 p-6 backdrop-blur-xl sm:p-9 lg:p-12">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -128,7 +122,7 @@ export function AuthShell({ children }: AuthShellProps) {
           </div>
         </div>
 
-        <p className="mx-auto max-w-xl text-center text-xs leading-5 text-slate-400">
+        <p className="mx-auto max-w-xl text-center text-xs leading-5 text-slate-500">
           Your senior friend · your guide
         </p>
       </div>

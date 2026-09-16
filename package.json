@@ -66,5 +66,14 @@
     "tailwindcss": "^4.2.4",
     "tsx": "^4.23.13",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "msgpackr-extract@3.0.3": true,
+    "msw@2.13.6": true,
+    "prisma@7.8.0": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.11.1": true,
+    "@prisma/engines@7.8.0": true,
+    "@sentry/cli@2.58.5": true
   }
 }

@@ -28,6 +28,7 @@ type SignInViewProps = {
   callbackUrl: string;
   errorCode?: string;
   emailEnabled: boolean;
+  googleEnabled: boolean;
 };
 
 const emailSchema = z
@@ -39,6 +40,7 @@ export function SignInView({
   callbackUrl,
   errorCode,
   emailEnabled,
+  googleEnabled,
 }: SignInViewProps) {
   const router = useRouter();
 
@@ -118,11 +120,11 @@ export function SignInView({
     <Card className="border-0 bg-transparent shadow-none">
       <CardHeader className="px-0 pb-7 pt-0">
         <div className="space-y-2.5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#7C3AED]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#4F46E5]">
             Welcome back
           </p>
 
-          <CardTitle className="text-[1.9rem] font-bold tracking-[-0.04em] text-[#1E1B4B] sm:text-[2.1rem]">
+          <CardTitle className="text-[1.9rem] font-bold tracking-[-0.04em] text-[#172033] sm:text-[2.1rem]">
             Sign in to Mentra
           </CardTitle>
 
@@ -193,11 +195,11 @@ export function SignInView({
             type="button"
             size="lg"
             onClick={handleGoogleSignIn}
-            disabled={pendingProvider !== null}
+            disabled={!googleEnabled || pendingProvider !== null}
             aria-busy={
               pendingProvider === "google"
             }
-            className="h-12 w-full rounded-xl bg-[#1E1B4B] text-[0.95rem] font-semibold text-white shadow-[0_14px_30px_-18px_rgba(30,27,75,0.6)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-[#2A275A] hover:shadow-[0_18px_36px_-18px_rgba(30,27,75,0.55)] active:scale-[0.99]"
+            className="h-12 w-full rounded-xl bg-[#172033] text-[0.95rem] font-semibold text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.6)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-[#27334A] hover:shadow-[0_18px_36px_-18px_rgba(15,23,42,0.55)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
           >
             <GoogleIcon
               className="mr-3 size-5"
@@ -206,7 +208,9 @@ export function SignInView({
 
             {pendingProvider === "google"
               ? "Redirecting to Google…"
-              : "Continue with Google"}
+              : googleEnabled
+                ? "Continue with Google"
+                : "Google sign-in unavailable"}
           </Button>
 
           {/* Divider */}
@@ -215,11 +219,11 @@ export function SignInView({
               className="absolute inset-0 flex items-center"
               aria-hidden="true"
             >
-              <div className="w-full border-t border-violet-100" />
+              <div className="w-full border-t border-slate-200" />
             </div>
 
             <div className="relative flex justify-center">
-              <span className="bg-white/80 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 backdrop-blur-xl">
+              <span className="bg-white/80 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 backdrop-blur-xl">
                 or continue with email
               </span>
             </div>
@@ -288,7 +292,7 @@ export function SignInView({
                       ? "signin-email-error"
                       : "signin-email-hint"
                   }
-                  className="h-12 rounded-xl border-slate-200 bg-white/80 pl-11 pr-4 text-base text-[#1E1B4B] shadow-sm transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-slate-400 focus-visible:border-[#7C3AED] focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#7C3AED]/15"
+                  className="h-12 rounded-xl border-slate-200 bg-white/80 pl-11 pr-4 text-base text-[#172033] shadow-sm transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-slate-400 focus-visible:border-[#4F46E5] focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#4F46E5]/15"
                 />
               </div>
 
@@ -353,7 +357,7 @@ export function SignInView({
               aria-busy={
                 pendingProvider === "email"
               }
-              className="h-12 w-full rounded-xl bg-[#7C3AED] text-[0.95rem] font-semibold text-white shadow-[0_14px_30px_-18px_rgba(124,58,237,0.72)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-[#6D28D9] hover:shadow-[0_18px_36px_-18px_rgba(124,58,237,0.7)] active:scale-[0.99]"
+              className="h-12 w-full rounded-xl bg-[#4F46E5] text-[0.95rem] font-semibold text-white shadow-[0_14px_30px_-18px_rgba(79,70,229,0.48)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-[#4338CA] hover:shadow-[0_18px_36px_-18px_rgba(79,70,229,0.54)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
             >
               {pendingProvider === "email" ? (
                 <>
@@ -387,12 +391,12 @@ export function SignInView({
         </div>
       </CardContent>
 
-      <CardFooter className="mt-7 border-t border-violet-100/80 bg-transparent px-0 pt-6">
+      <CardFooter className="mt-7 border-t border-slate-200/80 bg-transparent px-0 pt-6">
         <p className="text-sm text-slate-500">
           New to Mentra?{" "}
           <Link
             href={signUpHref}
-            className="font-semibold text-[#7C3AED] underline-offset-4 transition-colors hover:text-[#6D28D9] hover:underline"
+            className="rounded-md font-semibold text-[#4F46E5] underline-offset-4 transition-colors hover:text-[#3730A3] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
           >
             Create an account
           </Link>

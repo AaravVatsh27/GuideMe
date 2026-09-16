@@ -44,51 +44,56 @@ export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps
 
   return (
     <AuthShell {...shellContent}>
-      <Card className="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/92 py-0 shadow-card backdrop-blur">
-        <CardHeader className="gap-4 border-b border-slate-200/80 px-6 py-7 sm:px-7">
-          <div className="flex size-14 items-center justify-center rounded-full bg-red-50 text-red-600">
-            <AlertTriangle className="size-6" />
+      <Card className="overflow-hidden rounded-[2rem] border border-violet-200/80 bg-white/95 py-0 shadow-[0_20px_50px_-20px_rgba(124,58,237,0.12)] backdrop-blur-xl">
+        <CardHeader className="gap-4 border-b border-violet-100/80 px-6 py-7 sm:px-8">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 ring-8 ring-rose-50/60 shadow-xs">
+            <AlertTriangle className="size-7" />
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Authentication error
+            <p className="text-xs font-bold uppercase tracking-wider text-rose-600">
+              Authentication Notice
             </p>
-            <CardTitle className="font-display text-3xl font-bold text-slate-950">
+            <CardTitle className="font-display text-2xl font-bold tracking-tight text-[#1E1B4B] sm:text-3xl">
               {errorCopy.title}
             </CardTitle>
-            <CardDescription className="text-sm leading-6 text-slate-600">
+            <CardDescription className="text-sm leading-relaxed text-[#5B6475]">
               {errorCopy.description}
             </CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4 px-6 py-7 text-sm leading-6 text-slate-600 sm:px-7">
+        <CardContent className="space-y-4 px-6 py-6 text-sm leading-relaxed text-[#5B6475] sm:px-8">
           <p>
             Try signing in again, or start a fresh signup flow if you were creating a new
-            account.
+            account. If you linked an account with Google or email, make sure you use the same
+            sign-in method.
           </p>
         </CardContent>
 
-        <CardFooter className="grid gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-5 sm:px-7">
+        <CardFooter className="flex flex-col gap-3 border-t border-violet-100/80 bg-violet-50/40 px-6 py-6 sm:px-8">
           <Link
             href={signInHref}
-            className={cn(
-              buttonVariants({}),
-              "h-12 rounded-xl bg-slate-950 text-base font-semibold text-white hover:bg-slate-900",
-            )}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#7C3AED] text-sm font-semibold text-white shadow-[0_10px_22px_-8px_rgba(124,58,237,0.65)] transition-all hover:-translate-y-0.5 hover:bg-[#6D28D9] hover:shadow-[0_14px_26px_-8px_rgba(124,58,237,0.75)] active:translate-y-0"
           >
-            Back to sign in
+            <span>Back to sign in</span>
             <ArrowRight className="size-4" />
           </Link>
           <Link
             href={signUpHref}
-            className={cn(
-              buttonVariants({ variant: "outline" }),
-              "h-12 rounded-xl border-slate-200 bg-white text-base font-semibold text-slate-900 hover:bg-slate-100",
-            )}
+            className="flex h-12 w-full items-center justify-center rounded-full border border-violet-200 bg-white text-sm font-semibold text-[#1E1B4B] shadow-xs transition hover:border-violet-300 hover:bg-violet-50 hover:text-[#7C3AED]"
           >
             Create an account
           </Link>
+
+          <p className="mt-2 text-center text-xs text-slate-500">
+            Having trouble?{" "}
+            <a
+              href="mailto:support@mentra.in?subject=Authentication%20Help"
+              className="font-semibold text-[#7C3AED] hover:underline"
+            >
+              Contact support@mentra.in
+            </a>
+          </p>
         </CardFooter>
       </Card>
     </AuthShell>

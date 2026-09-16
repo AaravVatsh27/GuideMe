@@ -9,6 +9,7 @@ import {
   isTruthySearchParam,
 } from "@/Frontend/views/auth/search-params";
 import { AUTH_DEFAULT_REDIRECT, getOnboardingPath } from "@/Backend/server/auth-flow";
+import { isGoogleAuthEnabled } from "@/Backend/server/auth";
 import { getAuthShellContent } from "@/Backend/server/public-data";
 
 type SignUpPageProps = {
@@ -53,6 +54,7 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
         callbackUrl={callbackUrl}
         errorCode={errorCode}
         isCompletingOAuth={isCompletingOAuth}
+        googleEnabled={isGoogleAuthEnabled}
       />
     </AuthShell>
   );

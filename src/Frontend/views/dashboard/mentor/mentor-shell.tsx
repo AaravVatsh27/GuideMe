@@ -72,8 +72,8 @@ export function MentorShell({ children }: Props) {
           <div className="flex min-h-0 flex-1 flex-col">
             {/* Brand */}
             <div className="min-w-0">
-              <div className="h-[48px] w-[82px] overflow-hidden">
-                <MentraLogo size="sm" showTagline={false} />
+              <div className="flex h-[38px] items-center">
+                <MentraLogo size="sm" layout="horizontal" />
               </div>
               <h2 className="mt-3 text-lg font-bold tracking-tight text-slate-950">
                 Dashboard
@@ -184,7 +184,7 @@ export function MentorShell({ children }: Props) {
               </DropdownMenu>
             </div>
           </header>
-          <div className="mb-5 lg:hidden">
+          <div className="mb-5 min-w-0 lg:hidden">
             <div className="w-full rounded-2xl border border-violet-100 bg-violet-50/40 p-3.5">
               <div className="flex min-w-0 items-center gap-3">
                 <MentorAvatar src={data?.user?.image} alt={userName} fallback={initials} className="size-12 shrink-0" />
@@ -204,7 +204,7 @@ export function MentorShell({ children }: Props) {
               </div>
             </div>
           </div>
-          {children}
+          <div className="min-w-0">{children}</div>
         </div>
       </div>
 

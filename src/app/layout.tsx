@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "@/Frontend/styles/globals.css";
 import { AppProviders } from "@/app/providers";
@@ -15,6 +15,12 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
@@ -22,10 +28,21 @@ export const metadata: Metadata = {
       "http://localhost:3000",
   ),
   title: {
-    default: "GuideMe",
-    template: "%s | GuideMe",
+    default: "Mentra - Your Senior Friend · Your Guide",
+    template: "%s | Mentra",
   },
-  description: "Production-ready mentoring platform scaffold for GuideMe.",
+  description:
+    "Connect with verified college seniors for 1:1 guidance across IITs, AIIMS, BITS, and top universities.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/brand/mentra-icon.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/brand/mentra-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -37,7 +54,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} scroll-smooth`}
     >
       <body className="antialiased">
         <ErrorBoundary>

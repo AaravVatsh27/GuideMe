@@ -64,8 +64,8 @@ export function StudentShell({ children }: Props) {
           <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden">
             {/* Brand */}
             <div className="w-full min-w-0 space-y-2">
-              <div className="flex min-w-0 items-start">
-                <MentraLogo size="sm" showTagline={false} className="h-[61px] w-[72px] max-w-full shrink-0" />
+              <div className="flex h-[38px] items-center">
+                <MentraLogo size="sm" layout="horizontal" />
               </div>
               <div className="min-w-0">
                 <h2 className="text-base font-bold tracking-tight text-slate-950">Dashboard</h2>
@@ -205,7 +205,7 @@ export function StudentShell({ children }: Props) {
               </DropdownMenu>
             </div>
           </header>
-          {children}
+          <div className="min-w-0">{children}</div>
         </div>
       </div>
 

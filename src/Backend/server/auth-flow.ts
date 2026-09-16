@@ -38,11 +38,22 @@ export function getSafeRedirectTo(
   value: string | null | undefined,
   fallback = AUTH_DEFAULT_REDIRECT,
 ) {
-  if (!value || !value.startsWith("/")) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
     return fallback;
   }
 
-  return value;
+  try {
+    const baseUrl = "http://localhost";
+    const redirectUrl = new URL(value, baseUrl);
+
+    if (redirectUrl.origin !== baseUrl) {
+      return fallback;
+    }
+
+    return `${redirectUrl.pathname}${redirectUrl.search}${redirectUrl.hash}`;
+  } catch {
+    return fallback;
+  }
 }
 
 export function getOnboardingPath(role: string | null | undefined) {

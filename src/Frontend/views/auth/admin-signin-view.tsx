@@ -16,9 +16,10 @@ const emailSchema = z.string().trim().email("Enter a valid email address");
 
 type AdminSignInViewProps = {
   emailEnabled: boolean;
+  googleEnabled: boolean;
 };
 
-export function AdminSignInView({ emailEnabled }: AdminSignInViewProps) {
+export function AdminSignInView({ emailEnabled, googleEnabled }: AdminSignInViewProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -82,10 +83,10 @@ export function AdminSignInView({ emailEnabled }: AdminSignInViewProps) {
   }
 
   return (
-    <Card className="rounded-2xl border border-violet-100 bg-white shadow-[0_24px_70px_-40px_rgba(30,27,75,0.35)]">
+    <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_24px_70px_-40px_rgba(15,23,42,0.3)]">
       <CardHeader className="p-5 pb-3 sm:p-6 sm:pb-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7C3AED]">Internal access</p>
-        <CardTitle className="mt-2 text-2xl font-bold tracking-[-0.03em] text-[#1E1B4B]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4F46E5]">Internal access</p>
+        <CardTitle className="mt-2 text-2xl font-bold tracking-[-0.03em] text-[#172033]">
           Admin / HR Login
         </CardTitle>
         <CardDescription className="mt-2 text-sm leading-5 text-slate-600">
@@ -133,15 +134,15 @@ export function AdminSignInView({ emailEnabled }: AdminSignInViewProps) {
         <Button
           type="button"
           onClick={() => void handleGoogleSignIn()}
-          disabled={isPending}
-          className="h-10 w-full rounded-xl bg-[#1E1B4B] font-semibold text-white hover:bg-[#312E81]"
+          disabled={!googleEnabled || isPending}
+          className="h-11 w-full rounded-xl bg-[#172033] font-semibold text-white hover:bg-[#27334A] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
         >
-          Continue with Google
+          {googleEnabled ? "Continue with Google" : "Google sign-in unavailable"}
         </Button>
 
         <div className="relative py-1">
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
-            <div className="w-full border-t border-violet-100" />
+            <div className="w-full border-t border-slate-200" />
           </div>
           <div className="relative flex justify-center">
             <span className="bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
@@ -151,7 +152,7 @@ export function AdminSignInView({ emailEnabled }: AdminSignInViewProps) {
         </div>
 
         <form onSubmit={(event) => void handleEmailSignIn(event)} className="space-y-3">
-          <label htmlFor="admin-signin-email" className="text-sm font-medium text-[#1E1B4B]">
+          <label htmlFor="admin-signin-email" className="text-sm font-medium text-[#172033]">
             Work email
           </label>
           <div className="relative">
@@ -164,14 +165,14 @@ export function AdminSignInView({ emailEnabled }: AdminSignInViewProps) {
               placeholder="you@company.com"
               autoComplete="email"
               disabled={!emailEnabled || isPending}
-              className="h-10 rounded-xl border-slate-200 bg-white pl-10 text-[#1E1B4B] focus-visible:border-[#7C3AED] focus-visible:ring-2 focus-visible:ring-[#7C3AED]/10"
+              className="h-11 rounded-xl border-slate-200 bg-white pl-10 text-[#172033] focus-visible:border-[#4F46E5] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/15"
             />
           </div>
           {error ? <p className="text-sm text-rose-600" role="alert">{error}</p> : null}
           <Button
             type="submit"
             disabled={!emailEnabled || isPending}
-            className="h-10 w-full rounded-xl bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
+            className="h-11 w-full rounded-xl bg-[#4F46E5] font-semibold text-white hover:bg-[#4338CA] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
           >
             {isPending ? "Sending link..." : "Send secure sign-in link"}
             {!isPending ? <ExternalLink className="ml-2 size-4" aria-hidden="true" /> : null}
@@ -184,7 +185,7 @@ export function AdminSignInView({ emailEnabled }: AdminSignInViewProps) {
         </form>
       </CardContent>
 
-      <CardFooter className="border-t border-violet-100 bg-transparent p-5 pt-4 sm:px-6">
+      <CardFooter className="border-t border-slate-200 bg-transparent p-5 pt-4 sm:px-6">
         <p className="text-xs leading-5 text-slate-500">
           Access is limited to authorized Mentra administrators and HR staff.
         </p>

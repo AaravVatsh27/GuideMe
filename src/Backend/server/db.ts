@@ -48,7 +48,7 @@ function buildDb(): PrismaClient {
   // Always persist the pool on globalThis so it survives HMR re-evaluation.
   globalForPrisma.pool = pool;
 
-  const adapter = new PrismaPg(pool);
+  const adapter = new PrismaPg(pool as any);
   return new PrismaClient({ adapter });
 }
 

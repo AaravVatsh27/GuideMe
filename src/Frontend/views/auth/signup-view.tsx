@@ -37,6 +37,7 @@ type SignupViewProps = {
   callbackUrl: string;
   errorCode?: string;
   isCompletingOAuth: boolean;
+  googleEnabled: boolean;
 };
 
 const signupRoleSchema = z.enum(["STUDENT", "MENTOR"]);
@@ -72,6 +73,7 @@ export function SignupView({
   callbackUrl,
   errorCode,
   isCompletingOAuth,
+  googleEnabled,
 }: SignupViewProps) {
   const router = useRouter();
   const { data: session, status, update } = useSession();
@@ -215,10 +217,10 @@ export function SignupView({
     <Card className="border-0 bg-transparent py-0 shadow-none">
       <CardHeader className="gap-4 border-0 px-0 pb-7 pt-0">
         <div className="space-y-2.5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#7C3AED]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#4F46E5]">
             Create your account
           </p>
-          <CardTitle className="text-[1.9rem] font-bold tracking-[-0.04em] text-[#1E1B4B] sm:text-[2.1rem]">
+          <CardTitle className="text-[1.9rem] font-bold tracking-[-0.04em] text-[#172033] sm:text-[2.1rem]">
             What brings you to Mentra?
           </CardTitle>
           <CardDescription className="max-w-md text-sm leading-6 text-slate-500">
@@ -256,7 +258,7 @@ export function SignupView({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="space-y-4 rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-6 text-center"
+              className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/80 p-6 text-center"
             >
               <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-slate-950 text-white">
                 <CheckCircle2 className="size-6" />
@@ -309,21 +311,21 @@ export function SignupView({
                           onClick={() => handleRoleSelect(role)}
                           aria-pressed={isSelected}
                           className={cn(
-                            "group relative flex min-h-[200px] flex-col overflow-hidden rounded-[1.5rem] border p-5 text-left transition duration-200 sm:min-h-[205px]",
+                            "group relative flex min-h-50 flex-col overflow-hidden rounded-3xl border p-5 text-left transition duration-200 sm:min-h-51.25",
                             isSelected
-                              ? "border-[#7C3AED] bg-[#7C3AED]/[0.045] shadow-[0_20px_42px_-28px_rgba(124,58,237,0.48)]"
-                              : "border-slate-200/90 bg-white/90 hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:shadow-[0_18px_40px_-28px_rgba(30,27,75,0.22)]",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/30 focus-visible:ring-offset-2",
+                              ? "border-[#4F46E5] bg-indigo-50/60 shadow-[0_20px_42px_-28px_rgba(79,70,229,0.38)]"
+                              : "border-slate-200/90 bg-white/90 hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white hover:shadow-[0_18px_40px_-28px_rgba(15,23,42,0.18)]",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2",
                           )}
                         >
                           {/* Selection indicator */}
                           <div className="flex items-start justify-between">
                             <span
                               className={cn(
-                                "flex size-12 items-center justify-center rounded-[1rem] transition duration-200",
+                                "flex size-12 items-center justify-center rounded-2xl transition duration-200",
                                 isSelected
-                                  ? "bg-[#7C3AED] text-white shadow-[0_10px_24px_-16px_rgba(124,58,237,0.8)]"
-                                  : "bg-violet-50 text-[#7C3AED] group-hover:bg-violet-100",
+                                  ? "bg-[#4F46E5] text-white shadow-[0_10px_24px_-16px_rgba(79,70,229,0.6)]"
+                                  : "bg-indigo-50 text-[#4F46E5] group-hover:bg-indigo-100",
                               )}
                             >
                               <Icon className="size-5" />
@@ -333,8 +335,8 @@ export function SignupView({
                               className={cn(
                                 "flex size-6 items-center justify-center rounded-full border-2 transition duration-200",
                                 isSelected
-                                  ? "border-[#7C3AED] bg-[#7C3AED]"
-                                  : "border-slate-300 bg-white group-hover:border-violet-300",
+                                  ? "border-[#4F46E5] bg-[#4F46E5]"
+                                  : "border-slate-300 bg-white group-hover:border-indigo-300",
                               )}
                             >
                               {isSelected ? (
@@ -345,11 +347,11 @@ export function SignupView({
 
                           {/* Content */}
                           <div className="mt-7">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7C3AED]">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#4F46E5]">
                               {role === "STUDENT" ? "For students" : "For mentors"}
                             </p>
 
-                            <h4 className="mt-2 text-xl font-bold tracking-[-0.03em] text-[#1E1B4B]">
+                            <h4 className="mt-2 text-xl font-bold tracking-[-0.03em] text-[#172033]">
                               {role === "STUDENT"
                                 ? "I want guidance"
                                 : "I want to mentor"}
@@ -368,7 +370,7 @@ export function SignupView({
                               className={cn(
                                 "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold",
                                 isSelected
-                                  ? "bg-violet-100 text-[#6D28D9]"
+                                  ? "bg-indigo-100 text-[#3730A3]"
                                   : "bg-slate-100 text-slate-500",
                               )}
                             >
@@ -385,7 +387,7 @@ export function SignupView({
                       <Button
                         type="button"
                         onClick={() => setStep(2)}
-                        className="group h-12 w-full rounded-xl bg-[#7C3AED] text-sm font-semibold text-white shadow-[0_14px_30px_-20px_rgba(124,58,237,0.68)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#6D28D9] hover:shadow-[0_18px_36px_-20px_rgba(124,58,237,0.68)] active:scale-[0.99]"
+                        className="group h-12 w-full rounded-xl bg-[#4F46E5] text-sm font-semibold text-white shadow-[0_14px_30px_-20px_rgba(79,70,229,0.5)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4338CA] hover:shadow-[0_18px_36px_-20px_rgba(79,70,229,0.56)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
                       >
                         Continue as{" "}
                         {selectedRole === "STUDENT" ? "Student" : "Mentor"}
@@ -404,26 +406,26 @@ export function SignupView({
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                       Continue
                     </p>
-                    <h3 className="text-2xl font-bold tracking-[-0.035em] text-[#1E1B4B]">
+                    <h3 className="text-2xl font-bold tracking-[-0.035em] text-[#172033]">
                       Continue with Google
                     </h3>
                   </div>
 
                   {selectedRole ? (
-                    <div className="rounded-[1.5rem] border border-violet-100 bg-violet-50/[0.45] p-5">
+                    <div className="rounded-3xl border border-indigo-100 bg-indigo-50/45 p-5">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#7C3AED]">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#4F46E5]">
                             Selected role
                           </p>
-                          <h4 className="mt-1 text-xl font-bold tracking-[-0.03em] text-[#1E1B4B]">
+                          <h4 className="mt-1 text-xl font-bold tracking-[-0.03em] text-[#172033]">
                             {roleOptions[selectedRole].title}
                           </h4>
                           <p className="mt-2 text-sm leading-6 text-slate-500">
                             {roleOptions[selectedRole].description}
                           </p>
                         </div>
-                        <span className="rounded-full bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#7C3AED]">
+                        <span className="rounded-full bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#4F46E5]">
                           {selectedRole.toLowerCase()}
                         </span>
                       </div>
@@ -434,7 +436,7 @@ export function SignupView({
                     <Button
                       type="button"
                       onClick={handleBack}
-                      className="h-12 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-[#1E1B4B] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50/40 active:scale-[0.99]"
+                      className="h-12 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-[#172033] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50/40 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
                     >
                       <ArrowLeft className="size-4" />
                       Back
@@ -442,18 +444,23 @@ export function SignupView({
                     <Button
                       type="button"
                       onClick={handleGoogleSignup}
-                      disabled={!selectedRole || pending !== null}
-                      className="group h-12 flex-1 rounded-xl bg-[#7C3AED] text-sm font-semibold text-white shadow-[0_14px_30px_-20px_rgba(124,58,237,0.68)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#6D28D9] hover:shadow-[0_18px_36px_-20px_rgba(124,58,237,0.68)] active:scale-[0.99]"
+                      disabled={!googleEnabled || !selectedRole || pending !== null}
+                      className="group h-12 flex-1 rounded-xl bg-[#4F46E5] text-sm font-semibold text-white shadow-[0_14px_30px_-20px_rgba(79,70,229,0.5)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4338CA] hover:shadow-[0_18px_36px_-20px_rgba(79,70,229,0.56)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
                     >
                       <GoogleIcon />
-                      {pending === "google" ? "Redirecting to Google..." : "Continue with Google"}
+                      {pending === "google"
+                        ? "Redirecting to Google..."
+                        : googleEnabled
+                          ? "Continue with Google"
+                          : "Google sign-up unavailable"}
                       <ArrowRight className="size-4" />
                     </Button>
                   </div>
 
                   <p className="text-xs leading-5 text-slate-400">
-                    Your role is saved securely before Google sign-in so we can finish
-                    setting up your account when you return.
+                    {googleEnabled
+                      ? "Your role is saved securely before Google sign-in so we can finish setting up your account when you return."
+                      : "Google sign-up is not configured for this environment."}
                   </p>
                 </>
               )}
@@ -462,10 +469,10 @@ export function SignupView({
         </AnimatePresence>
       </CardContent>
 
-      <CardFooter className="mt-7 border-t border-violet-100/80 bg-transparent px-0 pt-5">
+      <CardFooter className="mt-7 border-t border-slate-200/80 bg-transparent px-0 pt-5">
         <p className="w-full text-center text-sm text-slate-500">
           Already have an account?{" "}
-          <Link href={signInHref} className="font-semibold text-[#7C3AED] underline-offset-4 transition-colors hover:text-[#6D28D9] hover:underline">
+          <Link href={signInHref} className="rounded-md font-semibold text-[#4F46E5] underline-offset-4 transition-colors hover:text-[#3730A3] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2">
             Sign in
           </Link>
         </p>

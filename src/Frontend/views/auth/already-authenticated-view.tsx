@@ -101,7 +101,7 @@ export function AlreadyAuthenticatedView({
           <Button
             asChild
             size="lg"
-            className="h-12 w-full min-w-0 flex-1 rounded-xl bg-primary px-3 text-xs font-semibold shadow-[0_12px_28px_-18px_rgba(79,70,229,0.65)] transition-[transform,background-color,box-shadow] duration-200 hover:bg-primary/90 hover:shadow-[0_16px_32px_-18px_rgba(79,70,229,0.7)] active:scale-[0.99] sm:text-sm"
+            className="h-12 w-full min-w-0 flex-1 rounded-xl bg-primary px-3 text-xs font-semibold shadow-[0_12px_28px_-18px_rgba(79,70,229,0.65)] transition-[transform,background-color,box-shadow] duration-200 hover:bg-primary/90 hover:shadow-[0_16px_32px_-18px_rgba(79,70,229,0.7)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 sm:text-sm"
           >
             <Link href={toRoute(continueHref)} className="inline-flex min-w-0 items-center justify-center gap-1.5">
               <span className="whitespace-normal leading-tight text-center">Continue with this account</span>
@@ -114,7 +114,7 @@ export function AlreadyAuthenticatedView({
             variant="outline"
             size="lg"
             onClick={handleSignOut}
-            className="h-12 w-full min-w-0 flex-1 rounded-xl border-border bg-background px-3 text-xs font-semibold text-foreground transition-[background-color,border-color,transform] duration-200 hover:bg-muted/60 hover:border-primary/20 active:scale-[0.99] sm:text-sm"
+            className="h-12 w-full min-w-0 flex-1 rounded-xl border-border bg-background px-3 text-xs font-semibold text-foreground transition-[background-color,border-color,transform] duration-200 hover:bg-muted/60 hover:border-primary/20 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 sm:text-sm"
           >
             <LogOut className="mr-1.5 size-4 shrink-0" />
             <span className="whitespace-normal leading-tight text-center">{copy.alternateLabel}</span>

@@ -7,7 +7,7 @@ import {
   getAuthCallbackUrl,
   getFirstSearchParam,
 } from "@/Frontend/views/auth/search-params";
-import { isEmailAuthEnabled } from "@/Backend/server/auth";
+import { isEmailAuthEnabled, isGoogleAuthEnabled } from "@/Backend/server/auth";
 import {
   AUTH_DEFAULT_REDIRECT,
   getOnboardingPath,
@@ -57,6 +57,7 @@ export default async function SignInPage({
         callbackUrl={callbackUrl}
         errorCode={errorCode}
         emailEnabled={isEmailAuthEnabled}
+        googleEnabled={isGoogleAuthEnabled}
       />
     </AuthShell>
   );
