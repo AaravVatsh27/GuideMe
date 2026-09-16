@@ -1,7 +1,60 @@
+import { hash } from "bcryptjs";
 import { db } from "../../src/Backend/server/db";
 import { institutionSeeds } from "./institutions";
 
+function requiredEnv(name: string): string {
+  const value = process.env[name]?.trim();
+
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+
+  return value;
+}
+
+async function seedAdminAccounts(): Promise<void> {
+  const accounts = [
+    {
+      email: (process.env.MENTRA_ADMIN_EMAIL ?? "admin@mentra.app").trim().toLowerCase(),
+      password: requiredEnv("MENTRA_ADMIN_PASSWORD"),
+      name: "Mentra Admin",
+    },
+    {
+      email: (process.env.MENTRA_HR_EMAIL ?? "hr@mentra.app").trim().toLowerCase(),
+      password: requiredEnv("MENTRA_HR_PASSWORD"),
+      name: "Mentra HR",
+    },
+  ];
+
+  for (const account of accounts) {
+    await db.user.upsert({
+      where: { email: account.email },
+      update: {
+        name: account.name,
+        passwordHash: await hash(account.password, 12),
+        role: "ADMIN",
+        emailVerified: true,
+        isActive: true,
+        deletedAt: null,
+        onboardingComplete: true,
+      },
+      create: {
+        email: account.email,
+        name: account.name,
+        passwordHash: await hash(account.password, 12),
+        role: "ADMIN",
+        emailVerified: true,
+        isActive: true,
+        onboardingComplete: true,
+      },
+    });
+  }
+
+  console.log(`Upserted ${accounts.length} admin accounts.`);
+}
+
 async function main(): Promise<void> {
+  await seedAdminAccounts();
   console.log(
     `Running institution seed for ${institutionSeeds.length} institutions...\n`,
   );

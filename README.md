@@ -9,6 +9,15 @@ Create `.env.local` from `.env.example` and set the database URLs for Supabase:
 
 The Prisma CLI config in [prisma.config.ts](/C:/Users/vatsh/OneDrive/Desktop/GuideMe/prisma.config.ts:1) reads `DIRECT_URL` from `.env.local`, and the Prisma client in [lib/db.ts](/C:/Users/vatsh/OneDrive/Desktop/GuideMe/lib/db.ts:1) uses `DATABASE_URL` at runtime.
 
+For local admin access, set `MENTRA_ADMIN_PASSWORD` and `MENTRA_HR_PASSWORD` in `.env.local` (the email variables default to `admin@mentra.app` and `hr@mentra.app`), then run:
+
+```bash
+npx prisma migrate deploy
+npx tsx prisma/seeds/seed.ts
+```
+
+The seed upserts both accounts with the `ADMIN` role and never stores plaintext passwords.
+
 ## Getting Started
 
 First, run the development server:

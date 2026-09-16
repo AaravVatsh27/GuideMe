@@ -1,20 +1,10 @@
-import NextAuth, { type NextAuthConfig } from "next-auth";
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 
-import { authConfig } from "@/Backend/server/auth";
+import { authEdgeConfig } from "@/Backend/server/auth-edge";
 import { getOnboardingPath } from "@/Backend/server/auth-flow";
 
-const middlewareAuthConfig = {
-  ...authConfig,
-  // Middleware only needs session decoding and route protection.
-  // Excluding the email provider avoids adapter assertions at the edge layer.
-  providers:
-    authConfig.providers?.filter(
-      (provider) => (provider as { id?: string }).id !== "resend",
-    ) ?? [],
-} satisfies NextAuthConfig;
-
-const { auth } = NextAuth(middlewareAuthConfig);
+const { auth } = NextAuth(authEdgeConfig);
 
 function redirectTo(url: URL, pathname: string) {
   return NextResponse.redirect(new URL(pathname, url));
