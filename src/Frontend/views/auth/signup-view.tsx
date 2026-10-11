@@ -1,7 +1,6 @@
 "use client";
 
 import type { Route } from "next";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -21,7 +20,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/Frontend/components/ui/card";
@@ -84,11 +82,6 @@ export function SignupView({
   const [syncError, setSyncError] = useState<string | null>(null);
 
   const authError = getAuthErrorCopy(errorCode);
-  const signInHref = {
-    pathname: "/auth/signin",
-    query: { callbackUrl },
-  } as const;
-
   function toRoute(path: string) {
     return path as Route;
   }
@@ -229,8 +222,8 @@ export function SignupView({
   }
 
   return (
-    <Card className="border-0 bg-transparent py-0 shadow-none">
-      <CardHeader className="gap-4 border-0 px-0 pb-7 pt-0">
+    <Card className="overflow-visible border-0 bg-transparent py-0 shadow-none">
+      <CardHeader className="gap-4 border-0 px-0 pb-4 pt-0">
         <div className="space-y-2.5">
           <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#4F46E5]">
             Create your account
@@ -238,7 +231,7 @@ export function SignupView({
           <CardTitle className="text-[1.9rem] font-bold tracking-[-0.04em] text-[#172033] sm:text-[2.1rem]">
             What brings you to Mentra?
           </CardTitle>
-          <CardDescription className="max-w-md text-sm leading-6 text-slate-500">
+          <CardDescription className="max-w-md text-sm leading-6 text-[#475569]">
             Choose how you want to use Mentra.
           </CardDescription>
         </div>
@@ -324,12 +317,13 @@ export function SignupView({
                           key={role}
                           type="button"
                           onClick={() => handleRoleSelect(role)}
-                          aria-pressed={isSelected}
+                          role="radio"
+                          aria-checked={isSelected}
                           className={cn(
-                            "group relative flex min-h-50 flex-col overflow-hidden rounded-3xl border p-5 text-left transition duration-200 sm:min-h-51.25",
+                            "group relative flex min-h-50 cursor-pointer flex-col overflow-hidden rounded-3xl border p-5 text-left transition duration-200 sm:min-h-51.25",
                             isSelected
-                              ? "border-[#4F46E5] bg-indigo-50/60 shadow-[0_20px_42px_-28px_rgba(79,70,229,0.38)]"
-                              : "border-slate-200/90 bg-white/90 hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white hover:shadow-[0_18px_40px_-28px_rgba(15,23,42,0.18)]",
+                              ? "border-[#4F46E5] bg-[#EEF2FF] shadow-[0_20px_42px_-28px_rgba(79,70,229,0.38)]"
+                              : "border-slate-200/90 bg-white/90 hover:-translate-y-0.5 hover:border-[#C7D2FE] hover:bg-white hover:shadow-[0_18px_40px_-28px_rgba(15,23,42,0.18)]",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2",
                           )}
                         >
@@ -351,11 +345,11 @@ export function SignupView({
                                 "flex size-6 items-center justify-center rounded-full border-2 transition duration-200",
                                 isSelected
                                   ? "border-[#4F46E5] bg-[#4F46E5]"
-                                  : "border-slate-300 bg-white group-hover:border-indigo-300",
+                                  : "border-slate-300 bg-white group-hover:border-[#C7D2FE]",
                               )}
                             >
                               {isSelected ? (
-                                <span className="size-2 rounded-full bg-white" />
+                                <CheckCircle2 className="size-4 text-white" />
                               ) : null}
                             </span>
                           </div>
@@ -372,7 +366,7 @@ export function SignupView({
                                 : "I want to mentor"}
                             </h4>
 
-                            <p className="mt-3 text-sm leading-6 text-slate-500">
+                            <p className="mt-3 text-sm leading-6 text-[#475569]">
                               {role === "STUDENT"
                                 ? "Find someone who has already walked the road and can help you make a clearer decision."
                                 : "Share what you've learned and help another student make a better decision."}
@@ -385,8 +379,8 @@ export function SignupView({
                               className={cn(
                                 "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold",
                                 isSelected
-                                  ? "bg-indigo-100 text-[#3730A3]"
-                                  : "bg-slate-100 text-slate-500",
+                                  ? "bg-indigo-200 text-[#312E81]"
+                                  : "bg-slate-200 text-slate-600",
                               )}
                             >
                               {role === "STUDENT" ? "Student" : "Mentor"}
@@ -398,21 +392,15 @@ export function SignupView({
                   </div>
 
                   <div className="pt-2">
-                    {selectedRole ? (
-                      <Button
-                        type="button"
-                        onClick={() => setStep(2)}
-                        className="group h-12 w-full rounded-xl bg-[#4F46E5] text-sm font-semibold text-white shadow-[0_14px_30px_-20px_rgba(79,70,229,0.5)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4338CA] hover:shadow-[0_18px_36px_-20px_rgba(79,70,229,0.56)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
-                      >
-                        Continue as{" "}
-                        {selectedRole === "STUDENT" ? "Student" : "Mentor"}
-                        <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-                      </Button>
-                    ) : (
-                      <p className="py-1 text-center text-xs text-slate-400">
-                        Choose a role to continue.
-                      </p>
-                    )}
+                    <Button
+                      type="button"
+                      onClick={() => setStep(2)}
+                      disabled={!selectedRole}
+                      className="group h-12 w-full rounded-[12px] !bg-[#4F46E5] text-sm font-semibold text-white shadow-[0_14px_30px_-20px_rgba(79,70,229,0.5)] transition duration-200 hover:-translate-y-0.5 hover:!bg-[#4338CA] hover:shadow-[0_18px_36px_-20px_rgba(79,70,229,0.56)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2 disabled:!cursor-not-allowed disabled:!opacity-50"
+                    >
+                      Continue
+                      <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                    </Button>
                   </div>
                 </>
               ) : (
@@ -484,14 +472,6 @@ export function SignupView({
         </AnimatePresence>
       </CardContent>
 
-      <CardFooter className="mt-7 border-t border-slate-200/80 bg-transparent px-0 pt-5">
-        <p className="w-full text-center text-sm text-slate-500">
-          Already have an account?{" "}
-          <Link href={signInHref} className="rounded-md font-semibold text-[#4F46E5] underline-offset-4 transition-colors hover:text-[#3730A3] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2">
-            Sign in
-          </Link>
-        </p>
-      </CardFooter>
     </Card>
   );
 }

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { MentraLogo } from "@/components/brand/MentraLogo";
@@ -11,6 +12,9 @@ type AuthShellProps = {
 };
 
 export function AuthShell({ children }: AuthShellProps) {
+  const pathname = usePathname();
+  const isSignupPage = pathname === "/auth/signup";
+
   return (
     <main className="relative min-h-dvh overflow-hidden bg-[#F6F8FC] text-[#172033]">
       <div
@@ -38,13 +42,13 @@ export function AuthShell({ children }: AuthShellProps) {
           </Link>
 
           <div className="hidden items-center gap-2 text-sm text-slate-600 sm:flex">
-            <span>New to Mentra?</span>
+            <span>{isSignupPage ? "Already have an account?" : "New to Mentra?"}</span>
 
             <Link
-              href="/auth/signup"
+              href={isSignupPage ? "/auth/signin" : "/auth/signup"}
               className="rounded-md font-semibold text-[#4F46E5] underline-offset-4 transition-colors hover:text-[#3730A3] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
             >
-              Create an account
+              {isSignupPage ? "Sign in" : "Create an account"}
             </Link>
           </div>
         </div>
@@ -52,7 +56,7 @@ export function AuthShell({ children }: AuthShellProps) {
         <div className="mx-auto flex w-full max-w-6xl items-start py-8 sm:py-12 lg:py-16">
           <div className="grid w-full overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/70 shadow-[0_28px_80px_-46px_rgba(15,23,42,0.38)] backdrop-blur-2xl lg:grid-cols-[0.9fr_1.1fr]">
 
-            <div className="relative hidden overflow-hidden border-r border-slate-200/80 bg-gradient-to-br from-[#EEF2FF]/90 via-white/60 to-[#F0F9FF]/85 p-10 lg:flex lg:flex-col lg:justify-between xl:p-14">
+            <div className="relative hidden overflow-hidden border-r border-slate-200/80 bg-gradient-to-br from-[#E0E7FF]/95 via-[#F8FAFF]/75 to-[#E0F2FE]/90 p-10 lg:flex lg:flex-col lg:justify-between xl:p-14">
               <div
                 className="pointer-events-none absolute -bottom-24 -left-20 h-80 w-80 rounded-full bg-[#4F46E5]/10 blur-[100px]"
                 aria-hidden="true"
@@ -64,11 +68,11 @@ export function AuthShell({ children }: AuthShellProps) {
               />
 
               <div className="relative">
-                <div className="flex size-16 items-center justify-center rounded-2xl bg-white/85 shadow-sm ring-1 ring-slate-200/80 backdrop-blur">
+                <div className="flex size-20 items-center justify-center rounded-2xl bg-white/85 shadow-sm ring-1 ring-slate-200/80 backdrop-blur">
                   <MentraLogo
                     variant="color"
                     layout="icon"
-                    size="sm"
+                    size="lg"
                   />
                 </div>
 
@@ -86,7 +90,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 </p>
               </div>
 
-              <div className="relative mt-10 space-y-4">
+              <div className="relative mt-6 space-y-4">
                 {[
                   "Real student experience",
                   "Practical, mentor-led guidance",
@@ -103,6 +107,26 @@ export function AuthShell({ children }: AuthShellProps) {
                     {item}
                   </div>
                 ))}
+
+                <div className="flex items-center gap-3 pt-5 text-xs font-medium text-slate-600">
+                  <div className="flex -space-x-2" aria-hidden="true">
+                    {["A", "R", "S"].map((initial, index) => (
+                      <span
+                        key={initial}
+                        className={`flex size-8 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${
+                          index === 0
+                            ? "bg-[#4F46E5]"
+                            : index === 1
+                              ? "bg-[#0EA5E9]"
+                              : "bg-[#F97316]"
+                        }`}
+                      >
+                        {initial}
+                      </span>
+                    ))}
+                  </div>
+                  Trusted by 500+ students
+                </div>
               </div>
             </div>
 

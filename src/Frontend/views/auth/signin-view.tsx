@@ -7,9 +7,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ExternalLink, Mail } from "lucide-react";
+import { ArrowRight, Mail } from "lucide-react";
 import { signIn } from "next-auth/react";
-import { z } from "zod";
 
 import { GoogleIcon } from "@/Frontend/views/auth/google-icon";
 import { Button } from "@/Frontend/components/ui/button";
@@ -17,7 +16,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/Frontend/components/ui/card";
@@ -31,10 +29,7 @@ type SignInViewProps = {
   googleEnabled: boolean;
 };
 
-const emailSchema = z
-  .string()
-  .trim()
-  .email("Enter a valid email address");
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function SignInView({
   callbackUrl,
@@ -53,9 +48,6 @@ export function SignInView({
     useState<"google" | "email" | null>(null);
 
   const authError = getAuthErrorCopy(errorCode);
-
-  const signUpHref =
-    `/auth/signup?callbackUrl=${encodeURIComponent(callbackUrl)}` as Route;
 
   async function handleGoogleSignIn() {
     setFormError(null);
@@ -78,13 +70,10 @@ export function SignInView({
 
     setFormError(null);
 
-    const parsed = emailSchema.safeParse(email);
+    const normalizedEmail = email.trim();
 
-    if (!parsed.success) {
-      setEmailError(
-        parsed.error.issues[0]?.message ??
-          "Enter a valid email address",
-      );
+    if (!emailPattern.test(normalizedEmail)) {
+      setEmailError("Enter a valid email address");
       return;
     }
 
@@ -92,7 +81,7 @@ export function SignInView({
     setPendingProvider("email");
 
     const result = await signIn("resend", {
-      email: parsed.data,
+      email: normalizedEmail,
       redirect: false,
       redirectTo: callbackUrl,
     });
@@ -109,7 +98,7 @@ export function SignInView({
 
     router.push(
       `/auth/verify?email=${encodeURIComponent(
-        parsed.data,
+        normalizedEmail,
       )}&callbackUrl=${encodeURIComponent(
         callbackUrl,
       )}` as Route,
@@ -118,7 +107,7 @@ export function SignInView({
 
   return (
     <Card className="border-0 bg-transparent shadow-none">
-      <CardHeader className="px-0 pb-7 pt-0">
+      <CardHeader className="px-0 pb-4 pt-0">
         <div className="space-y-2.5">
           <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#4F46E5]">
             Welcome back
@@ -199,7 +188,8 @@ export function SignInView({
             aria-busy={
               pendingProvider === "google"
             }
-            className="h-12 w-full rounded-xl bg-[#172033] text-[0.95rem] font-semibold text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.6)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-[#27334A] hover:shadow-[0_18px_36px_-18px_rgba(15,23,42,0.55)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
+            variant="default"
+            className="h-12 w-full rounded-[12px] border border-[#E2E8F0] !bg-white text-[0.95rem] font-semibold !text-[#0F172A] shadow-none transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:!bg-[#F8FAFC] hover:shadow-sm active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
           >
             <GoogleIcon
               className="mr-3 size-5"
@@ -223,7 +213,7 @@ export function SignInView({
             </div>
 
             <div className="relative flex justify-center">
-              <span className="bg-white/80 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 backdrop-blur-xl">
+              <span className="bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#64748B]">
                 or continue with email
               </span>
             </div>
@@ -231,6 +221,7 @@ export function SignInView({
 
           {/* Email authentication */}
           <form
+            noValidate
             onSubmit={(event) => {
               void handleEmailSignIn(event);
             }}
@@ -239,14 +230,14 @@ export function SignInView({
             <div className="space-y-2">
               <label
                 htmlFor="signin-email"
-                className="text-sm font-medium text-foreground"
+                className="text-[14px] font-medium text-[#334155]"
               >
                 Email address
               </label>
 
               <div className="relative">
                 <Mail
-                  className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+                  className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#64748B]"
                   aria-hidden="true"
                 />
 
@@ -269,9 +260,7 @@ export function SignInView({
                   onBlur={() => {
                     if (
                       email &&
-                      !emailSchema.safeParse(
-                        email,
-                      ).success
+                      !emailPattern.test(email.trim())
                     ) {
                       setEmailError(
                         "Enter a valid email address",
@@ -292,7 +281,11 @@ export function SignInView({
                       ? "signin-email-error"
                       : "signin-email-hint"
                   }
-                  className="h-12 rounded-xl border-slate-200 bg-white/80 pl-11 pr-4 text-base text-[#172033] shadow-sm transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-slate-400 focus-visible:border-[#4F46E5] focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#4F46E5]/15"
+                  className={`h-12 rounded-[12px] !bg-white pl-11 pr-4 text-base !text-[#0F172A] shadow-none transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-[#94A3B8] focus-visible:!bg-white focus-visible:ring-[3px] ${
+                    emailError
+                      ? "border-[#DC2626] focus-visible:border-[#DC2626] focus-visible:ring-[rgba(220,38,38,0.15)]"
+                      : "border-[#CBD5E1] focus-visible:border-[#4F46E5] focus-visible:ring-[rgba(79,70,229,0.15)]"
+                  }`}
                 />
               </div>
 
@@ -316,7 +309,7 @@ export function SignInView({
                     transition={{
                       duration: 0.15,
                     }}
-                    className="text-sm font-medium text-destructive"
+                    className="mt-2 text-[13px] font-medium text-[#DC2626]"
                     role="alert"
                   >
                     {emailError}
@@ -337,7 +330,7 @@ export function SignInView({
                     transition={{
                       duration: 0.15,
                     }}
-                    className="text-sm leading-5 text-muted-foreground"
+                    className="text-[13px] leading-5 text-[#64748B]"
                   >
                     We&apos;ll send a secure sign-in link
                     to this address.
@@ -348,7 +341,7 @@ export function SignInView({
 
             <Button
               type="submit"
-              variant="outline"
+              variant="default"
               size="lg"
               disabled={
                 !emailEnabled ||
@@ -357,7 +350,7 @@ export function SignInView({
               aria-busy={
                 pendingProvider === "email"
               }
-              className="h-12 w-full rounded-xl bg-[#4F46E5] text-[0.95rem] font-semibold text-white shadow-[0_14px_30px_-18px_rgba(79,70,229,0.48)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-[#4338CA] hover:shadow-[0_18px_36px_-18px_rgba(79,70,229,0.54)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
+              className="h-12 w-full rounded-[12px] !bg-[#4F46E5] text-[0.95rem] font-semibold text-white shadow-[0_4px_12px_rgba(79,70,229,0.2)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:!bg-[#4338CA] hover:shadow-[0_4px_12px_rgba(79,70,229,0.2)] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2 disabled:!bg-[#A5B4FC] disabled:shadow-none"
             >
               {pendingProvider === "email" ? (
                 <>
@@ -365,18 +358,35 @@ export function SignInView({
                     className="mr-2 size-4 animate-spin rounded-full border-2 border-current/20 border-t-current"
                     aria-hidden="true"
                   />
-                  Sending link…
+                  Sending...
                 </>
               ) : (
                 <>
                   Send magic link
-                  <ExternalLink
+                  <ArrowRight
                     className="ml-2 size-4"
                     aria-hidden="true"
                   />
                 </>
               )}
             </Button>
+
+            <p className="mt-4 text-center text-[12px] text-[#64748B]">
+              By continuing, you agree to our{" "}
+              <Link
+                href="/terms"
+                className="font-medium text-[#4F46E5] underline underline-offset-4"
+              >
+                Terms
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/privacy"
+                className="font-medium text-[#4F46E5] underline underline-offset-4"
+              >
+                Privacy Policy
+              </Link>
+            </p>
 
             {!emailEnabled && (
               <p
@@ -391,17 +401,6 @@ export function SignInView({
         </div>
       </CardContent>
 
-      <CardFooter className="mt-7 border-t border-slate-200/80 bg-transparent px-0 pt-6">
-        <p className="text-sm text-slate-500">
-          New to Mentra?{" "}
-          <Link
-            href={signUpHref}
-            className="rounded-md font-semibold text-[#4F46E5] underline-offset-4 transition-colors hover:text-[#3730A3] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
-          >
-            Create an account
-          </Link>
-        </p>
-      </CardFooter>
     </Card>
   );
 }
