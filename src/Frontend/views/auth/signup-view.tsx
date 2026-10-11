@@ -137,11 +137,16 @@ export function SignupView({
 
     const urlRole = new URLSearchParams(window.location.search).get("role");
 
+    if (session.user.onboardingComplete) {
+      hasCompletedRef.current = true;
+      window.sessionStorage.removeItem(SIGNUP_ROLE_STORAGE_KEY);
+      router.replace(toRoute(callbackUrl || AUTH_DEFAULT_REDIRECT));
+      return;
+    }
+
     if (!isCompletingOAuth && !selectedRole && !urlRole) {
       router.replace(
-        session.user.onboardingComplete
-          ? toRoute(callbackUrl || AUTH_DEFAULT_REDIRECT)
-          : toRoute(getOnboardingPath(session.user.role)),
+        toRoute(getOnboardingPath(session.user.role)),
       );
       return;
     }
@@ -160,34 +165,44 @@ export function SignupView({
     }
 
     void (async () => {
-      const response = await fetch("/api/auth/complete-signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: storedRole.data }),
-      });
+      try {
+        const response = await fetch("/api/auth/complete-signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: storedRole.data }),
+        });
 
-      if (!response.ok) {
-        hasCompletedRef.current = false;
+        if (!response.ok) {
+          setPending(null);
+          setSyncError("We could not finish setting up your account. Please try again.");
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          role: "STUDENT" | "MENTOR";
+          onboardingComplete: boolean;
+          onboardingPath: string;
+        };
+
+        await update({
+          user: {
+            role: payload.role,
+            onboardingComplete: payload.onboardingComplete,
+          },
+        });
+
+        window.sessionStorage.removeItem(SIGNUP_ROLE_STORAGE_KEY);
+        router.replace(
+          toRoute(
+            payload.onboardingComplete
+              ? callbackUrl || payload.onboardingPath || AUTH_DEFAULT_REDIRECT
+              : payload.onboardingPath,
+          ),
+        );
+      } catch {
         setPending(null);
         setSyncError("We could not finish setting up your account. Please try again.");
-        return;
       }
-
-      const payload = (await response.json()) as {
-        role: "STUDENT" | "MENTOR";
-        onboardingComplete: boolean;
-        onboardingPath: string;
-      };
-
-      await update({
-        user: {
-          role: payload.role,
-          onboardingComplete: payload.onboardingComplete,
-        },
-      });
-
-      window.sessionStorage.removeItem(SIGNUP_ROLE_STORAGE_KEY);
-      router.replace(toRoute(payload.onboardingPath));
     })();
   }, [callbackUrl, isCompletingOAuth, router, selectedRole, session, status, update]);
 
