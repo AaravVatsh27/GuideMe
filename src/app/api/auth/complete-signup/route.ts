@@ -33,7 +33,10 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
 
   const currentUser = await db.user.findUnique({
     where: { id: userId },
-    select: { onboardingComplete: true },
+    select: {
+      role: true,
+      onboardingComplete: true,
+    },
   });
 
   if (!currentUser) {
@@ -41,20 +44,32 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   }
 
   if (currentUser.onboardingComplete) {
-    return NextResponse.json(
-      { error: "Account setup is already complete" },
-      { status: 409 },
-    );
+    return NextResponse.json({
+      role: currentUser.role,
+      onboardingComplete: true,
+      onboardingPath: AUTH_DEFAULT_REDIRECT,
+    });
   }
 
-  const user = await db.user.update({
-    where: { id: userId },
+  await db.user.updateMany({
+    where: {
+      id: userId,
+      onboardingComplete: false,
+    },
     data: { role: parsed.data.role },
+  });
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
     select: {
       role: true,
       onboardingComplete: true,
     },
   });
+
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
 
   await updateSession({
     user: {
