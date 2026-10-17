@@ -1,11 +1,26 @@
 import { notFound } from "next/navigation";
 
-import { Badge } from "@/Frontend/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
 import { getAdminMentorDetailData, getMentorAdminStatus } from "@/Backend/server/admin";
+import { cn } from "@/Backend/server/utils";
 
 import { AdminStatusBadge } from "@/Frontend/views/admin/admin-status-badge";
+import {
+  AdminAvatar,
+  adminCardClass,
+  AdminDetailRows,
+  AdminPill,
+  adminSectionLabelClass,
+} from "@/Frontend/views/admin/admin-ui";
 import { formatCurrency, formatDateOnly, formatDateTime, formatEnumLabel } from "@/Frontend/views/admin/admin-utils";
+
+function DetailCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+  return (
+    <section className={cn(adminCardClass, "p-6", className)}>
+      <h2 className={adminSectionLabelClass}>{title}</h2>
+      <div className="mt-3">{children}</div>
+    </section>
+  );
+}
 
 export default async function AdminMentorDetailPage({
   params,
@@ -23,80 +38,124 @@ export default async function AdminMentorDetailPage({
     isVerified: mentor.mentorProfile.isVerified,
     isActive: mentor.mentorProfile.isActive,
   });
+  const verificationStatus = mentor.mentorVerification?.status ?? "PENDING";
 
   return (
     <div className="space-y-5">
-      <Card className="rounded-[1.75rem] border-slate-200 bg-white">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between gap-3 text-2xl tracking-tight text-slate-950">
-            <span>{mentor.name}</span>
+      <section className={cn(adminCardClass, "flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:p-8")}>
+        <AdminAvatar name={mentor.name} image={mentor.image} className="size-16 text-lg" />
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#64748B]">Mentor profile</p>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <h1 className="break-words text-[36px] font-bold leading-tight tracking-tight text-[#0F172A]">{mentor.name}</h1>
             <AdminStatusBadge status={status} kind="mentor" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-4">
-            <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-              <p><span className="font-medium text-slate-950">Email:</span> {mentor.email}</p>
-              <p className="mt-1"><span className="font-medium text-slate-950">College:</span> {mentor.mentorProfile.college || "Not provided"}</p>
-              <p className="mt-1"><span className="font-medium text-slate-950">Tier:</span> {mentor.mentorProfile.tier}</p>
-              <p className="mt-1"><span className="font-medium text-slate-950">Joined:</span> {formatDateOnly(mentor.createdAt)}</p>
-              <p className="mt-1"><span className="font-medium text-slate-950">Price:</span> {formatCurrency(mentor.mentorProfile.priceMin)} to {formatCurrency(mentor.mentorProfile.priceMax)}</p>
-              <p className="mt-1"><span className="font-medium text-slate-950">LinkedIn:</span> {mentor.mentorProfile.linkedinUrl || "Not provided"}</p>
-            </div>
+          </div>
+          <p className="mt-1 break-all text-sm text-[#64748B]">{mentor.email}</p>
+        </div>
+      </section>
 
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
-              <p className="font-medium text-slate-950">Profile bio</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{mentor.mentorProfile.bio || "No bio saved."}</p>
-            </div>
+      <div className="grid items-start gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="space-y-5">
+          <DetailCard title="Profile details">
+            <AdminDetailRows
+              rows={[
+                { label: "Email", value: mentor.email },
+                { label: "College", value: mentor.mentorProfile.college || "Not provided" },
+                {
+                  label: "Tier",
+                  value: (
+                    <AdminPill
+                      tone={mentor.mentorProfile.tier === "VERIFIED" ? "green" : mentor.mentorProfile.tier === "ELITE" ? "indigo" : "gray"}
+                    >
+                      {mentor.mentorProfile.tier}
+                    </AdminPill>
+                  ),
+                },
+                { label: "Joined", value: formatDateOnly(mentor.createdAt) },
+                {
+                  label: "Price",
+                  value: `${formatCurrency(mentor.mentorProfile.priceMin)} to ${formatCurrency(mentor.mentorProfile.priceMax)}`,
+                },
+                { label: "LinkedIn", value: <span className="break-all">{mentor.mentorProfile.linkedinUrl || "Not provided"}</span> },
+              ]}
+            />
+          </DetailCard>
 
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
-              <p className="font-medium text-slate-950">Recent sessions</p>
-              <div className="mt-3 space-y-3 text-sm text-slate-700">
+          <DetailCard title="Profile bio">
+            <p className="text-sm leading-6 text-[#334155]">{mentor.mentorProfile.bio || "No bio saved."}</p>
+          </DetailCard>
+
+          <DetailCard title="Recent sessions">
+            {mentor.mentorSessions.length > 0 ? (
+              <ul>
                 {mentor.mentorSessions.map((session) => (
-                  <div key={session.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="font-medium text-slate-950">{session.student.name}</p>
-                    <p className="mt-1">{formatDateTime(session.scheduledAt)} • {formatEnumLabel(session.status)}</p>
-                    <p className="mt-1">Earning: {formatCurrency(session.mentorEarning)}</p>
-                  </div>
+                  <li key={session.id} className="flex items-center gap-3 border-b border-[#F1F5F9] py-3 last:border-b-0">
+                    <AdminAvatar name={session.student.name} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-[#0F172A]">{session.student.name}</p>
+                      <p className="text-xs text-[#64748B]">{formatDateTime(session.scheduledAt)}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <AdminStatusBadge status={session.status} kind="session" />
+                      <span className="text-xs text-[#64748B]">Earning: {formatCurrency(session.mentorEarning)}</span>
+                    </div>
+                  </li>
                 ))}
-              </div>
-            </div>
-          </div>
+              </ul>
+            ) : (
+              <p className="text-sm text-[#64748B]">No sessions yet.</p>
+            )}
+          </DetailCard>
+        </div>
 
-          <div className="space-y-4">
-            <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Verification</p>
-              <p className="mt-3 text-sm text-slate-700">Status: {mentor.mentorVerification?.status ?? "PENDING"}</p>
-              <p className="mt-1 text-sm text-slate-700">Submitted: {formatDateTime(mentor.mentorVerification?.submittedAt)}</p>
-              <p className="mt-1 text-sm text-slate-700">Reviewed: {formatDateTime(mentor.mentorVerification?.reviewedAt)}</p>
-              <p className="mt-1 text-sm text-slate-700">Reason: {mentor.mentorVerification?.rejectionReason || "None"}</p>
-            </div>
+        <div className="space-y-5">
+          <DetailCard title="Verification">
+            <AdminDetailRows
+              rows={[
+                {
+                  label: "Status",
+                  value: <AdminStatusBadge status={verificationStatus} kind="verification" />,
+                },
+                { label: "Submitted", value: formatDateTime(mentor.mentorVerification?.submittedAt) },
+                { label: "Reviewed", value: formatDateTime(mentor.mentorVerification?.reviewedAt) },
+                { label: "Reason", value: mentor.mentorVerification?.rejectionReason || "None" },
+              ]}
+            />
+          </DetailCard>
 
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
-              <p className="font-medium text-slate-950">Specialisations</p>
-              <div className="mt-3 flex flex-wrap gap-2">
+          <DetailCard title="Specialisations">
+            {mentor.mentorProfile.specialisations.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
                 {mentor.mentorProfile.specialisations.map((topic) => (
-                  <Badge key={topic} variant="outline" className="border-slate-300 bg-slate-50 text-slate-700">
+                  <AdminPill key={topic} tone="gray">
                     {formatEnumLabel(topic)}
-                  </Badge>
+                  </AdminPill>
                 ))}
               </div>
-            </div>
+            ) : (
+              <p className="text-sm text-[#64748B]">No specialisations added.</p>
+            )}
+          </DetailCard>
 
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
-              <p className="font-medium text-slate-950">Recent reviews</p>
-              <div className="mt-3 space-y-3 text-sm text-slate-700">
+          <DetailCard title="Recent reviews">
+            {mentor.reviewsReceived.length > 0 ? (
+              <ul>
                 {mentor.reviewsReceived.map((review) => (
-                  <div key={review.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="font-medium text-slate-950">{review.student.name} • {review.rating} / 5</p>
-                    <p className="mt-1">{review.reviewText || "No written review."}</p>
-                  </div>
+                  <li key={review.id} className="border-b border-[#F1F5F9] py-3 last:border-b-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="truncate text-sm font-medium text-[#0F172A]">{review.student.name}</p>
+                      <AdminPill tone="indigo">{review.rating} / 5</AdminPill>
+                    </div>
+                    <p className="mt-1 text-sm leading-6 text-[#334155]">{review.reviewText || "No written review."}</p>
+                  </li>
                 ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              </ul>
+            ) : (
+              <p className="text-sm text-[#64748B]">No reviews yet.</p>
+            )}
+          </DetailCard>
+        </div>
+      </div>
     </div>
   );
 }

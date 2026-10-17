@@ -5,12 +5,10 @@ import { useRouter } from "next/navigation";
 import { Search, Video } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/Frontend/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/Frontend/components/ui/dialog";
@@ -22,7 +20,16 @@ import { cn } from "@/Backend/server/utils";
 
 import { AdminDataTable, type AdminTableColumn } from "./admin-data-table";
 import { AdminStatusBadge } from "./admin-status-badge";
-import { AdminPageHeader, adminSearchInputClass, adminSelectClass } from "./admin-ui";
+import {
+  adminDangerButtonClass,
+  AdminDetailRows,
+  AdminPageHeader,
+  adminPrimaryButtonClass,
+  adminSearchInputClass,
+  adminSecondaryButtonClass,
+  adminSectionLabelClass,
+  adminSelectClass,
+} from "./admin-ui";
 import { formatCurrency, formatDateTime, isDateInRange } from "./admin-utils";
 
 type Props = {
@@ -225,90 +232,129 @@ export function AdminSessionsPageClient({ sessions }: Props) {
       />
 
       <Dialog open={Boolean(selectedSession)} onOpenChange={(open) => !open && setSelectedSession(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto rounded-[24px] bg-white p-0 text-[#0F172A] ring-[#EEF2FF] sm:max-w-3xl [&_[data-slot=dialog-close]]:top-4 [&_[data-slot=dialog-close]]:right-4 [&_[data-slot=dialog-close]]:text-[#64748B]">
           {selectedSession ? (
             <>
-              <DialogHeader>
-                <DialogTitle>Session {selectedSession.id}</DialogTitle>
-                <DialogDescription>
+              <DialogHeader className="gap-1 border-b border-[#F1F5F9] px-6 pb-5 pt-6 pr-14">
+                <div className="flex flex-wrap items-center gap-2">
+                  <DialogTitle className="break-all text-lg font-semibold text-[#0F172A]">Session {selectedSession.id}</DialogTitle>
+                  <AdminStatusBadge status={selectedSession.status} kind="session" />
+                </div>
+                <DialogDescription className="text-sm text-[#64748B]">
                   {selectedSession.student.name} with {selectedSession.mentor.name} on {formatDateTime(selectedSession.scheduledAt)}.
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                  <p className="font-medium text-slate-950">Participants</p>
-                  <p className="mt-2">Student: {selectedSession.student.name} ({selectedSession.student.email})</p>
-                  <p className="mt-1">Mentor: {selectedSession.mentor.name} ({selectedSession.mentor.email})</p>
-                  <p className="mt-3">Type: {selectedSession.typeLabel}</p>
-                  <p className="mt-1">Duration: {selectedSession.durationMinutes} min</p>
-                  <p className="mt-1">Meeting link: {selectedSession.meetingLink || "Not assigned"}</p>
-                </div>
+              <div className="grid gap-x-10 gap-y-6 px-6 py-5 md:grid-cols-2">
+                <section>
+                  <h3 className={adminSectionLabelClass}>Participants</h3>
+                  <div className="mt-2">
+                    <AdminDetailRows
+                      rows={[
+                        { label: "Student", value: `${selectedSession.student.name} (${selectedSession.student.email})` },
+                        { label: "Mentor", value: `${selectedSession.mentor.name} (${selectedSession.mentor.email})` },
+                        { label: "Type", value: selectedSession.typeLabel },
+                        { label: "Duration", value: `${selectedSession.durationMinutes} min` },
+                        { label: "Meeting link", value: selectedSession.meetingLink || "Not assigned" },
+                      ]}
+                    />
+                  </div>
+                </section>
 
-                <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                  <p className="font-medium text-slate-950">Financials</p>
-                  <p className="mt-2">Price: {formatCurrency(selectedSession.price)}</p>
-                  <p className="mt-1">Mentor earning: {formatCurrency(selectedSession.mentorEarning)}</p>
-                  <p className="mt-1">
-                    Payment:{" "}
-                    {selectedSession.payment ? selectedSession.payment.status : "No payment"}
-                  </p>
-                  <p className="mt-1">
-                    Payout: {selectedSession.payout ? selectedSession.payout.status : "Not created"}
-                  </p>
-                </div>
-              </div>
+                <section>
+                  <h3 className={adminSectionLabelClass}>Financials</h3>
+                  <div className="mt-2">
+                    <AdminDetailRows
+                      rows={[
+                        { label: "Price", value: formatCurrency(selectedSession.price) },
+                        { label: "Mentor earning", value: formatCurrency(selectedSession.mentorEarning) },
+                        {
+                          label: "Payment",
+                          value: selectedSession.payment ? (
+                            <AdminStatusBadge status={selectedSession.payment.status} kind="payment" />
+                          ) : (
+                            "No payment"
+                          ),
+                        },
+                        {
+                          label: "Payout",
+                          value: selectedSession.payout ? (
+                            <AdminStatusBadge status={selectedSession.payout.status} kind="payment" />
+                          ) : (
+                            "Not created"
+                          ),
+                        },
+                      ]}
+                    />
+                  </div>
+                </section>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
-                  <p className="font-medium text-slate-950">Summary</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                <section>
+                  <h3 className={adminSectionLabelClass}>Summary</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#334155]">
                     {selectedSession.aiSummary || "No AI summary generated yet."}
                   </p>
-                </div>
-                <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
-                  <p className="font-medium text-slate-950">Notes</p>
-                  <div className="mt-2 space-y-2 text-sm text-slate-600">
+                </section>
+
+                <section>
+                  <h3 className={adminSectionLabelClass}>Notes</h3>
+                  <div className="mt-2 space-y-2 text-sm leading-6 text-[#334155]">
                     {selectedSession.notes.length > 0 ? (
                       selectedSession.notes.map((note) => (
                         <p key={note.id}>{note.content}</p>
                       ))
                     ) : (
-                      <p>No notes saved.</p>
+                      <p className="text-[#64748B]">No notes saved.</p>
                     )}
                   </div>
-                </div>
+                </section>
               </div>
 
-              <Textarea
-                value={actionReason}
-                onChange={(event) => setActionReason(event.target.value)}
-                placeholder="Required for refund and no-show actions. Example: Mentor did not join within 15 minutes."
-                className="min-h-28"
-              />
+              <div className="sticky bottom-0 border-t border-[#F1F5F9] bg-white px-6 pb-6 pt-4">
+                <label htmlFor="session-action-reason" className="text-xs font-semibold text-[#64748B]">
+                  Reason (required for refund and no-show)
+                </label>
+                <Textarea
+                  id="session-action-reason"
+                  rows={2}
+                  value={actionReason}
+                  onChange={(event) => setActionReason(event.target.value)}
+                  placeholder="Required for refund and no-show actions. Example: Mentor did not join within 15 minutes."
+                  className="mt-2 min-h-0 rounded-[12px] border-[#CBD5E1] bg-white text-[#0F172A] placeholder:text-[#94A3B8] focus-visible:border-[#4F46E5] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/20"
+                />
 
-              <DialogFooter>
-                <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-between">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-wrap gap-2">
-                    <Button disabled={isSubmitting || selectedSession.status === "COMPLETED"} onClick={() => runAdminAction("complete")}>
+                    <button
+                      type="button"
+                      className={adminPrimaryButtonClass}
+                      disabled={isSubmitting || selectedSession.status === "COMPLETED"}
+                      onClick={() => runAdminAction("complete")}
+                    >
                       Mark completed
-                    </Button>
-                    <Button
-                      variant="outline"
+                    </button>
+                    <button
+                      type="button"
+                      className={adminSecondaryButtonClass}
                       disabled={isSubmitting || !selectedSession.payment}
                       onClick={() => runAdminAction("refund")}
                     >
                       Trigger refund
-                    </Button>
-                    <Button variant="destructive" disabled={isSubmitting} onClick={() => runAdminAction("no_show")}>
+                    </button>
+                    <button
+                      type="button"
+                      className={adminDangerButtonClass}
+                      disabled={isSubmitting}
+                      onClick={() => runAdminAction("no_show")}
+                    >
                       Flag as no-show
-                    </Button>
+                    </button>
                   </div>
-                  <Button variant="outline" onClick={() => setSelectedSession(null)}>
+                  <button type="button" className={adminSecondaryButtonClass} onClick={() => setSelectedSession(null)}>
                     Close
-                  </Button>
+                  </button>
                 </div>
-              </DialogFooter>
+              </div>
             </>
           ) : null}
         </DialogContent>

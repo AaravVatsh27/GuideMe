@@ -120,3 +120,34 @@ export function AdminPageHeader({
 }
 
 export type AdminEmptyStateConfig = { icon: LucideIcon; title: string; caption: string };
+
+const adminButtonBase =
+  "inline-flex h-10 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50";
+
+export const adminPrimaryButtonClass = cn(
+  adminButtonBase,
+  "bg-[#4F46E5] text-white hover:bg-[#4338CA] focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2 disabled:hover:bg-[#4F46E5]",
+);
+export const adminSecondaryButtonClass = cn(
+  adminButtonBase,
+  "border border-[#E2E8F0] bg-white text-[#334155] hover:bg-[#F5F3FF] focus-visible:ring-[#4F46E5]/30 disabled:hover:bg-white",
+);
+export const adminDangerButtonClass = cn(
+  adminButtonBase,
+  "border border-[#FCA5A5] bg-white text-[#DC2626] hover:bg-[#FEF2F2] focus-visible:ring-[#DC2626]/30 disabled:hover:bg-white",
+);
+
+export const adminSectionLabelClass = "text-xs font-semibold uppercase tracking-[0.12em] text-[#64748B]";
+
+export function AdminDetailRows({ rows }: { rows: Array<{ label: string; value: React.ReactNode }> }) {
+  return (
+    <dl>
+      {rows.map((row) => (
+        <div key={row.label} className="flex items-start justify-between gap-4 border-b border-[#F1F5F9] py-2.5 text-sm last:border-b-0">
+          <dt className="shrink-0 text-[#64748B]">{row.label}</dt>
+          <dd className="min-w-0 break-words text-right text-[#0F172A]">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}

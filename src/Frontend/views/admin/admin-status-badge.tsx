@@ -25,6 +25,7 @@ function getStatusTone(status: string, kind: StatusKind): AdminPillTone {
     switch (normalized) {
       case "CAPTURED":
       case "PAID":
+      case "COMPLETED":
         return "green";
       case "PENDING":
       case "PROCESSING":
