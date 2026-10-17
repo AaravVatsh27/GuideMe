@@ -64,22 +64,12 @@ export const POST = withApiErrorHandling(async (
     return NextResponse.json({ success: true, session: updatedSession });
   }
 
-  const sessionRecord = await db.session.findUnique({
-    where: { id: context.params.sessionId },
-    select: {
-      mentorId: true,
-    },
-  });
-
-  if (!sessionRecord) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
-  }
-
   const result = await cancelSessionById({
     sessionId: context.params.sessionId,
-    actorId: sessionRecord.mentorId,
+    actorId: session.user.id,
     reason: parsed.data.reason,
     noShow: true,
+    asAdmin: true,
   });
 
   await db.auditLog.create({
