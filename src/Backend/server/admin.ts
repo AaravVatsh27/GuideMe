@@ -245,13 +245,13 @@ export async function getAdminOverviewData(): Promise<AdminOverviewData> {
     flaggedReviews,
   ] = await Promise.all([
     db.user.count({
-      where: { createdAt: { gte: todayStart, lt: tomorrowStart } },
+      where: { deletedAt: null },
     }),
     db.session.count({
       where: { scheduledAt: { gte: todayStart, lt: tomorrowStart } },
     }),
     db.mentorProfile.count({
-      where: { isActive: true },
+      where: { isActive: true, isVerified: true },
     }),
     db.payment.findMany({
       where: {
