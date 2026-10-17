@@ -1,12 +1,22 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
+import { log } from "@/Backend/lib/logger";
+
 /**
- * Lazy singleton — returns null when Upstash env vars are absent so local dev
- * without Redis still works. Each limiter is created once per process.
+ * Lazy singleton — when Upstash env vars are absent, limiters fall back to a per-process
+ * in-memory counter so limits still apply (per instance) instead of being silently disabled.
+ * Each limiter is created once per process.
  */
 
+export type RateLimiter = {
+  limit(identifier: string): Promise<{ success: boolean; limit: number; reset: number }>;
+};
+
+type Window = `${number} ${"ms" | "s" | "m" | "h" | "d"}`;
+
 let redis: Redis | null | undefined;
+let warnedAboutMemoryFallback = false;
 
 function getRedis(): Redis | null {
   if (redis !== undefined) return redis;
@@ -20,13 +30,55 @@ function getRedis(): Redis | null {
   return redis;
 }
 
-function makeLimiter(
-  tokens: number,
-  window: `${number} ${"ms" | "s" | "m" | "h" | "d"}`,
-  prefix: string,
-): Ratelimit | null {
+const WINDOW_UNIT_MS = { ms: 1, s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 } as const;
+
+function windowToMs(window: Window) {
+  const [amount, unit] = window.split(" ") as [string, keyof typeof WINDOW_UNIT_MS];
+  return Number(amount) * WINDOW_UNIT_MS[unit];
+}
+
+function createMemoryLimiter(tokens: number, window: Window): RateLimiter {
+  const windowMs = windowToMs(window);
+  const buckets = new Map<string, { count: number; reset: number }>();
+
+  return {
+    async limit(identifier) {
+      const now = Date.now();
+
+      if (buckets.size > 10_000) {
+        buckets.forEach((bucket, key) => {
+          if (bucket.reset <= now) buckets.delete(key);
+        });
+      }
+
+      let bucket = buckets.get(identifier);
+
+      if (!bucket || bucket.reset <= now) {
+        bucket = { count: 0, reset: now + windowMs };
+        buckets.set(identifier, bucket);
+      }
+
+      bucket.count += 1;
+
+      return { success: bucket.count <= tokens, limit: tokens, reset: bucket.reset };
+    },
+  };
+}
+
+function makeLimiter(tokens: number, window: Window, prefix: string): RateLimiter {
   const r = getRedis();
-  if (!r) return null;
+
+  if (!r) {
+    if (process.env.NODE_ENV === "production" && !warnedAboutMemoryFallback) {
+      warnedAboutMemoryFallback = true;
+      log.warn("Upstash Redis is not configured; rate limits are per-instance only", {
+        requestId: "system",
+        route: "ratelimit",
+      });
+    }
+
+    return createMemoryLimiter(tokens, window);
+  }
 
   return new Ratelimit({
     redis: r,
@@ -40,6 +92,11 @@ function makeLimiter(
  * 5 requests per 15 minutes per IP — auth routes (/api/auth/*)
  */
 export const authLimiter = makeLimiter(5, "15 m", "auth");
+
+/**
+ * 5 attempts per 15 minutes — admin password sign-in, applied per email and per IP
+ */
+export const adminLoginLimiter = makeLimiter(5, "15 m", "admin-login");
 
 /**
  * 30 requests per minute per user — mentor search (/api/mentors GET)

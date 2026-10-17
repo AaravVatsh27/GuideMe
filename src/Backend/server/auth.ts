@@ -4,6 +4,8 @@ import Google from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
 import { compare } from "bcryptjs";
 
+import { getClientIp } from "@/Backend/lib/client-ip";
+import { adminLoginLimiter } from "@/Backend/lib/ratelimit";
 import { db } from "@/Backend/server/db";
 
 const AUTH_ROLES = ["STUDENT", "MENTOR", "ADMIN"] as const;
@@ -87,7 +89,7 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
       email: { label: "Email", type: "email" },
       password: { label: "Password", type: "password" },
     },
-    async authorize(credentials) {
+    async authorize(credentials, request) {
       const email =
         typeof credentials?.email === "string"
           ? credentials.email.trim().toLowerCase()
@@ -96,6 +98,16 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
         typeof credentials?.password === "string" ? credentials.password : "";
 
       if (!email || !password) {
+        return null;
+      }
+
+      // Throttle password guessing per account and per client IP.
+      const [byEmail, byIp] = await Promise.all([
+        adminLoginLimiter.limit(`email:${email}`),
+        adminLoginLimiter.limit(`ip:${getClientIp(request) ?? "unknown"}`),
+      ]);
+
+      if (!byEmail.success || !byIp.success) {
         return null;
       }
 

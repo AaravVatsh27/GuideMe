@@ -9,6 +9,7 @@ import {
 } from "@prisma/client";
 import { addDays, format, startOfDay, subDays } from "date-fns";
 
+import { getClientIp } from "@/Backend/lib/client-ip";
 import { isEmailAuthEnabled } from "@/Backend/server/auth";
 import { db } from "@/Backend/server/db";
 import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
@@ -115,11 +116,7 @@ function getRevenueBuckets(payments: Array<{ paidAt: Date | null; amount: number
 }
 
 export function extractRequestIp(request: Request) {
-  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const realIp = request.headers.get("x-real-ip")?.trim();
-  const cfIp = request.headers.get("cf-connecting-ip")?.trim();
-
-  return forwardedFor || realIp || cfIp || null;
+  return getClientIp(request);
 }
 
 export function getAdminRedirectPath() {

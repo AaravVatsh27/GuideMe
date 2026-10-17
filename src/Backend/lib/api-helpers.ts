@@ -1,11 +1,12 @@
 import * as Sentry from "@sentry/nextjs";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
-import type { Ratelimit } from "@upstash/ratelimit";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
+import { getClientIp } from "@/Backend/lib/client-ip";
 import { log } from "@/Backend/lib/logger";
+import type { RateLimiter } from "@/Backend/lib/ratelimit";
 
 interface ApiSuccessResponse<T = unknown> {
   success: true;
@@ -48,7 +49,7 @@ type BuiltApiErrorResponse = {
 
 /**
  * Returns the best available identifier for rate-limiting:
- * prefers user ID (authenticated), falls back to x-forwarded-for, then remote addr.
+ * prefers user ID (authenticated), falls back to the client IP (see getClientIp).
  */
 export function getRateLimitId(
   request: NextRequest | Request,
@@ -56,15 +57,7 @@ export function getRateLimitId(
 ): string {
   if (userId) return `user:${userId}`;
 
-  // Cast to access headers safely
-  const headers =
-    request instanceof Request
-      ? request.headers
-      : (request as NextRequest).headers;
-
-  const forwarded = headers.get("x-forwarded-for");
-  const ip = forwarded ? forwarded.split(",")[0].trim() : "127.0.0.1";
-  return `ip:${ip}`;
+  return `ip:${getClientIp(request) ?? "unknown"}`;
 }
 
 // ─── Rate limiting ─────────────────────────────────────────────────────────────
@@ -77,10 +70,10 @@ export function getRateLimitId(
  *   if (denied) return denied;
  */
 export async function applyRateLimit(
-  limiter: Ratelimit | null,
+  limiter: RateLimiter | null,
   identifier: string,
 ): Promise<NextResponse | null> {
-  if (!limiter) return null; // Redis not configured — skip in dev
+  if (!limiter) return null;
 
   const { success, limit, reset } = await limiter.limit(identifier);
 
