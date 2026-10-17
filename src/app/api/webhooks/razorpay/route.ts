@@ -13,7 +13,7 @@ import { log } from "@/Backend/lib/logger";
 import { PLATFORM_CUT } from "@/Backend/server/constants";
 import { db } from "@/Backend/server/db";
 import { sendBookingConfirmation, sendPaymentFailureEmail, sendRefundConfirmationEmail } from "@/Backend/server/resend";
-import { releaseBookingIfSlotLost } from "@/Backend/server/sessions";
+import { refundPaymentForClosedSession, releaseBookingIfSlotLost } from "@/Backend/server/sessions";
 
 function verifyWebhookSignature(body: string, signature: string): boolean {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
@@ -78,9 +78,14 @@ async function handlePaymentCaptured(payload: any, requestId: string) {
 
   if (
     payment.session.status === SessionStatus.CANCELLED ||
-    payment.session.status === SessionStatus.NO_SHOW ||
-    payment.session.status === SessionStatus.COMPLETED
+    payment.session.status === SessionStatus.NO_SHOW
   ) {
+    // Money arrived for a booking that no longer exists; give it back.
+    await refundPaymentForClosedSession({ sessionId: payment.sessionId, razorpayPaymentId: paymentId });
+    return;
+  }
+
+  if (payment.session.status === SessionStatus.COMPLETED) {
     return;
   }
 

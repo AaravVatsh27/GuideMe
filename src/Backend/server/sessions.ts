@@ -1418,23 +1418,80 @@ export async function releaseBookingIfSlotLost(input: {
     return false;
   }
 
-  // Claim the refund so a concurrent webhook and verify call cannot both refund.
+  return refundUnrecordedBookingPayment({
+    session,
+    razorpayPaymentId: input.razorpayPaymentId,
+    reason: "The slot was booked by someone else before your payment completed",
+    auditAction: "SESSION_SLOT_LOST_REFUNDED",
+    cancelSession: true,
+  });
+}
+
+/**
+ * Handles a payment captured for a session that was already cancelled or marked no-show
+ * (for example, the student cancelled or the hold expired while checkout was still open).
+ * The money is refunded in full. Returns true when the payment was (or is being) refunded.
+ */
+export async function refundPaymentForClosedSession(input: {
+  sessionId: string;
+  razorpayPaymentId: string;
+}) {
+  const session = await db.session.findUnique({
+    where: { id: input.sessionId },
+    select: {
+      id: true,
+      status: true,
+      price: true,
+      mentorId: true,
+      studentId: true,
+    },
+  });
+
+  if (
+    !session ||
+    (session.status !== SessionStatus.CANCELLED && session.status !== SessionStatus.NO_SHOW)
+  ) {
+    return false;
+  }
+
+  return refundUnrecordedBookingPayment({
+    session,
+    razorpayPaymentId: input.razorpayPaymentId,
+    reason: "Your payment completed after this booking was cancelled",
+    auditAction: "CLOSED_SESSION_PAYMENT_REFUNDED",
+    cancelSession: false,
+  });
+}
+
+/**
+ * Refunds a captured payment that was never recorded as captured, records the refund, and
+ * optionally cancels the booking. A conditional claim on the payment row ensures that a
+ * concurrent webhook and verify call refund only once.
+ */
+async function refundUnrecordedBookingPayment(input: {
+  session: { id: string; price: number; studentId: string; mentorId: string };
+  razorpayPaymentId: string;
+  reason: string;
+  auditAction: string;
+  cancelSession: boolean;
+}) {
+  const { session, razorpayPaymentId, reason, auditAction, cancelSession } = input;
+
   const claim = await db.payment.updateMany({
     where: {
       sessionId: session.id,
       refundStatus: null,
       status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
     },
-    data: { refundStatus: PaymentStatus.PENDING, razorpayPaymentId: input.razorpayPaymentId },
+    data: { refundStatus: PaymentStatus.PENDING, razorpayPaymentId },
   });
 
   if (claim.count === 0) {
     return true;
   }
 
-  const refund = await createRefund(input.razorpayPaymentId, session.price);
+  const refund = await createRefund(razorpayPaymentId, session.price);
   const now = new Date();
-  const reason = "The slot was booked by someone else before your payment completed";
 
   await db.$transaction(async (tx) => {
     await tx.payment.update({
@@ -1449,22 +1506,24 @@ export async function releaseBookingIfSlotLost(input: {
       },
     });
 
-    await tx.session.update({
-      where: { id: session.id },
-      data: {
-        status: SessionStatus.CANCELLED,
-        cancellationReason: reason,
-        cancelledAt: now,
-      },
-    });
+    if (cancelSession) {
+      await tx.session.update({
+        where: { id: session.id },
+        data: {
+          status: SessionStatus.CANCELLED,
+          cancellationReason: reason,
+          cancelledAt: now,
+        },
+      });
 
-    await tx.booking.deleteMany({ where: { sessionId: session.id } });
+      await tx.booking.deleteMany({ where: { sessionId: session.id } });
+    }
 
     await tx.notification.create({
       data: {
         userId: session.studentId,
         type: NotificationType.SYSTEM,
-        title: "Booking released and refunded",
+        title: "Payment refunded",
         body: `${reason}. A full refund has been issued.`,
         link: `/session/${session.id}`,
       },
@@ -1472,7 +1531,7 @@ export async function releaseBookingIfSlotLost(input: {
 
     await tx.auditLog.create({
       data: {
-        action: "SESSION_SLOT_LOST_REFUNDED",
+        action: auditAction,
         entityType: "Session",
         entityId: session.id,
         metadata: { refundId: refund.id, amount: session.price },

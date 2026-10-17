@@ -16,7 +16,7 @@ import { paymentLimiter } from "@/Backend/lib/ratelimit";
 import { PLATFORM_CUT } from "@/Backend/server/constants";
 import { db } from "@/Backend/server/db";
 import { verifyPaymentSignature } from "@/Backend/server/razorpay";
-import { releaseBookingIfSlotLost } from "@/Backend/server/sessions";
+import { refundPaymentForClosedSession, releaseBookingIfSlotLost } from "@/Backend/server/sessions";
 import { sendBookingConfirmation } from "@/Backend/server/resend";
 
 const verifyPaymentSchema = z.object({
@@ -125,6 +125,18 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
 
   if (bookingSession.type !== SessionType.PAID) {
     return NextResponse.json({ error: "Only paid sessions can be verified" }, { status: 400 });
+  }
+
+  if (
+    (bookingSession.status === SessionStatus.CANCELLED ||
+      bookingSession.status === SessionStatus.NO_SHOW) &&
+    bookingSession.payment?.razorpayOrderId === razorpayOrderId &&
+    (await refundPaymentForClosedSession({ sessionId, razorpayPaymentId }))
+  ) {
+    return NextResponse.json(
+      { error: "This booking was cancelled before your payment completed. A full refund has been issued." },
+      { status: 409 },
+    );
   }
 
   if (
