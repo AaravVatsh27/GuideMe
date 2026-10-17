@@ -20,6 +20,8 @@ type OpenAIChatResponse = {
 
 const OPENAI_CHAT_API_URL = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
+// Session completion waits for the summary, so a slow API must not hold it up for long.
+const OPENAI_REQUEST_TIMEOUT_MS = 15_000;
 
 function getOpenAiApiKey() {
   return process.env.OPENAI_API_KEY?.trim() ?? null;
@@ -89,6 +91,7 @@ export async function generateClaudeSessionSummary(context: SessionSummaryContex
   try {
     const response = await fetch(OPENAI_CHAT_API_URL, {
       method: "POST",
+      signal: AbortSignal.timeout(OPENAI_REQUEST_TIMEOUT_MS),
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
