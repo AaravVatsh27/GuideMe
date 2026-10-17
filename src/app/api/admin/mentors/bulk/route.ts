@@ -4,7 +4,11 @@ import { z } from "zod";
 
 import { auth } from "@/Backend/auth";
 import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
-import { autoAssignMentorTier, extractRequestIp } from "@/Backend/server/admin";
+import {
+  autoAssignMentorTier,
+  extractRequestIp,
+  invalidateMentorPublicCaches,
+} from "@/Backend/server/admin";
 import { db } from "@/Backend/server/db";
 import { sendWelcomeMentorEmail } from "@/Backend/server/resend";
 
@@ -60,6 +64,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
         select: {
           college: true,
           tier: true,
+          username: true,
         },
       },
     },
@@ -184,6 +189,8 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
       }
     }
   });
+
+  await invalidateMentorPublicCaches(mentors);
 
   if (parsed.data.action === "verify") {
     await Promise.allSettled(

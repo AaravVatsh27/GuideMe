@@ -9,13 +9,15 @@ import {
 } from "@prisma/client";
 import { addDays, format, startOfDay, subDays } from "date-fns";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/Backend/auth";
+import { cacheDel, cacheDelPattern, cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 import { getClientIp } from "@/Backend/lib/client-ip";
+import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
 import { isEmailAuthEnabled } from "@/Backend/server/auth";
 import { db } from "@/Backend/server/db";
-import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 
 type AdminMentorStatus = "PENDING" | "VERIFIED" | "SUSPENDED" | "REJECTED";
 
@@ -132,6 +134,37 @@ async function requireAdminViewer() {
   if (session.user.role !== "ADMIN") {
     redirect("/dashboard");
   }
+}
+
+/**
+ * Drops cached public data for mentors after an admin changes their status or tier,
+ * so suspended or rejected mentors stop appearing straight away.
+ */
+export async function invalidateMentorPublicCaches(
+  mentors: Array<{ id: string; mentorProfile?: { username: string } | null }>,
+) {
+  const invalidations: Promise<unknown>[] = [
+    cacheDelPattern(cacheKeys.searchPattern),
+    invalidateAllMatchingCaches(),
+  ];
+
+  for (const mentor of mentors) {
+    invalidations.push(cacheDelPattern(cacheKeys.availabilityPattern(mentor.id)));
+
+    if (mentor.mentorProfile?.username) {
+      invalidations.push(cacheDel(cacheKeys.mentorProfile(mentor.mentorProfile.username)));
+    }
+  }
+
+  await Promise.allSettled(invalidations);
+
+  for (const mentor of mentors) {
+    if (mentor.mentorProfile?.username) {
+      revalidatePath(`/mentor/${mentor.mentorProfile.username}`);
+    }
+  }
+
+  revalidatePath("/find-mentor");
 }
 
 export function extractRequestIp(request: Request) {

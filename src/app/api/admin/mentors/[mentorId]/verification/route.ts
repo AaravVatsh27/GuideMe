@@ -4,7 +4,11 @@ import { z } from "zod";
 
 import { auth } from "@/Backend/auth";
 import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
-import { autoAssignMentorTier, extractRequestIp } from "@/Backend/server/admin";
+import {
+  autoAssignMentorTier,
+  extractRequestIp,
+  invalidateMentorPublicCaches,
+} from "@/Backend/server/admin";
 import { db } from "@/Backend/server/db";
 import {
   sendMentorVerificationRejectedEmail,
@@ -60,6 +64,7 @@ export const POST = withApiErrorHandling(async (
       mentorProfile: {
         select: {
           college: true,
+          username: true,
         },
       },
       mentorVerification: {
@@ -168,6 +173,8 @@ export const POST = withApiErrorHandling(async (
       });
     }
   });
+
+  await invalidateMentorPublicCaches([mentor]);
 
   if (parsed.data.decision === "approve") {
     await sendWelcomeMentorEmail({
