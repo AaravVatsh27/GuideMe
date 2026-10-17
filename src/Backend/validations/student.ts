@@ -246,14 +246,16 @@ export const studentOnboardingSchema = z
     stream: streamSchema.optional().default("UNDECIDED"),
     schoolingMode: schoolingModeSchema.optional(),
     coachingMode: coachingModeSchema.optional(),
-    targetExams: z.array(targetExamSchema).optional().default([]),
-    mentorshipNeeds: z.array(mentorshipNeedSchema).optional().default([]),
+    targetExam: targetExamSchema.optional(),
+    targetExams: z.array(targetExamSchema).max(5).optional().default([]),
+    mentorshipNeeds: z.array(mentorshipNeedSchema).max(5).optional().default([]),
     decisionStage: decisionStageSchema.optional(),
     currentConfusion: currentConfusionSchema.optional(),
-    confusionTypes: z.array(confusionTypeSchema).optional().default([]),
+    confusionTypes: z.array(confusionTypeSchema).max(3).optional().default([]),
     city: citySchema,
     state: stateSchema,
     languagePreference: languageSchema,
+    parentalPressure: parentalPressureSchema.optional(),
   })
   .superRefine((value, context) => {
     validateStudentBoard(value, context);

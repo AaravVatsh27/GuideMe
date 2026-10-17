@@ -323,7 +323,43 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
     );
   }
 
-  const rawData = payload as Record<string, unknown>;
+  // Only validated values are written; the raw request body is never used directly.
+  const data = parsed.data;
+  const targetExam = data.targetExam ?? data.targetExams[0] ?? null;
+  const currentConfusion = data.currentConfusion?.trim() || null;
+  const profileData = {
+    class: data.class,
+    board: data.board ?? null,
+    stream: data.stream,
+    schoolingMode: data.schoolingMode ?? null,
+    coachingMode: data.coachingMode ?? null,
+    targetExam,
+    targetExams: data.targetExams,
+    mentorshipNeeds: data.mentorshipNeeds,
+    decisionStage: data.decisionStage ?? null,
+    currentConfusion,
+    confusionType: data.confusionTypes[0] ?? null,
+    confusionTypes: data.confusionTypes,
+    city: data.city,
+    state: data.state,
+    languagePreference: data.languagePreference,
+    parentalPressure: data.parentalPressure ?? null,
+  };
+  // On update, optional fields the client did not send keep their saved value.
+  const wasSent = (key: string) =>
+    typeof payload === "object" && payload !== null && key in payload;
+  const profileUpdateData = {
+    ...profileData,
+    schoolingMode: data.schoolingMode,
+    coachingMode: data.coachingMode,
+    targetExam: data.targetExam ?? data.targetExams[0],
+    targetExams: wasSent("targetExams") ? data.targetExams : undefined,
+    mentorshipNeeds: wasSent("mentorshipNeeds") ? data.mentorshipNeeds : undefined,
+    decisionStage: data.decisionStage,
+    currentConfusion: wasSent("currentConfusion") ? currentConfusion : undefined,
+    parentalPressure: data.parentalPressure,
+  };
+
   const result = await db.$transaction(async (tx) => {
     const profile = await tx.studentProfile.upsert({
       where: {
@@ -331,77 +367,9 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
       },
       create: {
         userId: session.user.id,
-        class: parsed.data.class,
-        board: parsed.data.board ?? null,
-        stream: parsed.data.stream,
-        schoolingMode:
-          typeof rawData.schoolingMode === "string" ? (rawData.schoolingMode as SchoolingMode) : null,
-        coachingMode:
-          typeof rawData.coachingMode === "string" ? (rawData.coachingMode as CoachingMode) : null,
-        targetExam:
-          typeof rawData.targetExam === "string" 
-            ? (rawData.targetExam as TargetExam)
-            : Array.isArray(rawData.targetExams) && rawData.targetExams.length > 0
-              ? (rawData.targetExams[0] as TargetExam)
-              : null,
-        targetExams: Array.isArray(rawData.targetExams)
-          ? (rawData.targetExams as TargetExam[])
-          : [],
-        mentorshipNeeds: Array.isArray(rawData.mentorshipNeeds)
-          ? (rawData.mentorshipNeeds as MentorshipNeed[])
-          : [],
-        decisionStage:
-          typeof rawData.decisionStage === "string" ? (rawData.decisionStage as DecisionStage) : null,
-        currentConfusion:
-          typeof rawData.currentConfusion === "string" && rawData.currentConfusion.trim().length > 0
-            ? rawData.currentConfusion.trim()
-            : null,
-        confusionType: parsed.data.confusionTypes[0] ?? null,
-        confusionTypes: parsed.data.confusionTypes,
-        city: parsed.data.city,
-        state: parsed.data.state,
-        languagePreference: parsed.data.languagePreference,
-        parentalPressure:
-          typeof rawData.parentalPressure === "string"
-            ? (rawData.parentalPressure as ParentalPressure)
-            : null,
+        ...profileData,
       },
-      update: {
-        class: parsed.data.class,
-        board: parsed.data.board ?? null,
-        stream: parsed.data.stream,
-        schoolingMode:
-          typeof rawData.schoolingMode === "string" ? (rawData.schoolingMode as SchoolingMode) : undefined,
-        coachingMode:
-          typeof rawData.coachingMode === "string" ? (rawData.coachingMode as CoachingMode) : undefined,
-        targetExam:
-          typeof rawData.targetExam === "string"
-            ? (rawData.targetExam as TargetExam)
-            : Array.isArray(rawData.targetExams) && rawData.targetExams.length > 0
-              ? (rawData.targetExams[0] as TargetExam)
-              : undefined,
-        targetExams: Array.isArray(rawData.targetExams)
-          ? (rawData.targetExams as TargetExam[])
-          : undefined,
-        mentorshipNeeds: Array.isArray(rawData.mentorshipNeeds)
-          ? (rawData.mentorshipNeeds as MentorshipNeed[])
-          : undefined,
-        decisionStage:
-          typeof rawData.decisionStage === "string" ? (rawData.decisionStage as DecisionStage) : undefined,
-        currentConfusion:
-          typeof rawData.currentConfusion === "string"
-            ? (rawData.currentConfusion.trim() || null)
-            : undefined,
-        confusionType: parsed.data.confusionTypes[0] ?? null,
-        confusionTypes: parsed.data.confusionTypes,
-        city: parsed.data.city,
-        state: parsed.data.state,
-        languagePreference: parsed.data.languagePreference,
-        parentalPressure:
-          typeof rawData.parentalPressure === "string"
-            ? (rawData.parentalPressure as ParentalPressure)
-            : undefined,
-      },
+      update: profileUpdateData,
       select: {
         class: true,
         board: true,
