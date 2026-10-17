@@ -13,7 +13,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/Backend/auth";
-import { cacheDel, cacheDelPattern, cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
+import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
 import { getClientIp } from "@/Backend/lib/client-ip";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
 import { isEmailAuthEnabled } from "@/Backend/server/auth";
@@ -217,16 +217,13 @@ export async function getPendingMentorVerificationCount() {
   return db.mentorVerification.count({
     where: {
       status: VerificationStatus.PENDING,
+      mentor: { deletedAt: null },
     },
   });
 }
 
 export async function getAdminOverviewData(): Promise<AdminOverviewData> {
   await requireAdminViewer();
-
-  const cacheKey = cacheKeys.adminStats;
-  const cached = await cacheGet<AdminOverviewData>(cacheKey);
-  if (cached) return cached;
 
   const now = new Date();
   const todayStart = startOfDay(now);
@@ -245,13 +242,13 @@ export async function getAdminOverviewData(): Promise<AdminOverviewData> {
     flaggedReviews,
   ] = await Promise.all([
     db.user.count({
-      where: { deletedAt: null },
+      where: { deletedAt: null, role: { not: Role.ADMIN } },
     }),
     db.session.count({
       where: { scheduledAt: { gte: todayStart, lt: tomorrowStart } },
     }),
     db.mentorProfile.count({
-      where: { isActive: true, isVerified: true },
+      where: { isActive: true, isVerified: true, user: { deletedAt: null } },
     }),
     db.payment.findMany({
       where: {
@@ -376,8 +373,6 @@ export async function getAdminOverviewData(): Promise<AdminOverviewData> {
       })),
     },
   } satisfies AdminOverviewData;
-
-  cacheSet(cacheKey, response, cacheTtl.adminOverviewStats).catch(() => {});
 
   return response;
 }
