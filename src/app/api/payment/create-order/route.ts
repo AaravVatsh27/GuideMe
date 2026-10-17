@@ -9,6 +9,7 @@ import { paymentLimiter } from "@/Backend/lib/ratelimit";
 import { DEFAULT_CURRENCY, PLATFORM_CUT } from "@/Backend/server/constants";
 import { db } from "@/Backend/server/db";
 import { createOrder } from "@/Backend/server/razorpay";
+import { expireUnpaidBooking, isBookingHoldExpired } from "@/Backend/server/sessions";
 
 const createOrderSchema = z.object({
   sessionId: z.string().uuid("sessionId must be a valid UUID"),
@@ -74,6 +75,14 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   // Return existing captured payment
   if (bookingSession.payment?.status === PaymentStatus.CAPTURED) {
     return NextResponse.json({ error: "Session is already paid" }, { status: 409 });
+  }
+
+  if (isBookingHoldExpired(bookingSession, bookingSession.payment?.status)) {
+    await expireUnpaidBooking(sessionId);
+    return NextResponse.json(
+      { error: "This booking was not paid in time and has been released. Please book the slot again." },
+      { status: 410 },
+    );
   }
 
   // Reuse existing pending order if present

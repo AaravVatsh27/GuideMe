@@ -13,10 +13,12 @@ import { addMinutes } from "date-fns";
 import { generateClaudeSessionSummary } from "@/Backend/server/openai";
 import {
   DEFAULT_CURRENCY,
+  MAX_UNPAID_BOOKING_HOLDS,
   NO_SHOW_REPORT_GRACE_MINUTES,
   NO_SHOW_REPORT_WINDOW_HOURS,
   PLATFORM_CUT,
   SESSION_JOIN_EARLY_WINDOW_MINUTES,
+  UNPAID_BOOKING_HOLD_MINUTES,
 } from "@/Backend/server/constants";
 import { createDailyRoom } from "@/Backend/server/daily";
 import { db } from "@/Backend/server/db";
@@ -462,23 +464,46 @@ async function findSessionDetailsOrThrow(sessionId: string) {
   return session;
 }
 
-async function ensureNoConflict(
+type DbClient = Prisma.TransactionClient | typeof db;
+
+export function getBookingHoldCutoff(now = new Date()) {
+  return addMinutes(now, -UNPAID_BOOKING_HOLD_MINUTES);
+}
+
+/**
+ * Sessions that occupy their time slot: active intro sessions, paid sessions whose
+ * payment is captured, and paid sessions still inside their unpaid hold window.
+ */
+export function slotHoldingSessionWhere(now = new Date()): Prisma.SessionWhereInput {
+  return {
+    status: {
+      in: [...ACTIVE_SESSION_STATUSES],
+    },
+    OR: [
+      { type: SessionType.INTRO },
+      { createdAt: { gte: getBookingHoldCutoff(now) } },
+      { payment: { is: { status: PaymentStatus.CAPTURED } } },
+    ],
+  };
+}
+
+async function hasConflict(
+  client: DbClient,
   userField: "studentId" | "mentorId",
   userId: string,
   requested: {
     scheduledAt: Date;
     durationMinutes: number;
   },
-  label: string,
+  excludeSessionId?: string,
 ) {
   const where: Prisma.SessionWhereInput = {
-    status: {
-      in: [...ACTIVE_SESSION_STATUSES],
-    },
+    ...slotHoldingSessionWhere(),
     scheduledAt: {
       gte: addMinutes(requested.scheduledAt, -180),
       lt: addMinutes(requested.scheduledAt, requested.durationMinutes),
     },
+    ...(excludeSessionId ? { id: { not: excludeSessionId } } : {}),
   };
 
   if (userField === "studentId") {
@@ -487,7 +512,7 @@ async function ensureNoConflict(
     where.mentorId = userId;
   }
 
-  const conflicts = await db.session.findMany({
+  const conflicts = await client.session.findMany({
     where,
     select: {
       id: true,
@@ -496,13 +521,36 @@ async function ensureNoConflict(
     },
   });
 
-  const hasConflict = conflicts.some((session) =>
-    sessionsOverlap(session, requested),
-  );
+  return conflicts.some((session) => sessionsOverlap(session, requested));
+}
 
-  if (hasConflict) {
+async function ensureNoConflict(
+  client: DbClient,
+  userField: "studentId" | "mentorId",
+  userId: string,
+  requested: {
+    scheduledAt: Date;
+    durationMinutes: number;
+  },
+  label: string,
+) {
+  if (await hasConflict(client, userField, userId, requested)) {
     throw new SessionApiError(`${label} already has a conflicting session`, 409);
   }
+}
+
+/**
+ * Serialises bookings for the same mentor and student until the transaction ends,
+ * so two concurrent requests cannot both pass the conflict check.
+ * Mentor locks are always taken before student locks to avoid deadlocks.
+ */
+async function lockBookingParticipants(
+  tx: Prisma.TransactionClient,
+  mentorId: string,
+  studentId: string,
+) {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`session-slot:mentor:${mentorId}`}::text))`;
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`session-slot:student:${studentId}`}::text))`;
 }
 
 async function findMatchingAvailability(
@@ -775,26 +823,36 @@ export async function createSessionBooking({
     throw new SessionApiError("Mentor is not available at the requested slot", 409);
   }
 
+  const requestedSlot = {
+    scheduledAt: input.scheduledAt,
+    durationMinutes: input.durationMinutes,
+  };
+
+  // Early checks so we don't create a video room or payment order for a slot that is taken.
+  // They are repeated under a lock inside the transaction below.
   await Promise.all([
-    ensureNoConflict(
-      "studentId",
-      studentId,
-      {
-        scheduledAt: input.scheduledAt,
-        durationMinutes: input.durationMinutes,
-      },
-      "Student",
-    ),
-    ensureNoConflict(
-      "mentorId",
-      mentor.id,
-      {
-        scheduledAt: input.scheduledAt,
-        durationMinutes: input.durationMinutes,
-      },
-      "Mentor",
-    ),
+    ensureNoConflict(db, "studentId", studentId, requestedSlot, "Student"),
+    ensureNoConflict(db, "mentorId", mentor.id, requestedSlot, "Mentor"),
   ]);
+
+  if (input.type === SessionType.PAID) {
+    const unpaidHolds = await db.session.count({
+      where: {
+        studentId,
+        type: SessionType.PAID,
+        status: SessionStatus.SCHEDULED,
+        createdAt: { gte: getBookingHoldCutoff() },
+        payment: { is: { status: { not: PaymentStatus.CAPTURED } } },
+      },
+    });
+
+    if (unpaidHolds >= MAX_UNPAID_BOOKING_HOLDS) {
+      throw new SessionApiError(
+        "Please complete payment for your pending bookings before booking another session",
+        429,
+      );
+    }
+  }
 
   if (input.type === SessionType.INTRO) {
     const priorIntroCount = await db.session.count({
@@ -834,6 +892,10 @@ export async function createSessionBooking({
   const amounts = calculateSessionAmounts(input.type, input.price);
 
   await db.$transaction(async (tx) => {
+    await lockBookingParticipants(tx, mentor.id, studentId);
+    await ensureNoConflict(tx, "studentId", studentId, requestedSlot, "Student");
+    await ensureNoConflict(tx, "mentorId", mentor.id, requestedSlot, "Mentor");
+
     await tx.session.create({
       data: {
         id: sessionId,
@@ -855,6 +917,7 @@ export async function createSessionBooking({
       data: {
         availabilityId: matchedAvailability.id,
         sessionId,
+        expiresAt: order ? addMinutes(new Date(), UNPAID_BOOKING_HOLD_MINUTES) : null,
       },
     });
 
@@ -1259,4 +1322,164 @@ export async function completeSessionById({
   ]);
 
   return updatedSession;
+}
+
+/**
+ * Cancels a paid booking whose unpaid hold has expired, freeing its slot.
+ * Called before a new payment order is issued so students cannot pay for a stale hold.
+ */
+export async function expireUnpaidBooking(sessionId: string) {
+  const session = await db.session.findUnique({
+    where: { id: sessionId },
+    select: { mentorId: true },
+  });
+
+  if (!session) {
+    return;
+  }
+
+  await db.$transaction(async (tx) => {
+    const { count } = await tx.session.updateMany({
+      where: { id: sessionId, status: SessionStatus.SCHEDULED },
+      data: {
+        status: SessionStatus.CANCELLED,
+        cancellationReason: "Payment was not completed in time",
+        cancelledAt: new Date(),
+      },
+    });
+
+    if (count === 0) {
+      return;
+    }
+
+    await tx.booking.deleteMany({ where: { sessionId } });
+    await tx.payment.updateMany({
+      where: { sessionId, status: PaymentStatus.PENDING },
+      data: { status: PaymentStatus.FAILED },
+    });
+    await tx.auditLog.create({
+      data: {
+        action: "SESSION_HOLD_EXPIRED",
+        entityType: "Session",
+        entityId: sessionId,
+      },
+    });
+  });
+
+  invalidateSessionCaches(sessionId, session.mentorId);
+}
+
+export function isBookingHoldExpired(
+  session: { type: SessionType; createdAt: Date },
+  paymentStatus: PaymentStatus | null | undefined,
+) {
+  return (
+    session.type === SessionType.PAID &&
+    paymentStatus !== PaymentStatus.CAPTURED &&
+    session.createdAt < getBookingHoldCutoff()
+  );
+}
+
+/**
+ * Handles a payment captured after the booking's unpaid hold expired. If another booking
+ * has taken the slot in the meantime, the payment is refunded in full and this booking is
+ * cancelled. Returns true when the booking was released (or is already being released).
+ */
+export async function releaseBookingIfSlotLost(input: {
+  sessionId: string;
+  razorpayPaymentId: string;
+}) {
+  const session = await db.session.findUnique({
+    where: { id: input.sessionId },
+    select: {
+      id: true,
+      type: true,
+      status: true,
+      createdAt: true,
+      scheduledAt: true,
+      durationMinutes: true,
+      price: true,
+      mentorId: true,
+      studentId: true,
+      payment: { select: { status: true } },
+    },
+  });
+
+  if (!session || !isBookingHoldExpired(session, session.payment?.status)) {
+    return false;
+  }
+
+  const [mentorTaken, studentTaken] = await Promise.all([
+    hasConflict(db, "mentorId", session.mentorId, session, session.id),
+    hasConflict(db, "studentId", session.studentId, session, session.id),
+  ]);
+
+  if (!mentorTaken && !studentTaken) {
+    return false;
+  }
+
+  // Claim the refund so a concurrent webhook and verify call cannot both refund.
+  const claim = await db.payment.updateMany({
+    where: {
+      sessionId: session.id,
+      refundStatus: null,
+      status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+    },
+    data: { refundStatus: PaymentStatus.PENDING, razorpayPaymentId: input.razorpayPaymentId },
+  });
+
+  if (claim.count === 0) {
+    return true;
+  }
+
+  const refund = await createRefund(input.razorpayPaymentId, session.price);
+  const now = new Date();
+  const reason = "The slot was booked by someone else before your payment completed";
+
+  await db.$transaction(async (tx) => {
+    await tx.payment.update({
+      where: { sessionId: session.id },
+      data: {
+        status: PaymentStatus.REFUNDED,
+        refundStatus: PaymentStatus.REFUNDED,
+        refundId: refund.id,
+        refundAmount: session.price,
+        refundedAt: now,
+        paidAt: now,
+      },
+    });
+
+    await tx.session.update({
+      where: { id: session.id },
+      data: {
+        status: SessionStatus.CANCELLED,
+        cancellationReason: reason,
+        cancelledAt: now,
+      },
+    });
+
+    await tx.booking.deleteMany({ where: { sessionId: session.id } });
+
+    await tx.notification.create({
+      data: {
+        userId: session.studentId,
+        type: NotificationType.SYSTEM,
+        title: "Booking released and refunded",
+        body: `${reason}. A full refund has been issued.`,
+        link: `/session/${session.id}`,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        action: "SESSION_SLOT_LOST_REFUNDED",
+        entityType: "Session",
+        entityId: session.id,
+        metadata: { refundId: refund.id, amount: session.price },
+      },
+    });
+  });
+
+  invalidateSessionCaches(session.id, session.mentorId);
+  return true;
 }

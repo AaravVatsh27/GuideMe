@@ -5,6 +5,7 @@ import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/
 import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 import { generalLimiter } from "@/Backend/lib/ratelimit";
 import { db } from "@/Backend/server/db";
+import { slotHoldingSessionWhere } from "@/Backend/server/sessions";
 
 type RouteParams = { params: Promise<{ username: string }> };
 
@@ -122,8 +123,8 @@ export const GET = withApiErrorHandling(async (request: Request, context: RouteP
     }),
     db.session.findMany({
       where: {
+        ...slotHoldingSessionWhere(now),
         mentorId: mentor.id,
-        status: { in: ["SCHEDULED", "ONGOING"] },
         scheduledAt: { gte: now, lte: endDate },
       },
       select: {

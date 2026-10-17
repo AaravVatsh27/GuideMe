@@ -13,3 +13,7 @@ export const NO_SHOW_REPORT_GRACE_MINUTES = 10;
 export const NO_SHOW_REPORT_WINDOW_HOURS = 24;
 // Meeting tokens stay valid this long after the scheduled end.
 export const SESSION_ROOM_GRACE_MINUTES = 60;
+// An unpaid paid booking holds its slot for this long; after that the slot is free again.
+export const UNPAID_BOOKING_HOLD_MINUTES = 15;
+// How many unpaid paid bookings a student may hold at once.
+export const MAX_UNPAID_BOOKING_HOLDS = 2;

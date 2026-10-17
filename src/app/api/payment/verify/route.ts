@@ -16,6 +16,7 @@ import { paymentLimiter } from "@/Backend/lib/ratelimit";
 import { PLATFORM_CUT } from "@/Backend/server/constants";
 import { db } from "@/Backend/server/db";
 import { verifyPaymentSignature } from "@/Backend/server/razorpay";
+import { releaseBookingIfSlotLost } from "@/Backend/server/sessions";
 import { sendBookingConfirmation } from "@/Backend/server/resend";
 
 const verifyPaymentSchema = z.object({
@@ -144,6 +145,16 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   // Already captured — idempotent response
   if (bookingSession.payment.status === PaymentStatus.CAPTURED) {
     return NextResponse.json({ success: true, sessionId });
+  }
+
+  if (await releaseBookingIfSlotLost({ sessionId, razorpayPaymentId })) {
+    return NextResponse.json(
+      {
+        error:
+          "This slot was booked by someone else before your payment completed. A full refund has been issued.",
+      },
+      { status: 409 },
+    );
   }
 
   const platformCut = Math.round(bookingSession.price * PLATFORM_CUT);

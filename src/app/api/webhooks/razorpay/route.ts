@@ -13,6 +13,7 @@ import { log } from "@/Backend/lib/logger";
 import { PLATFORM_CUT } from "@/Backend/server/constants";
 import { db } from "@/Backend/server/db";
 import { sendBookingConfirmation, sendPaymentFailureEmail, sendRefundConfirmationEmail } from "@/Backend/server/resend";
+import { releaseBookingIfSlotLost } from "@/Backend/server/sessions";
 
 function verifyWebhookSignature(body: string, signature: string): boolean {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
@@ -80,6 +81,10 @@ async function handlePaymentCaptured(payload: any, requestId: string) {
     payment.session.status === SessionStatus.NO_SHOW ||
     payment.session.status === SessionStatus.COMPLETED
   ) {
+    return;
+  }
+
+  if (await releaseBookingIfSlotLost({ sessionId: payment.sessionId, razorpayPaymentId: paymentId })) {
     return;
   }
 
