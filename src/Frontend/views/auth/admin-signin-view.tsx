@@ -4,192 +4,250 @@ import type { FormEvent } from "react";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ExternalLink, Mail } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { signIn } from "next-auth/react";
-import { z } from "zod";
 
 import { Button } from "@/Frontend/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
 import { Input } from "@/Frontend/components/ui/input";
-
-const emailSchema = z.string().trim().email("Enter a valid email address");
+import { GoogleIcon } from "./google-icon";
 
 type AdminSignInViewProps = {
   emailEnabled: boolean;
   googleEnabled: boolean;
 };
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function AdminSignInView({ emailEnabled, googleEnabled }: AdminSignInViewProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"password" | "email" | "google" | null>(null);
+
+  function clearErrors() {
+    setEmailError(null);
+    setPasswordError(null);
+    setFormError(null);
+  }
+
+  function validateCredentials() {
+    const normalizedEmail = email.trim();
+    let valid = true;
+
+    if (!emailPattern.test(normalizedEmail)) {
+      setEmailError("Enter a valid work email address.");
+      valid = false;
+    }
+
+    if (!password) {
+      setPasswordError("Enter your password.");
+      valid = false;
+    }
+
+    return valid;
+  }
 
   async function handlePasswordSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
-    setIsPending(true);
+    clearErrors();
 
+    if (!validateCredentials()) {
+      return;
+    }
+
+    setPendingAction("password");
     const result = await signIn("credentials", {
-      email,
+      email: email.trim(),
       password,
       redirect: false,
       redirectTo: "/admin",
     });
-
-    setIsPending(false);
+    setPendingAction(null);
 
     if (!result || result.error) {
-      setError("Those credentials were not accepted. Try again.");
+      setFormError("Those credentials were not accepted. Try again.");
       return;
     }
 
     router.push("/admin");
   }
 
-  async function handleEmailSignIn(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
+  async function handleEmailSignIn() {
+    clearErrors();
+    const normalizedEmail = email.trim();
 
-    const parsed = emailSchema.safeParse(email);
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Enter a valid email address");
+    if (!emailPattern.test(normalizedEmail)) {
+      setEmailError("Enter a valid work email address.");
       return;
     }
 
-    setIsPending(true);
+    setPendingAction("email");
     const result = await signIn("resend", {
-      email: parsed.data,
+      email: normalizedEmail,
       redirect: false,
       redirectTo: "/admin",
     });
-    setIsPending(false);
+    setPendingAction(null);
 
     if (!result || result.error) {
-      setError("We could not send the sign-in email right now. Try again.");
+      setFormError("We could not send the sign-in email right now. Try again.");
       return;
     }
 
     router.push(
-      `/auth/verify?email=${encodeURIComponent(parsed.data)}&callbackUrl=${encodeURIComponent("/admin")}`,
+      `/auth/verify?email=${encodeURIComponent(normalizedEmail)}&callbackUrl=${encodeURIComponent("/admin")}`,
     );
   }
 
   async function handleGoogleSignIn() {
-    setError(null);
-    setIsPending(true);
+    clearErrors();
+    setPendingAction("google");
     await signIn("google", { redirectTo: "/admin" });
   }
 
+  const isPending = pendingAction !== null;
+
   return (
-    <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_24px_70px_-40px_rgba(15,23,42,0.3)]">
-      <CardHeader className="p-5 pb-3 sm:p-6 sm:pb-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4F46E5]">Internal access</p>
-        <CardTitle className="mt-2 text-2xl font-bold tracking-[-0.03em] text-[#172033]">
+    <Card className="border-0 bg-transparent shadow-none">
+      <CardHeader className="px-0 pb-5 pt-0">
+        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#4F46E5]">Internal access</p>
+        <CardTitle className="mt-2 text-[1.9rem] font-bold tracking-[-0.04em] text-[#172033] sm:text-[2.1rem]">
           Admin / HR Login
         </CardTitle>
-        <CardDescription className="mt-2 text-sm leading-5 text-slate-600">
-          This area is for authorized internal staff only.
+        <CardDescription className="mt-2 text-sm leading-6 text-slate-500">
+          Authorized staff only.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-4 p-5 pt-2 sm:p-6 sm:pt-3">
-        <form onSubmit={(event) => void handlePasswordSignIn(event)} className="space-y-3">
-          <label htmlFor="admin-signin-email" className="text-sm font-medium text-[#1E1B4B]">
-            Work email
-          </label>
-          <Input
-            id="admin-signin-email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@company.com"
-            autoComplete="username"
-            disabled={isPending}
-            className="h-10 rounded-xl border-slate-200 bg-white text-[#1E1B4B] focus-visible:border-[#7C3AED] focus-visible:ring-2 focus-visible:ring-[#7C3AED]/10"
-          />
-          <label htmlFor="admin-signin-password" className="text-sm font-medium text-[#1E1B4B]">
-            Password
-          </label>
-          <Input
-            id="admin-signin-password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
-            disabled={isPending}
-            className="h-10 rounded-xl border-slate-200 bg-white text-[#1E1B4B] focus-visible:border-[#7C3AED] focus-visible:ring-2 focus-visible:ring-[#7C3AED]/10"
-          />
-          {error ? <p className="text-sm text-rose-600" role="alert">{error}</p> : null}
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="h-10 w-full rounded-xl bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
-          >
-            {isPending ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
-
+      <CardContent className="space-y-5 px-0 pb-0">
         <Button
           type="button"
+          size="lg"
           onClick={() => void handleGoogleSignIn()}
           disabled={!googleEnabled || isPending}
-          className="h-11 w-full rounded-xl bg-[#172033] font-semibold text-white hover:bg-[#27334A] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
+          aria-busy={pendingAction === "google"}
+          className="h-12 w-full rounded-[12px] border border-[#E2E8F0] !bg-white text-[0.95rem] font-semibold !text-[#0F172A] shadow-none hover:!bg-[#F8FAFC] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
         >
-          {googleEnabled ? "Continue with Google" : "Google sign-in unavailable"}
+          <GoogleIcon className="mr-3 size-5" />
+          {pendingAction === "google"
+            ? "Redirecting to Google..."
+            : googleEnabled
+              ? "Continue with Google"
+              : "Google sign-in unavailable"}
         </Button>
 
-        <div className="relative py-1">
+        <div className="relative py-2">
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-full border-t border-slate-200" />
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-              or use email
+            <span className="bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#64748B]">
+              Or use email
             </span>
           </div>
         </div>
 
-        <form onSubmit={(event) => void handleEmailSignIn(event)} className="space-y-3">
-          <label htmlFor="admin-signin-email" className="text-sm font-medium text-[#172033]">
-            Work email
-          </label>
-          <div className="relative">
-            <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+        <form noValidate onSubmit={(event) => void handlePasswordSignIn(event)} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="admin-signin-email" className="text-[14px] font-medium text-[#334155]">
+              Work email
+            </label>
             <Input
-              id="admin-signin-magic-link-email"
+              id="admin-signin-email"
+              name="email"
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setEmailError(null);
+                setFormError(null);
+              }}
               placeholder="you@company.com"
               autoComplete="email"
-              disabled={!emailEnabled || isPending}
-              className="h-11 rounded-xl border-slate-200 bg-white pl-10 text-[#172033] focus-visible:border-[#4F46E5] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/15"
+              disabled={isPending}
+              aria-invalid={emailError ? "true" : "false"}
+              className={`h-12 rounded-[12px] !bg-white px-4 text-base !text-[#0F172A] placeholder:text-[#94A3B8] focus-visible:!bg-white focus-visible:ring-[3px] ${
+                emailError
+                  ? "border-[#DC2626] focus-visible:border-[#DC2626] focus-visible:ring-[rgba(220,38,38,0.15)]"
+                  : "border-[#CBD5E1] focus-visible:border-[#4F46E5] focus-visible:ring-[rgba(79,70,229,0.15)]"
+              }`}
             />
+            {emailError ? <p className="text-[13px] font-medium text-[#DC2626]" role="alert">{emailError}</p> : null}
           </div>
-          {error ? <p className="text-sm text-rose-600" role="alert">{error}</p> : null}
+
+          <div className="space-y-2">
+            <label htmlFor="admin-signin-password" className="text-[14px] font-medium text-[#334155]">
+              Password
+            </label>
+            <div className="relative">
+              <Input
+                id="admin-signin-password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setPasswordError(null);
+                  setFormError(null);
+                }}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                disabled={isPending}
+                aria-invalid={passwordError ? "true" : "false"}
+                className={`h-12 rounded-[12px] !bg-white px-4 pr-12 text-base !text-[#0F172A] placeholder:text-[#94A3B8] focus-visible:!bg-white focus-visible:ring-[3px] ${
+                  passwordError
+                    ? "border-[#DC2626] focus-visible:border-[#DC2626] focus-visible:ring-[rgba(220,38,38,0.15)]"
+                    : "border-[#CBD5E1] focus-visible:border-[#4F46E5] focus-visible:ring-[rgba(79,70,229,0.15)]"
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                disabled={isPending}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#64748B] transition-colors hover:text-[#334155] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40"
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+            {passwordError ? <p className="text-[13px] font-medium text-[#DC2626]" role="alert">{passwordError}</p> : null}
+          </div>
+
+          {formError ? <p className="text-[13px] font-medium text-[#DC2626]" role="alert">{formError}</p> : null}
+
           <Button
             type="submit"
-            disabled={!emailEnabled || isPending}
-            className="h-11 w-full rounded-xl bg-[#4F46E5] font-semibold text-white hover:bg-[#4338CA] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
+            size="lg"
+            disabled={isPending}
+            aria-busy={pendingAction === "password"}
+            className="h-12 w-full rounded-[12px] !bg-[#4F46E5] text-[0.95rem] font-semibold text-white shadow-[0_4px_12px_rgba(79,70,229,0.2)] hover:!bg-[#4338CA] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2 disabled:!bg-[#A5B4FC] disabled:shadow-none"
           >
-            {isPending ? "Sending link..." : "Send secure sign-in link"}
-            {!isPending ? <ExternalLink className="ml-2 size-4" aria-hidden="true" /> : null}
+            {pendingAction === "password" ? "Signing in..." : "Sign in"}
           </Button>
-          {!emailEnabled ? (
-            <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-              Email sign-in is not configured for this environment.
-            </p>
-          ) : null}
         </form>
-      </CardContent>
 
-      <CardFooter className="border-t border-slate-200 bg-transparent p-5 pt-4 sm:px-6">
-        <p className="text-xs leading-5 text-slate-500">
-          Access is limited to authorized Mentra administrators and HR staff.
-        </p>
-      </CardFooter>
+        <div className="pt-1 text-center">
+          <button
+            type="button"
+            onClick={() => void handleEmailSignIn()}
+            disabled={!emailEnabled || isPending}
+            className="text-sm font-medium text-[#4F46E5] underline-offset-4 transition-colors hover:text-[#3730A3] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {pendingAction === "email" ? "Sending link..." : "Email me a sign-in link instead"}
+          </button>
+          {!emailEnabled ? <p className="mt-2 text-xs text-amber-700">Email sign-in is not configured for this environment.</p> : null}
+        </div>
+
+        <div className="flex items-center justify-center gap-2 pt-2 text-center text-xs leading-5 text-[#64748B]">
+          <LockKeyhole className="size-3.5 shrink-0" aria-hidden="true" />
+          <span>Access is limited to authorized Mentra administrators and HR staff.</span>
+        </div>
+      </CardContent>
     </Card>
   );
 }

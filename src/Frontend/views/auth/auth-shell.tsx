@@ -9,11 +9,13 @@ import { MentraLogo } from "@/components/brand/MentraLogo";
 
 type AuthShellProps = {
   children: ReactNode;
+  variant?: "default" | "admin";
 };
 
-export function AuthShell({ children }: AuthShellProps) {
+export function AuthShell({ children, variant = "default" }: AuthShellProps) {
   const pathname = usePathname();
   const isSignupPage = pathname === "/auth/signup";
+  const isAdmin = variant === "admin";
 
   return (
     <main className="relative min-h-dvh overflow-hidden bg-[#F6F8FC] text-[#172033]">
@@ -42,21 +44,31 @@ export function AuthShell({ children }: AuthShellProps) {
           </Link>
 
           <div className="hidden items-center gap-2 text-sm text-slate-600 sm:flex">
-            <span>{isSignupPage ? "Already have an account?" : "New to Mentra?"}</span>
-
-            <Link
-              href={isSignupPage ? "/auth/signin" : "/auth/signup"}
-              className="rounded-md font-semibold text-[#4F46E5] underline-offset-4 transition-colors hover:text-[#3730A3] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
-            >
-              {isSignupPage ? "Sign in" : "Create an account"}
-            </Link>
+            {isAdmin ? (
+              <Link
+                href="/"
+                className="rounded-md font-medium text-[#4F46E5] underline-offset-4 transition-colors hover:text-[#3730A3] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
+              >
+                ← Back to Mentra
+              </Link>
+            ) : (
+              <>
+                <span>{isSignupPage ? "Already have an account?" : "New to Mentra?"}</span>
+                <Link
+                  href={isSignupPage ? "/auth/signin" : "/auth/signup"}
+                  className="rounded-md font-semibold text-[#4F46E5] underline-offset-4 transition-colors hover:text-[#3730A3] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
+                >
+                  {isSignupPage ? "Sign in" : "Create an account"}
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
         <div className="mx-auto flex w-full max-w-6xl items-start py-8 sm:py-12 lg:py-16">
           <div className="grid w-full overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/70 shadow-[0_28px_80px_-46px_rgba(15,23,42,0.38)] backdrop-blur-2xl lg:grid-cols-[0.9fr_1.1fr]">
 
-            <div className="relative hidden overflow-hidden border-r border-slate-200/80 bg-gradient-to-br from-[#E0E7FF]/95 via-[#F8FAFF]/75 to-[#E0F2FE]/90 p-10 lg:flex lg:flex-col lg:justify-between xl:p-14">
+            <div             className={`relative hidden overflow-hidden border-r border-slate-200/80 bg-gradient-to-br from-[#E0E7FF]/95 via-[#F8FAFF]/75 to-[#E0F2FE]/90 p-10 lg:flex lg:flex-col xl:p-14 ${isAdmin ? "lg:justify-start" : "lg:justify-between"}`}>
               <div
                 className="pointer-events-none absolute -bottom-24 -left-20 h-80 w-80 rounded-full bg-[#4F46E5]/10 blur-[100px]"
                 aria-hidden="true"
@@ -77,24 +89,33 @@ export function AuthShell({ children }: AuthShellProps) {
                 </div>
 
                 <p className="mt-10 max-w-md text-sm font-semibold uppercase tracking-[0.2em] text-[#4F46E5]">
-                  Your senior friend · your guide
+                  {isAdmin ? "Mentra admin" : "Your senior friend · your guide"}
                 </p>
 
                 <h2 className="mt-5 max-w-lg text-[2.65rem] font-bold leading-[1.05] tracking-[-0.045em] text-[#172033] xl:text-[2.85rem]">
-                  Guidance starts with the right person.
+                  {isAdmin ? "Run Mentra with clarity." : "Guidance starts with the right person."}
                 </h2>
 
                 <p className="mt-6 max-w-md text-base leading-7 text-slate-600">
-                  Talk to someone who has already walked the road you are
-                  trying to navigate.
+                  {isAdmin
+                    ? "Review, verify, and support the mentors and students on the platform."
+                    : "Talk to someone who has already walked the road you are trying to navigate."}
                 </p>
               </div>
 
-              <div className="relative mt-6 space-y-4">
+              <div className={`relative space-y-4 ${isAdmin ? "mt-12" : "mt-6"}`}>
                 {[
-                  "Real student experience",
-                  "Practical, mentor-led guidance",
-                  "Clarity before a big decision",
+                  ...(isAdmin
+                    ? [
+                        "Review mentor applications",
+                        "Manage verification and payouts",
+                        "Monitor platform activity",
+                      ]
+                    : [
+                        "Real student experience",
+                        "Practical, mentor-led guidance",
+                        "Clarity before a big decision",
+                      ]),
                 ].map((item) => (
                   <div
                     key={item}
@@ -108,25 +129,27 @@ export function AuthShell({ children }: AuthShellProps) {
                   </div>
                 ))}
 
-                <div className="flex items-center gap-3 pt-5 text-xs font-medium text-slate-600">
-                  <div className="flex -space-x-2" aria-hidden="true">
-                    {["A", "R", "S"].map((initial, index) => (
-                      <span
-                        key={initial}
-                        className={`flex size-8 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${
-                          index === 0
-                            ? "bg-[#4F46E5]"
-                            : index === 1
-                              ? "bg-[#0EA5E9]"
-                              : "bg-[#F97316]"
-                        }`}
-                      >
-                        {initial}
-                      </span>
-                    ))}
+                {!isAdmin ? (
+                  <div className="flex items-center gap-3 pt-5 text-xs font-medium text-slate-600">
+                    <div className="flex -space-x-2" aria-hidden="true">
+                      {["A", "R", "S"].map((initial, index) => (
+                        <span
+                          key={initial}
+                          className={`flex size-8 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${
+                            index === 0
+                              ? "bg-[#4F46E5]"
+                              : index === 1
+                                ? "bg-[#0EA5E9]"
+                                : "bg-[#F97316]"
+                          }`}
+                        >
+                          {initial}
+                        </span>
+                      ))}
+                    </div>
+                    Trusted by 500+ students
                   </div>
-                  Trusted by 500+ students
-                </div>
+                ) : null}
               </div>
             </div>
 
@@ -146,9 +169,11 @@ export function AuthShell({ children }: AuthShellProps) {
           </div>
         </div>
 
-        <p className="mx-auto max-w-xl text-center text-xs leading-5 text-slate-500">
-          Your senior friend · your guide
-        </p>
+        {!isAdmin ? (
+          <p className="mx-auto max-w-xl text-center text-xs leading-5 text-slate-500">
+            Your senior friend · your guide
+          </p>
+        ) : null}
       </div>
     </main>
   );

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function AdminSignInPage() {
   return (
-    <AuthShell>
+    <AuthShell variant="admin">
       <AdminSignInView
         emailEnabled={isEmailAuthEnabled}
         googleEnabled={isGoogleAuthEnabled}
