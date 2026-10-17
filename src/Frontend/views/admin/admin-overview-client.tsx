@@ -1,7 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, BarChart3, CheckCircle2, IndianRupee, TrendingUp, Video } from "lucide-react";
+import {
+  AlertTriangle,
+  BarChart3,
+  CalendarClock,
+  CheckCircle2,
+  Clock,
+  IndianRupee,
+  PlayCircle,
+  RotateCcw,
+  TrendingUp,
+  Video,
+  XCircle,
+  type LucideIcon,
+} from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { Badge } from "@/Frontend/components/ui/badge";
@@ -10,12 +23,83 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/
 import type { getAdminOverviewData } from "@/Backend/server/admin";
 
 import { usePendingVerificationCount } from "./admin-shell";
-import { AdminStatusBadge } from "./admin-status-badge";
-import { formatCurrency, formatDateTime } from "./admin-utils";
+import { formatCurrency } from "./admin-utils";
 
 type Props = {
   data: Awaited<ReturnType<typeof getAdminOverviewData>>;
 };
+
+type OverviewSession = Props["data"]["recentSessions"][number];
+
+const pillTones = {
+  indigo: "bg-[#EEF2FF] text-[#4F46E5]",
+  amber: "bg-[#FEF3C7] text-[#92400E]",
+  green: "bg-[#DCFCE7] text-[#166534]",
+  red: "bg-[#FEE2E2] text-[#991B1B]",
+} as const;
+
+type Pill = { label: string; tone: keyof typeof pillTones; icon: LucideIcon };
+
+const sessionStatusPills: Record<OverviewSession["status"], Pill> = {
+  SCHEDULED: { label: "Scheduled", tone: "indigo", icon: CalendarClock },
+  ONGOING: { label: "In progress", tone: "amber", icon: PlayCircle },
+  COMPLETED: { label: "Completed", tone: "green", icon: CheckCircle2 },
+  CANCELLED: { label: "Cancelled", tone: "red", icon: XCircle },
+  NO_SHOW: { label: "No-show", tone: "red", icon: XCircle },
+};
+
+const paymentStatusPills: Record<NonNullable<OverviewSession["paymentStatus"]>, Pill> = {
+  CAPTURED: { label: "Paid", tone: "green", icon: CheckCircle2 },
+  PENDING: { label: "Pending", tone: "amber", icon: Clock },
+  FAILED: { label: "Failed", tone: "red", icon: XCircle },
+  REFUNDED: { label: "Refunded", tone: "red", icon: RotateCcw },
+  PARTIALLY_REFUNDED: { label: "Partially refunded", tone: "red", icon: RotateCcw },
+};
+
+const sessionTimeFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric",
+  weekday: "short",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+// e.g. "6 Mon, 4:00 PM"
+function formatSessionTime(value: Date | string) {
+  const parts = Object.fromEntries(
+    sessionTimeFormatter.formatToParts(new Date(value)).map((part) => [part.type, part.value]),
+  );
+
+  return `${parts.day} ${parts.weekday}, ${parts.hour}:${parts.minute} ${(parts.dayPeriod ?? "").toUpperCase()}`.trim();
+}
+
+function StatusPill({ label, tone, icon: Icon }: Pill) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${pillTones[tone]}`}>
+      <Icon className="size-3.5" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+function PersonCell({ name }: { name: string }) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "?";
+
+  return (
+    <span className="flex items-center gap-3">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-xs font-semibold text-[#4F46E5]" aria-hidden="true">
+        {initials}
+      </span>
+      <span className="truncate text-sm text-[#0F172A]">{name}</span>
+    </span>
+  );
+}
 
 export function AdminOverviewClient({ data }: Props) {
   const alertCount =
@@ -244,30 +328,34 @@ export function AdminOverviewClient({ data }: Props) {
               </p>
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
-                <tr className="text-[12px] uppercase tracking-[0.05em] text-[#64748B]">
-                  <th className="py-3 pr-4 font-medium">Student</th>
-                  <th className="px-4 py-3 font-medium">Mentor</th>
-                  <th className="px-4 py-3 font-medium">Time</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Payment</th>
+                <tr className="border-b border-[#E2E8F0] text-[12px] uppercase tracking-[0.05em] text-[#64748B]">
+                  <th className="px-3 py-3 font-medium">Student</th>
+                  <th className="px-3 py-3 font-medium">Mentor</th>
+                  <th className="px-3 py-3 font-medium">Time</th>
+                  <th className="px-3 py-3 font-medium">Status</th>
+                  <th className="px-3 py-3 font-medium">Payment</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {data.recentSessions.map((session) => (
-                  <tr key={session.id}>
-                    <td className="py-4 pr-4 font-medium text-slate-950">{session.studentName}</td>
-                    <td className="px-4 py-4 text-slate-700">{session.mentorName}</td>
-                    <td className="px-4 py-4 text-slate-700">{formatDateTime(session.scheduledAt)}</td>
-                    <td className="px-4 py-4">
-                      <AdminStatusBadge status={session.status} kind="session" />
+                  <tr key={session.id} className="h-16 border-b border-[#F1F5F9] transition-colors last:border-b-0 hover:bg-[#F8FAFC]">
+                    <td className="px-3">
+                      <PersonCell name={session.studentName} />
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-3">
+                      <PersonCell name={session.mentorName} />
+                    </td>
+                    <td className="whitespace-nowrap px-3 text-sm text-[#334155]">{formatSessionTime(session.scheduledAt)}</td>
+                    <td className="px-3">
+                      <StatusPill {...sessionStatusPills[session.status]} />
+                    </td>
+                    <td className="px-3">
                       {session.paymentStatus ? (
-                        <AdminStatusBadge status={session.paymentStatus} kind="payment" />
+                        <StatusPill {...paymentStatusPills[session.paymentStatus]} />
                       ) : (
-                        <span className="text-slate-500">No payment</span>
+                        <span className="text-sm text-[#64748B]">No payment</span>
                       )}
                     </td>
                   </tr>
