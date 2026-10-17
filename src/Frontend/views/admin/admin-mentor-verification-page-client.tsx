@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, ShieldAlert, XCircle } from "lucide-react";
+import { CheckCircle2, Search, ShieldAlert, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/Frontend/components/ui/badge";
 import { Button } from "@/Frontend/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
 import { Input } from "@/Frontend/components/ui/input";
+import { Textarea } from "@/Frontend/components/ui/textarea";
 
 import type { getAdminMentorVerificationQueueData } from "@/Backend/server/admin";
 
@@ -80,12 +81,16 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
             <Badge variant="outline" className="border-amber-300 bg-amber-100 text-amber-900">
               {queue.length} pending
             </Badge>
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search mentor or college"
-              className="w-[240px]"
-            />
+            <div className="relative">
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search mentor or college"
+                aria-label="Search mentor or college"
+                className="h-12 w-[240px] rounded-xl border-[#CBD5E1] bg-white pl-10 text-[#0F172A] placeholder:text-[#94A3B8] focus-visible:border-[#4F46E5] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/15 dark:bg-white"
+              />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -142,7 +147,7 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
                     <div className="mt-3 flex flex-wrap gap-2">
                       {mentor.profile.examsCleared.length > 0 ? (
                         mentor.profile.examsCleared.map((exam) => (
-                          <Badge key={exam} variant="outline" className="border-slate-300 bg-white text-slate-700">
+                          <Badge key={exam} variant="outline" className="h-auto max-w-full overflow-visible whitespace-normal break-all border-slate-300 bg-white py-1.5 leading-[1.3] text-slate-700">
                             {formatEnumLabel(exam)}
                           </Badge>
                         ))
@@ -157,7 +162,7 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
                     <div className="mt-3 flex flex-wrap gap-2">
                       {mentor.profile.specialisations.length > 0 ? (
                         mentor.profile.specialisations.map((topic) => (
-                          <Badge key={topic} variant="outline" className="border-slate-300 bg-white text-slate-700">
+                          <Badge key={topic} variant="outline" className="h-auto max-w-full overflow-visible whitespace-normal break-all border-slate-300 bg-white py-1.5 leading-[1.3] text-slate-700">
                             {formatEnumLabel(topic)}
                           </Badge>
                         ))
@@ -169,9 +174,12 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
                 </div>
 
                 <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Review notes</p>
-                  <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_auto_auto]">
-                    <Input
+                  <label className="text-xs font-semibold text-slate-500" htmlFor={`rejection-reason-${mentor.id}`}>
+                    Reason (required if rejecting)
+                  </label>
+                  <Textarea
+                    id={`rejection-reason-${mentor.id}`}
+                    rows={3}
                       value={rejectionReasons[mentor.id] ?? ""}
                       onChange={(event) =>
                         setRejectionReasons((current) => ({
@@ -180,20 +188,23 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
                         }))
                       }
                       placeholder="Reason required if rejecting this application"
-                    />
+                      className="mt-3 min-h-[84px] rounded-xl border-[#CBD5E1] bg-white text-[#0F172A] placeholder:text-[#94A3B8] focus-visible:border-[#4F46E5] focus-visible:ring-3 focus-visible:ring-[#4F46E5]/15 dark:bg-white"
+                  />
+                  <div className="mt-3 flex justify-end gap-3">
                     <Button
                       disabled={submittingId === mentor.id}
                       onClick={() => submitDecision(mentor.id, "approve")}
+                      className="h-11 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA]"
                     >
                       <CheckCircle2 className="size-4" />
                       Approve
                     </Button>
                     <Button
-                      variant="destructive"
                       disabled={submittingId === mentor.id}
                       onClick={() => submitDecision(mentor.id, "reject")}
+                      className="group h-11 rounded-xl border border-[#FCA5A5] bg-white text-[#DC2626] hover:bg-[#DC2626] hover:text-white"
                     >
-                      <XCircle className="size-4" />
+                      <XCircle className="size-4 text-[#DC2626] group-hover:text-white" />
                       Reject
                     </Button>
                   </div>
@@ -221,7 +232,18 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-white p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">LinkedIn</p>
-                      <p className="mt-2 text-sm text-slate-700">{mentor.profile.linkedinUrl || "Not provided"}</p>
+                      {mentor.profile.linkedinUrl ? (
+                        <a
+                          href={mentor.profile.linkedinUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 block max-w-full break-all text-sm text-[#4F46E5] underline-offset-2 hover:underline"
+                        >
+                          {mentor.profile.linkedinUrl}
+                        </a>
+                      ) : (
+                        <p className="mt-2 text-sm text-slate-700">Not provided</p>
+                      )}
                     </div>
                   </div>
                 </div>
