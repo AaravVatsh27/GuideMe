@@ -84,7 +84,7 @@ function ApplicationCard({ applicant, onOpen }: { applicant: Applicant; onOpen: 
       type="button"
       onClick={onOpen}
       aria-label={`Open application from ${applicant.name}`}
-      className="absolute inset-y-0 left-0 z-10 flex w-[calc(100%-36px)] flex-col rounded-[20px] bg-white p-4 text-left shadow-[0_12px_32px_-12px_rgba(15,23,42,0.35)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 sm:w-[300px]"
+      className="relative z-10 flex w-[calc(100%-36px)] flex-col rounded-[20px] bg-white p-4 text-left shadow-[0_12px_32px_-12px_rgba(15,23,42,0.35)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 sm:w-[300px]"
     >
       <div className="flex min-h-6 gap-1.5 overflow-hidden">
         {applicant.profile.specialisations.slice(0, 2).map((topic, index) => (
@@ -102,7 +102,7 @@ function ApplicationCard({ applicant, onOpen }: { applicant: Applicant; onOpen: 
       <p className="mt-0.5 text-xs text-[#64748B]">
         {applicant.submittedAt ? `Submitted ${formatDateOnly(applicant.submittedAt)}` : "Submission date not available"}
       </p>
-      <div className="mt-auto flex items-center gap-2 pt-3">
+      <div className="mt-3 flex items-center gap-2">
         <ApplicantAvatar applicant={applicant} className="size-7 text-[10px]" />
         {meta ? <span className="min-w-0 truncate text-xs text-[#64748B]">{meta}</span> : null}
         <span className="ml-auto flex shrink-0 gap-1">
@@ -312,7 +312,7 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
 
             {frontApplicant ? (
               <div className="relative mt-5 [--peek:12px] sm:pr-14 sm:[--peek:20px]">
-                <div className="relative h-[200px] w-full sm:w-[372px]">
+                <div className="relative w-full sm:w-[372px]">
                   {stackLayers
                     .filter((layer) => layer.offset < filteredQueue.length)
                     .map((layer) => (
