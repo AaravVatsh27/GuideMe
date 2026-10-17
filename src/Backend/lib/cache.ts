@@ -7,7 +7,6 @@ export const cacheTtl = {
   matchingResults: 60 * 60 * 24,
   mentorAvailability: 15 * 60,
   sessionDetails: 5 * 60,
-  adminOverviewStats: 5 * 60,
 } as const;
 
 export const cacheKeys = {
@@ -19,7 +18,6 @@ export const cacheKeys = {
   availability: (mentorId: string, date: string) => `availability:${mentorId}:${date}`,
   availabilityPattern: (mentorId: string) => `availability:${mentorId}:*`,
   session: (sessionId: string) => `session:${sessionId}`,
-  adminStats: "admin:stats",
 } as const;
 
 /**
