@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, BarChart3, CheckCircle2, IndianRupee, TrendingUp, UserCheck, Users, Video } from "lucide-react";
+import { AlertTriangle, BarChart3, CheckCircle2, IndianRupee, TrendingUp, Video } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { Badge } from "@/Frontend/components/ui/badge";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/
 
 import type { getAdminOverviewData } from "@/Backend/server/admin";
 
+import { usePendingVerificationCount } from "./admin-shell";
 import { AdminStatusBadge } from "./admin-status-badge";
 import { formatCurrency, formatDateTime } from "./admin-utils";
 
@@ -20,18 +21,47 @@ export function AdminOverviewClient({ data }: Props) {
   const alertCount =
     data.alerts.failedPayments.length + data.alerts.mentorNoShows.length + data.alerts.flaggedReviews.length;
   const totalRevenueLast30Days = data.revenueLast30Days.reduce((sum, entry) => sum + entry.amount, 0);
+  const pendingVerificationCount = usePendingVerificationCount();
+  const headerStats = [
+    { label: "Pending reviews", value: pendingVerificationCount },
+    { label: "Active mentors", value: data.kpis.activeMentors },
+    { label: "Total users", value: data.kpis.totalUsersToday },
+  ];
 
   return (
     <div className="space-y-5">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="flex flex-col gap-8 rounded-[24px] border border-[#EEF2FF] bg-white p-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-[36px] font-bold leading-tight tracking-tight text-[#0F172A]">Platform overview</h1>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <p className="text-sm text-[#64748B]">
+              {pendingVerificationCount > 0
+                ? `${pendingVerificationCount.toLocaleString("en-IN")} mentor ${pendingVerificationCount === 1 ? "application" : "applications"} waiting for review`
+                : "No applications waiting. You're all caught up."}
+            </p>
+            {pendingVerificationCount > 0 ? (
+              <Link
+                href="/admin/mentors/verification"
+                className="inline-flex h-9 items-center rounded-full bg-[#4F46E5] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 focus-visible:ring-offset-2"
+              >
+                Review applications
+              </Link>
+            ) : null}
+          </div>
+        </div>
+
+        <dl className="flex shrink-0 divide-x divide-[#E2E8F0]">
+          {headerStats.map((stat) => (
+            <div key={stat.label} className="flex flex-col px-4 first:pl-0 last:pr-0 sm:px-8">
+              <dt className="mt-1 text-sm text-[#64748B]">{stat.label}</dt>
+              <dd className="order-first text-[40px] font-bold leading-none tracking-tight text-[#0F172A]">{stat.value.toLocaleString("en-IN")}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2">
         {[
-          {
-            label: "Total users",
-            value: data.kpis.totalUsersToday.toLocaleString("en-IN"),
-            caption: "Students and mentors",
-            icon: Users,
-            tone: "bg-sky-50 text-sky-700",
-          },
           {
             label: "Sessions today",
             value: data.kpis.sessionsToday.toLocaleString("en-IN"),
@@ -45,13 +75,6 @@ export function AdminOverviewClient({ data }: Props) {
             caption: "Collected today",
             icon: IndianRupee,
             tone: "bg-amber-50 text-amber-700",
-          },
-          {
-            label: "Active mentors",
-            value: data.kpis.activeMentors.toLocaleString("en-IN"),
-            caption: "Approved and live",
-            icon: UserCheck,
-            tone: "bg-violet-50 text-violet-700",
           },
         ].map((item) => (
           <Card key={item.label} className="rounded-[1.5rem] border-slate-200 bg-white">

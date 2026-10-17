@@ -3,7 +3,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 import {
   Bell,
   ChevronDown,
@@ -52,6 +52,13 @@ const mainSurfaceStyles = [
   "[&_[data-slot=button][class*='7C3AED']]:rounded-full [&_[data-slot=button][class*='7C3AED']]:bg-[#4F46E5] [&_[data-slot=button][class*='7C3AED']]:text-white [&_[data-slot=button][class*='7C3AED']]:shadow-none [&_[data-slot=button][class*='7C3AED']:hover]:bg-[#4338CA]",
   "[&_[data-slot=button][class*='light-border']]:rounded-full [&_[data-slot=button][class*='light-border']]:border-[#E2E8F0] [&_[data-slot=button][class*='light-border']]:bg-white [&_[data-slot=button][class*='light-border']]:text-[#334155] [&_[data-slot=button][class*='light-border']:hover]:bg-[#F5F3FF]",
 ].join(" ");
+
+// Lets admin pages reuse the pending count the layout already loads, without a second query.
+const PendingVerificationCountContext = createContext(0);
+
+export function usePendingVerificationCount() {
+  return useContext(PendingVerificationCountContext);
+}
 
 type Props = {
   adminName: string;
@@ -273,7 +280,9 @@ export function AdminShell({ adminName, adminEmail, pendingVerificationCount, ch
           ) : null}
 
           <main className={cn("min-w-0", mainSurfaceStyles)}>
-            {children}
+            <PendingVerificationCountContext.Provider value={pendingVerificationCount}>
+              {children}
+            </PendingVerificationCountContext.Provider>
           </main>
         </div>
       </div>
