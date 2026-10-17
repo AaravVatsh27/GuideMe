@@ -5,7 +5,7 @@ import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/
 import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
 import { generalLimiter } from "@/Backend/lib/ratelimit";
 import { db } from "@/Backend/server/db";
-import { calculateFortyFiveMinutePrice } from "@/Backend/server/mentor-onboarding";
+import { calculateFortyFiveMinutePrice, retireMentorAvailability } from "@/Backend/server/mentor-onboarding";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
 import { mentorProfileUpdateSchema } from "@/Backend/validations/mentor";
 
@@ -113,7 +113,7 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
 
     // Replace availability slots if provided
     if (availabilitySlots !== undefined) {
-      await tx.availability.deleteMany({ where: { mentorId } });
+      await retireMentorAvailability(tx, { mentorId });
 
       if (availabilitySlots.length > 0) {
         await tx.availability.createMany({

@@ -7,7 +7,7 @@ import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { DEFAULT_TIMEZONE } from "@/Backend/server/constants";
 import { db } from "@/Backend/server/db";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
-import { calculateFortyFiveMinutePrice } from "@/Backend/server/mentor-onboarding";
+import { calculateFortyFiveMinutePrice, retireMentorAvailability } from "@/Backend/server/mentor-onboarding";
 import {
   mentorAvailabilityStepSchema,
   mentorCourseStepSchema,
@@ -739,11 +739,9 @@ export const PATCH = withApiErrorHandling(
         });
 
         if (availabilityStepData) {
-          await tx.availability.deleteMany({
-            where: {
-              mentorId: session.user.id,
-              isRecurring: true,
-            },
+          await retireMentorAvailability(tx, {
+            mentorId: session.user.id,
+            isRecurring: true,
           });
 
           if (

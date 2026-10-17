@@ -1,4 +1,25 @@
+import type { Prisma } from "@prisma/client";
+
 import { DEFAULT_TIMEZONE, PLATFORM_CUT } from "@/Backend/server/constants";
+
+/**
+ * Retires a mentor's current availability before new slots are written.
+ * Slots that existing bookings point at are deactivated rather than deleted, because
+ * deleting them would cascade-delete those bookings; unused slots are removed.
+ */
+export async function retireMentorAvailability(
+  tx: Prisma.TransactionClient,
+  where: Prisma.AvailabilityWhereInput & { mentorId: string },
+) {
+  await tx.availability.updateMany({
+    where,
+    data: { isActive: false },
+  });
+
+  await tx.availability.deleteMany({
+    where: { ...where, bookings: { none: {} } },
+  });
+}
 
 export const MENTOR_TIER_VALUES = [
   "RISING",
