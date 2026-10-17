@@ -1,3 +1,4 @@
+import { PaymentStatus, SessionStatus, SessionType } from "@prisma/client";
 import { addMinutes } from "date-fns";
 import { NextResponse } from "next/server";
 
@@ -8,7 +9,10 @@ import {
   createDailyMeetingToken,
   getDailyRoomNameFromSession,
 } from "@/Backend/server/daily";
-import { SESSION_JOIN_EARLY_WINDOW_MINUTES } from "@/Backend/server/constants";
+import {
+  SESSION_JOIN_EARLY_WINDOW_MINUTES,
+  SESSION_ROOM_GRACE_MINUTES,
+} from "@/Backend/server/constants";
 
 export const GET = withApiErrorHandling(async (
   _request: Request,
@@ -30,12 +34,18 @@ export const GET = withApiErrorHandling(async (
     select: {
       id: true,
       status: true,
+      type: true,
       scheduledAt: true,
       durationMinutes: true,
       mentorId: true,
       studentId: true,
       meetingLink: true,
       meetingRoomId: true,
+      payment: {
+        select: {
+          status: true,
+        },
+      },
       mentor: {
         select: {
           name: true,
@@ -57,12 +67,34 @@ export const GET = withApiErrorHandling(async (
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  if (record.status !== SessionStatus.SCHEDULED && record.status !== SessionStatus.ONGOING) {
+    return NextResponse.json(
+      { error: `This session is ${record.status.toLowerCase()}` },
+      { status: 409 },
+    );
+  }
+
+  if (record.type === SessionType.PAID && record.payment?.status !== PaymentStatus.CAPTURED) {
+    return NextResponse.json(
+      { error: "Payment must be completed before joining this session" },
+      { status: 402 },
+    );
+  }
+
   if (!record.meetingLink) {
     return NextResponse.json({ error: "Meeting room is not ready yet" }, { status: 409 });
   }
 
   const roomOpensAt = addMinutes(record.scheduledAt, -SESSION_JOIN_EARLY_WINDOW_MINUTES);
+  const roomClosesAt = addMinutes(
+    record.scheduledAt,
+    record.durationMinutes + SESSION_ROOM_GRACE_MINUTES,
+  );
   const now = new Date();
+
+  if (now > roomClosesAt) {
+    return NextResponse.json({ error: "This session's room has closed" }, { status: 409 });
+  }
 
   if (now < roomOpensAt) {
     return NextResponse.json(
@@ -84,7 +116,7 @@ export const GET = withApiErrorHandling(async (
     userName: record.studentId === session.user.id ? record.student.name : record.mentor.name,
     isOwner: record.mentorId === session.user.id,
     notBefore: roomOpensAt,
-    expiresAt: addMinutes(record.scheduledAt, record.durationMinutes + 60),
+    expiresAt: roomClosesAt,
   });
 
   const joinUrl = new URL(record.meetingLink);
