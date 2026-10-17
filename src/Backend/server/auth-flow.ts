@@ -24,6 +24,10 @@ const AUTH_ERROR_COPY: Record<string, { title: string; description: string }> = 
     title: "That magic link is no longer valid",
     description: "Magic links expire after a while and can only be used once. Request a fresh one.",
   },
+  RateLimited: {
+    title: "Too many sign-in attempts",
+    description: "Please wait a few minutes before trying to sign in again.",
+  },
   Configuration: {
     title: "Authentication is not configured correctly",
     description: "Something is off in the auth setup. Please try again shortly.",

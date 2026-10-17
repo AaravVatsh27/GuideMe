@@ -99,6 +99,16 @@ export const authLimiter = makeLimiter(5, "15 m", "auth");
 export const adminLoginLimiter = makeLimiter(5, "15 m", "admin-login");
 
 /**
+ * 10 sign-in requests (magic link or OAuth start) per 15 minutes per IP
+ */
+export const signInIpLimiter = makeLimiter(10, "15 m", "signin-ip");
+
+/**
+ * 5 magic-link emails per hour per email address
+ */
+export const signInEmailLimiter = makeLimiter(5, "1 h", "signin-email");
+
+/**
  * 30 requests per minute per user — mentor search (/api/mentors GET)
  */
 export const searchLimiter = makeLimiter(30, "1 m", "search");
