@@ -216,12 +216,18 @@ async function handleRefundCreated(payload: any) {
   const payment = await db.payment.findFirst({ where: { razorpayPaymentId: paymentId } });
   if (!payment) return;
 
+  // A completed full refund must never be downgraded by a late or replayed event.
+  if (payment.refundStatus === PaymentStatus.REFUNDED) return;
+
+  const refundAmount = Math.round(amountPaise / 100);
+  const isFullRefund = refundAmount >= payment.amount;
+
   await db.payment.update({
     where: { id: payment.id },
     data: {
       refundId,
-      refundAmount: Math.round(amountPaise / 100),
-      refundStatus: PaymentStatus.PARTIALLY_REFUNDED,
+      refundAmount,
+      refundStatus: isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED,
     },
   });
 
@@ -250,9 +256,18 @@ async function handleRefundProcessed(payload: any, requestId: string) {
   });
   if (!payment) return;
 
-  const isFullRefund = Math.round(amountPaise / 100) >= payment.amount;
-
   const refundAmount = Math.round(amountPaise / 100);
+  const isFullRefund = refundAmount >= payment.amount;
+  const nextRefundStatus = isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED;
+
+  // Already recorded (by our own refund flow or an earlier delivery of this event):
+  // skip so the student isn't notified twice and a full refund isn't downgraded.
+  if (
+    payment.refundStatus === PaymentStatus.REFUNDED ||
+    (payment.refundId === refundId && payment.refundedAt && payment.refundStatus === nextRefundStatus)
+  ) {
+    return;
+  }
 
   await db.$transaction(async (tx) => {
     await tx.payment.update({
@@ -261,8 +276,8 @@ async function handleRefundProcessed(payload: any, requestId: string) {
         refundId,
         refundAmount,
         refundedAt: new Date(),
-        refundStatus: isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED,
-        status: isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED,
+        refundStatus: nextRefundStatus,
+        status: nextRefundStatus,
       },
     });
 
