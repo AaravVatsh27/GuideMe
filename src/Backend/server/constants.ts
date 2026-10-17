@@ -7,3 +7,9 @@ export const SESSION_DURATIONS = [30, 45] as const;
 export const DEFAULT_CURRENCY = "INR";
 export const DEFAULT_TIMEZONE = "Asia/Kolkata";
 export const SESSION_JOIN_EARLY_WINDOW_MINUTES = 5;
+// A student can report a mentor no-show once this many minutes have passed since the start time...
+export const NO_SHOW_REPORT_GRACE_MINUTES = 10;
+// ...and until this many hours after the scheduled end.
+export const NO_SHOW_REPORT_WINDOW_HOURS = 24;
+// Meeting tokens stay valid this long after the scheduled end.
+export const SESSION_ROOM_GRACE_MINUTES = 60;

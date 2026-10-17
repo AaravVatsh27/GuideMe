@@ -24,5 +24,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     role?: AppRole;
     onboardingComplete?: boolean;
+    claimsRefreshedAt?: number;
   }
 }

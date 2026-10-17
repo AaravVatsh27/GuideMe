@@ -20,22 +20,9 @@ export const authEdgeConfig = {
     verifyRequest: "/auth/verify",
   },
   callbacks: {
-    async jwt({ token, trigger, session }) {
-      if (trigger === "update") {
-        const update = session as { user?: { role?: unknown; onboardingComplete?: unknown } };
-        const claims = update?.user;
-
-        if (claims?.role && isAuthRole(claims.role)) {
-          token.role = claims.role;
-        }
-
-        if (typeof claims?.onboardingComplete === "boolean") {
-          token.onboardingComplete = claims.onboardingComplete;
-        }
-
-        return token;
-      }
-
+    async jwt({ token }) {
+      // The edge runtime cannot reach the database, so it never changes claims.
+      // Session updates are handled by the Node config, which re-reads them from the database.
       return token;
     },
     async session({ session, token }) {

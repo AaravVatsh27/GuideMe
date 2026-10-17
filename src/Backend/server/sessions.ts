@@ -13,6 +13,8 @@ import { addMinutes } from "date-fns";
 import { generateClaudeSessionSummary } from "@/Backend/server/openai";
 import {
   DEFAULT_CURRENCY,
+  NO_SHOW_REPORT_GRACE_MINUTES,
+  NO_SHOW_REPORT_WINDOW_HOURS,
   PLATFORM_CUT,
   SESSION_JOIN_EARLY_WINDOW_MINUTES,
 } from "@/Backend/server/constants";
@@ -39,6 +41,8 @@ type CancelSessionInput = {
   actorId: string;
   reason: string;
   noShow?: boolean;
+  /** Admin actions skip the participant and no-show timing checks. */
+  asAdmin?: boolean;
 };
 
 type StartSessionInput = {
@@ -368,17 +372,22 @@ function ensureMentorControlsSession(
   }
 }
 
-function ensureSessionCanStartAt(
+/**
+ * Checks against the server clock and returns the start time to record.
+ * A client-supplied startedAt is only used when it falls between the earliest
+ * allowed start and now.
+ */
+function resolveSessionStartAt(
   session: { scheduledAt: Date },
   startedAt?: Date,
 ) {
-  const effectiveStart = startedAt ?? new Date();
+  const now = new Date();
   const earliestAllowedStart = addMinutes(
     session.scheduledAt,
     -SESSION_JOIN_EARLY_WINDOW_MINUTES,
   );
 
-  if (effectiveStart < earliestAllowedStart) {
+  if (now < earliestAllowedStart) {
     throw new SessionApiError(
       "Sessions can only be started shortly before the scheduled time",
       409,
@@ -387,16 +396,54 @@ function ensureSessionCanStartAt(
       },
     );
   }
+
+  return startedAt && startedAt >= earliestAllowedStart && startedAt <= now ? startedAt : now;
 }
 
-function ensureSessionCanCompleteAt(
+/**
+ * Checks against the server clock and returns the end time to record.
+ * A client-supplied endedAt is only used when it falls between the start time and now.
+ */
+function resolveSessionEndAt(
   session: { scheduledAt: Date },
   endedAt?: Date,
 ) {
-  const effectiveEnd = endedAt ?? new Date();
+  const now = new Date();
 
-  if (effectiveEnd < session.scheduledAt) {
+  if (now < session.scheduledAt) {
     throw new SessionApiError("Sessions cannot be completed before they begin", 409);
+  }
+
+  return endedAt && endedAt >= session.scheduledAt && endedAt <= now ? endedAt : now;
+}
+
+function ensureNoShowCanBeReported(session: {
+  status: SessionStatus;
+  startedAt: Date | null;
+  scheduledAt: Date;
+  durationMinutes: number;
+}) {
+  if (session.status !== SessionStatus.SCHEDULED || session.startedAt) {
+    throw new SessionApiError("A no-show cannot be reported for a session that has started", 409);
+  }
+
+  const now = new Date();
+  const opensAt = addMinutes(session.scheduledAt, NO_SHOW_REPORT_GRACE_MINUTES);
+  const closesAt = addMinutes(
+    session.scheduledAt,
+    session.durationMinutes + NO_SHOW_REPORT_WINDOW_HOURS * 60,
+  );
+
+  if (now < opensAt) {
+    throw new SessionApiError(
+      `A no-show can be reported ${NO_SHOW_REPORT_GRACE_MINUTES} minutes after the scheduled start`,
+      409,
+      { opensAt },
+    );
+  }
+
+  if (now > closesAt) {
+    throw new SessionApiError("The window for reporting a no-show has closed", 409);
   }
 }
 
@@ -886,10 +933,11 @@ export async function cancelSessionById({
   actorId,
   reason,
   noShow,
+  asAdmin = false,
 }: CancelSessionInput) {
   const session = await findSessionDetailsOrThrow(sessionId);
 
-  if (!isParticipant(session, actorId)) {
+  if (!asAdmin && !isParticipant(session, actorId)) {
     throw new SessionApiError("You do not have access to this session", 403);
   }
 
@@ -911,8 +959,12 @@ export async function cancelSessionById({
     };
   }
 
-  if (noShow && actorId !== session.studentId) {
-    throw new SessionApiError("Only the student can report a mentor no-show", 403);
+  if (noShow && !asAdmin) {
+    if (actorId !== session.studentId) {
+      throw new SessionApiError("Only the student can report a mentor no-show", 403);
+    }
+
+    ensureNoShowCanBeReported(session);
   }
 
   const outcome = calculateCancellationOutcome(session, actorId, noShow);
@@ -1011,8 +1063,11 @@ export async function cancelSessionById({
 
   invalidateSessionCaches(sessionId, session.mentorId);
   const updatedSession = await findSessionDetailsOrThrow(sessionId);
-  const canceller =
-    actorId === session.mentorId ? session.mentor : session.student;
+  const cancelledByName = asAdmin
+    ? "GuideMe support"
+    : actorId === session.mentorId
+      ? session.mentor.name
+      : session.student.name;
 
   await safelySend(
     sendSessionCancellationEmails(
@@ -1020,7 +1075,7 @@ export async function cancelSessionById({
       asEmailParticipant(session.student),
       asEmailParticipant(session.mentor),
       {
-        cancelledByName: canceller.name,
+        cancelledByName,
         reason,
         refundAmount: outcome.refundAmount,
         isNoShow: outcome.status === SessionStatus.NO_SHOW,
@@ -1064,7 +1119,7 @@ export async function markSessionStarted({
     return session;
   }
 
-  ensureSessionCanStartAt(session, startedAt);
+  const effectiveStartedAt = resolveSessionStartAt(session, startedAt);
 
   await db.session.update({
     where: {
@@ -1072,7 +1127,7 @@ export async function markSessionStarted({
     },
     data: {
       status: SessionStatus.ONGOING,
-      startedAt: startedAt ?? session.startedAt ?? new Date(),
+      startedAt: session.startedAt ?? effectiveStartedAt,
     },
   });
 
@@ -1105,7 +1160,7 @@ export async function completeSessionById({
     throw new SessionApiError("Paid sessions can only complete after payment is captured", 409);
   }
 
-  ensureSessionCanCompleteAt(session, endedAt);
+  const completedAt = resolveSessionEndAt(session, endedAt);
 
   const reviewLink = buildAbsoluteUrl(`/session/${sessionId}?review=1`);
   const summary =
@@ -1127,7 +1182,6 @@ export async function completeSessionById({
         .filter(Boolean)
         .slice(-12),
     }));
-  const completedAt = endedAt ?? new Date();
 
   await db.$transaction(async (tx) => {
     await tx.session.update({

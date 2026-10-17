@@ -20,12 +20,38 @@ type AuthClaims = {
   role?: string;
   onboardingComplete?: boolean;
 };
-type SessionUpdateClaims = {
-  user?: AuthClaims;
-};
+
+// How often a signed-in user's role and account status are re-read from the database.
+const CLAIMS_REFRESH_INTERVAL_SECONDS = 60;
 
 function isAuthRole(value: unknown): value is AuthRole {
   return typeof value === "string" && AUTH_ROLES.includes(value as AuthRole);
+}
+
+/**
+ * Loads the authoritative role and onboarding state for a user.
+ * Returns null when the account no longer exists, is deactivated or soft-deleted,
+ * which signs the user out.
+ */
+async function loadCurrentClaims(userId: string) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      role: true,
+      onboardingComplete: true,
+      isActive: true,
+      deletedAt: true,
+    },
+  });
+
+  if (!user || !user.isActive || user.deletedAt) {
+    return null;
+  }
+
+  return {
+    role: isAuthRole(user.role) ? user.role : ("STUDENT" as const),
+    onboardingComplete: user.onboardingComplete,
+  };
 }
 
 const providers: NonNullable<NextAuthConfig["providers"]> = [
@@ -123,31 +149,43 @@ export const authConfig = {
     verifyRequest: "/auth/verify",
   },
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      if (trigger === "update") {
-        const update = session as SessionUpdateClaims | undefined;
-        const claims = update?.user;
+    async jwt({ token, user, trigger }) {
+      const nowSeconds = Math.floor(Date.now() / 1000);
 
-        if (claims?.role && isAuthRole(claims.role)) {
-          token.role = claims.role;
-        }
+      if (user) {
+        const claims = user as AuthClaims;
 
-        if (typeof claims?.onboardingComplete === "boolean") {
-          token.onboardingComplete = claims.onboardingComplete;
-        }
+        token.sub = claims.id ?? token.sub;
+        token.role = isAuthRole(claims.role) ? claims.role : "STUDENT";
+        token.onboardingComplete = Boolean(claims.onboardingComplete);
+        token.claimsRefreshedAt = nowSeconds;
 
         return token;
       }
 
-      if (!user) {
+      if (!token.sub) {
         return token;
       }
 
-      const claims = user as AuthClaims;
+      // Session updates can be triggered by the client, so claims sent with the update
+      // are never trusted: role and onboarding state always come from the database.
+      const isStale =
+        typeof token.claimsRefreshedAt !== "number" ||
+        nowSeconds - token.claimsRefreshedAt >= CLAIMS_REFRESH_INTERVAL_SECONDS;
 
-      token.sub = claims.id ?? token.sub;
-      token.role = isAuthRole(claims.role) ? claims.role : "STUDENT";
-      token.onboardingComplete = Boolean(claims.onboardingComplete);
+      if (trigger !== "update" && !isStale) {
+        return token;
+      }
+
+      const current = await loadCurrentClaims(token.sub);
+
+      if (!current) {
+        return null;
+      }
+
+      token.role = current.role;
+      token.onboardingComplete = current.onboardingComplete;
+      token.claimsRefreshedAt = nowSeconds;
 
       return token;
     },
