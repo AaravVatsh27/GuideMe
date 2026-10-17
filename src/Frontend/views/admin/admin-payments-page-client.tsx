@@ -81,6 +81,11 @@ export function AdminPaymentsPageClient({ data }: Props) {
       return;
     }
 
+    if (selectedPayoutIds.length === 0) {
+      toast.error("Select the payouts covered by this transaction.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -88,7 +93,7 @@ export function AdminPaymentsPageClient({ data }: Props) {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          payoutIds: selectedPayoutIds.length > 0 ? selectedPayoutIds : undefined,
+          payoutIds: selectedPayoutIds,
           transactionId: transactionId.trim(),
           upiId: upiId.trim() || undefined,
         }),

@@ -1,4 +1,4 @@
-import { PaymentStatus, SessionStatus } from "@prisma/client";
+import { PaymentStatus, PayoutStatus, SessionStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -64,7 +64,14 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
     where: { sessionId },
     include: {
       session: {
-        select: { id: true, status: true, price: true, studentId: true, mentorId: true },
+        select: {
+          id: true,
+          status: true,
+          price: true,
+          studentId: true,
+          mentorId: true,
+          payout: { select: { id: true, status: true, amount: true } },
+        },
       },
       user: { select: { id: true, name: true, email: true } },
     },
@@ -92,6 +99,9 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
     return NextResponse.json({ error: "Payment is already refunded" }, { status: 409 });
   }
 
+  const existingPayout = payment.session.payout;
+  const payoutAlreadyPaid = existingPayout?.status === PayoutStatus.PAID;
+
   const refund = await createRefund(payment.razorpayPaymentId, payment.amount);
   const now = new Date();
 
@@ -114,7 +124,14 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
       });
     }
 
-    await tx.payout.deleteMany({ where: { sessionId } });
+    // Only cancel payouts that have not been sent. A payout already PAID to the mentor
+    // stays on record so the books still show the money that left the platform.
+    await tx.payout.deleteMany({
+      where: {
+        sessionId,
+        status: { in: [PayoutStatus.PENDING, PayoutStatus.PROCESSING] },
+      },
+    });
 
     await tx.auditLog.create({
       data: {
@@ -127,6 +144,9 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
           refundId: refund.id,
           amount: payment.amount,
           reason,
+          payoutAlreadyPaid: payoutAlreadyPaid
+            ? { payoutId: existingPayout?.id, amount: existingPayout?.amount }
+            : null,
         },
       },
     });
@@ -154,5 +174,6 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
     success: true,
     refundId: refund.id,
     amount: payment.amount,
+    payoutAlreadyPaid,
   });
 }, "/api/payment/refund");
