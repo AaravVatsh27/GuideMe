@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Download, SlidersHorizontal } from "lucide-react";
 
-import { Button } from "@/Frontend/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -12,6 +11,7 @@ import {
 } from "@/Frontend/components/ui/dropdown-menu";
 import { cn } from "@/Backend/server/utils";
 
+import { adminCardClass, AdminCheckbox, adminToolbarButtonClass, type AdminEmptyStateConfig } from "./admin-ui";
 import { downloadCsv } from "./admin-utils";
 
 type SortDirection = "asc" | "desc";
@@ -41,6 +41,9 @@ type Props<T> = {
   onRowClick?: (row: T) => void;
   pageSize?: number;
   emptyState?: string;
+  /** Shown instead of `emptyState` when there are no rows and no filter or search is active. */
+  emptyStateWithoutFilters?: AdminEmptyStateConfig;
+  filtersActive?: boolean;
   fileName?: string;
   renderToolbar?: (context: ToolbarContext<T>) => React.ReactNode;
 };
@@ -64,6 +67,8 @@ export function AdminDataTable<T>({
   onRowClick,
   pageSize = 25,
   emptyState = "No records match the current filters.",
+  emptyStateWithoutFilters,
+  filtersActive = false,
   fileName = "admin-export.csv",
   renderToolbar,
 }: Props<T>) {
@@ -123,6 +128,7 @@ export function AdminDataTable<T>({
   );
 
   const visibleColumns = columns.filter((column) => visibility[column.id] !== false);
+  const blankState = !filtersActive && emptyStateWithoutFilters ? emptyStateWithoutFilters : null;
   const allPageRowsSelected = pagedRows.length > 0 && pagedRows.every((row) => selectedIds.has(getRowId(row)));
 
   function toggleSort(columnId: string) {
@@ -196,21 +202,21 @@ export function AdminDataTable<T>({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-[1.5rem] border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className={cn(adminCardClass, "flex flex-wrap items-center gap-3 p-4")}>
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
           {renderToolbar?.({ selectedRows, filteredRows: sortedRows, clearSelection })}
           {selectedRows.length > 0 ? (
-            <span className="text-sm text-slate-500">{selectedRows.length} selected</span>
+            <span className="shrink-0 text-sm text-[#64748B]">{selectedRows.length} selected</span>
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportRows}>
+        <div className="flex shrink-0 items-center gap-2">
+          <button type="button" onClick={exportRows} className={adminToolbarButtonClass}>
             <Download className="size-4" />
             Export CSV
-          </Button>
+          </button>
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
+            <DropdownMenuTrigger className={adminToolbarButtonClass}>
               <SlidersHorizontal className="size-4" />
               Columns
             </DropdownMenuTrigger>
@@ -234,14 +240,13 @@ export function AdminDataTable<T>({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-            <thead className="bg-slate-50">
-              <tr>
+      <div className={cn(adminCardClass, "overflow-hidden")}>
+        <div className="overflow-x-auto px-2">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-[#E2E8F0]">
                 <th className="w-12 px-4 py-3">
-                  <input
-                    type="checkbox"
+                  <AdminCheckbox
                     checked={allPageRowsSelected}
                     onChange={toggleAllPageRows}
                     aria-label="Select current page rows"
@@ -253,19 +258,30 @@ export function AdminDataTable<T>({
                   return (
                     <th
                       key={column.id}
-                      className={cn("px-4 py-3 font-medium text-slate-600", column.headerClassName)}
+                      aria-sort={isSorted ? (sortState?.direction === "asc" ? "ascending" : "descending") : undefined}
+                      className={cn(
+                        "whitespace-nowrap px-4 py-3 text-left text-[12px] font-medium uppercase tracking-[0.05em] text-[#64748B]",
+                        column.headerClassName,
+                      )}
                     >
                       {column.sortable ? (
                         <button
                           type="button"
-                          className="inline-flex items-center gap-2 text-left"
+                          className="group/sort inline-flex items-center gap-1.5 uppercase tracking-[0.05em] hover:text-[#0F172A] focus-visible:text-[#0F172A] focus-visible:outline-none"
                           onClick={() => toggleSort(column.id)}
                         >
                           <span>{column.header}</span>
                           {isSorted ? (
-                            sortState?.direction === "asc" ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                            sortState?.direction === "asc" ? (
+                              <ArrowUp className="size-3.5 text-[#4F46E5]" />
+                            ) : (
+                              <ArrowDown className="size-3.5 text-[#4F46E5]" />
+                            )
                           ) : (
-                            <ArrowUpDown className="size-3.5 text-slate-400" />
+                            <ArrowUpDown
+                              className="size-3.5 opacity-0 transition-opacity group-hover/sort:opacity-100 group-focus-visible/sort:opacity-100"
+                              aria-hidden="true"
+                            />
                           )}
                         </button>
                       ) : (
@@ -276,11 +292,19 @@ export function AdminDataTable<T>({
                 })}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {pagedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={visibleColumns.length + 1} className="px-4 py-8 text-center text-slate-500">
-                    {emptyState}
+                  <td colSpan={visibleColumns.length + 1} className="px-4 py-12 text-center">
+                    {blankState ? (
+                      <div className="flex flex-col items-center">
+                        <blankState.icon className="size-8 text-[#CBD5E1]" aria-hidden="true" />
+                        <p className="mt-3 text-base font-semibold text-[#0F172A]">{blankState.title}</p>
+                        <p className="mt-1 text-[13px] text-[#64748B]">{blankState.caption}</p>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-[#64748B]">{emptyState}</span>
+                    )}
                   </td>
                 </tr>
               ) : (
@@ -292,9 +316,9 @@ export function AdminDataTable<T>({
                     <tr
                       key={rowId}
                       className={cn(
-                        "transition hover:bg-slate-50",
+                        "h-16 border-b border-[#F1F5F9] transition-colors last:border-b-0 hover:bg-[#F8FAFC]",
                         onRowClick ? "cursor-pointer" : "",
-                        isSelected ? "bg-teal-50/50" : "",
+                        isSelected ? "bg-[#EEF2FF]/60" : "",
                       )}
                       onClick={(event) => {
                         if (!onRowClick) {
@@ -309,16 +333,15 @@ export function AdminDataTable<T>({
                         onRowClick(row);
                       }}
                     >
-                      <td className="px-4 py-4">
-                        <input
-                          type="checkbox"
+                      <td className="px-4 py-3">
+                        <AdminCheckbox
                           checked={isSelected}
                           onChange={() => toggleSelectedRow(rowId)}
                           aria-label={`Select row ${rowId}`}
                         />
                       </td>
                       {visibleColumns.map((column) => (
-                        <td key={column.id} className={cn("px-4 py-4 align-top text-slate-700", column.className)}>
+                        <td key={column.id} className={cn("px-4 py-3 align-middle text-[#334155]", column.className)}>
                           {column.cell ? column.cell(row) : String(column.accessor?.(row) ?? "")}
                         </td>
                       ))}
@@ -330,28 +353,33 @@ export function AdminDataTable<T>({
           </table>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-[#F1F5F9] px-6 py-4 text-sm text-[#64748B] sm:flex-row sm:items-center sm:justify-between">
           <p>
             {sortedRows.length === 0 ? 0 : (page - 1) * pageSize + 1}-{Math.min(page * pageSize, sortedRows.length)} of{" "}
             {sortedRows.length}
           </p>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+            <button
+              type="button"
+              className={cn(adminToolbarButtonClass, "h-9 px-3.5")}
+              disabled={page === 1}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+            >
               <ChevronLeft className="size-4" />
               Prev
-            </Button>
-            <span className="text-slate-600">
+            </button>
+            <span className="text-[#64748B]">
               Page {page} / {totalPages}
             </span>
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              type="button"
+              className={cn(adminToolbarButtonClass, "h-9 px-3.5")}
               disabled={page === totalPages}
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
             >
               Next
               <ChevronRight className="size-4" />
-            </Button>
+            </button>
           </div>
         </div>
       </div>

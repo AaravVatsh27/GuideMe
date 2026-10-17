@@ -1,15 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 
-import { Badge } from "@/Frontend/components/ui/badge";
-import { Card, CardContent } from "@/Frontend/components/ui/card";
 import { Input } from "@/Frontend/components/ui/input";
 
 import type { getAdminNotificationsData } from "@/Backend/server/admin";
 
 import { AdminDataTable, type AdminTableColumn } from "./admin-data-table";
+import { AdminPageHeader, AdminPill, adminSearchInputClass, adminSelectClass } from "./admin-ui";
 import { formatDateTime } from "./admin-utils";
 
 type Props = {
@@ -43,8 +42,8 @@ export function AdminNotificationsPageClient({ notifications }: Props) {
       sortable: true,
       cell: (row) => (
         <div>
-          <p className="font-medium text-slate-950">{row.title}</p>
-          <p className="text-xs text-slate-500">{row.body}</p>
+          <p className="font-medium text-[#0F172A]">{row.title}</p>
+          <p className="text-xs text-[#64748B]">{row.body}</p>
         </div>
       ),
     },
@@ -60,11 +59,7 @@ export function AdminNotificationsPageClient({ notifications }: Props) {
       header: "Type",
       accessor: (row) => row.type,
       sortable: true,
-      cell: (row) => (
-        <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-700">
-          {row.type}
-        </Badge>
-      ),
+      cell: (row) => <AdminPill tone="gray">{row.type}</AdminPill>,
     },
     {
       id: "isRead",
@@ -72,15 +67,7 @@ export function AdminNotificationsPageClient({ notifications }: Props) {
       accessor: (row) => (row.isRead ? 1 : 0),
       sortable: true,
       cell: (row) =>
-        row.isRead ? (
-          <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-            Read
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
-            Unread
-          </Badge>
-        ),
+        row.isRead ? <AdminPill tone="green">Read</AdminPill> : <AdminPill tone="amber">Unread</AdminPill>,
     },
     {
       id: "createdAt",
@@ -93,33 +80,36 @@ export function AdminNotificationsPageClient({ notifications }: Props) {
 
   return (
     <div className="space-y-5">
-      <Card className="rounded-[1.75rem] border-slate-200 bg-white">
-        <CardContent className="p-6 sm:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">Notification stream</p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Notifications</h2>
-        </CardContent>
-      </Card>
+      <AdminPageHeader
+        eyebrow="Notification stream"
+        title="Notifications"
+        description="Every notification sent to users, with read state."
+      />
 
       <AdminDataTable
         rows={filteredNotifications}
         columns={columns}
         getRowId={(row) => row.id}
         fileName="admin-notifications.csv"
+        filtersActive={search.trim().length > 0 || readState !== "all"}
+        emptyStateWithoutFilters={{ icon: Bell, title: "No notifications yet", caption: "Notifications sent to users will appear here." }}
         renderToolbar={() => (
-          <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
-            <div className="relative min-w-[240px] flex-1">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+            <div className="relative min-w-[220px] flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#94A3B8]" aria-hidden="true" />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search title, body, or recipient"
-                className="pl-9"
+                aria-label="Search title, body, or recipient"
+                className={adminSearchInputClass}
               />
             </div>
             <select
               value={readState}
               onChange={(event) => setReadState(event.target.value)}
-              className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950"
+              aria-label="Filter by read state"
+              className={adminSelectClass}
             >
               <option value="all">All</option>
               <option value="read">Read</option>

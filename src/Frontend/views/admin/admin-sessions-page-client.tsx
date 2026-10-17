@@ -2,11 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, Video } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/Frontend/components/ui/button";
-import { Card, CardContent } from "@/Frontend/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -19,9 +18,11 @@ import { Input } from "@/Frontend/components/ui/input";
 import { Textarea } from "@/Frontend/components/ui/textarea";
 
 import type { getAdminSessionsData } from "@/Backend/server/admin";
+import { cn } from "@/Backend/server/utils";
 
 import { AdminDataTable, type AdminTableColumn } from "./admin-data-table";
 import { AdminStatusBadge } from "./admin-status-badge";
+import { AdminPageHeader, adminSearchInputClass, adminSelectClass } from "./admin-ui";
 import { formatCurrency, formatDateTime, isDateInRange } from "./admin-utils";
 
 type Props = {
@@ -60,8 +61,8 @@ export function AdminSessionsPageClient({ sessions }: Props) {
       sortable: true,
       cell: (row) => (
         <div>
-          <p className="font-medium text-slate-950">{row.student.name}</p>
-          <p className="text-xs text-slate-500">{row.mentor.name}</p>
+          <p className="font-medium text-[#0F172A]">{row.student.name}</p>
+          <p className="text-xs text-[#64748B]">{row.mentor.name}</p>
         </div>
       ),
       csvValue: (row) => row.id,
@@ -93,7 +94,7 @@ export function AdminSessionsPageClient({ sessions }: Props) {
       accessor: (row) => row.payment?.status ?? "NONE",
       sortable: true,
       cell: (row) =>
-        row.payment ? <AdminStatusBadge status={row.payment.status} kind="payment" /> : <span className="text-slate-500">No payment</span>,
+        row.payment ? <AdminStatusBadge status={row.payment.status} kind="payment" /> : <span className="text-[#64748B]">No payment</span>,
     },
     {
       id: "amount",
@@ -155,37 +156,37 @@ export function AdminSessionsPageClient({ sessions }: Props) {
 
   return (
     <div className="space-y-5">
-      <Card className="rounded-[1.75rem] border-slate-200 bg-[linear-gradient(135deg,_#ffffff_0%,_#f8fafc_58%,_#eef6ff_100%)]">
-        <CardContent className="p-6 sm:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">Session operations</p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Sessions</h2>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
-            Inspect every session, filter by status and date range, then jump into detail to mark outcomes, issue refunds, or record mentor no-shows.
-          </p>
-        </CardContent>
-      </Card>
+      <AdminPageHeader
+        eyebrow="Session operations"
+        title="Sessions"
+        description="Every session, with outcomes, refunds and no-shows one click away."
+      />
 
       <AdminDataTable
         rows={filteredSessions}
         columns={columns}
         getRowId={(row) => row.id}
         fileName="admin-sessions.csv"
+        filtersActive={search.trim().length > 0 || status !== "all" || Boolean(startDate) || Boolean(endDate)}
+        emptyStateWithoutFilters={{ icon: Video, title: "No sessions yet", caption: "Sessions appear here once students book mentors." }}
         onRowClick={(row) => setSelectedSession(row)}
         renderToolbar={() => (
-          <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
-            <div className="relative min-w-[240px] flex-1">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+            <div className="relative min-w-[130px] flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#94A3B8]" aria-hidden="true" />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search student, mentor, or session ID"
-                className="pl-9"
+                aria-label="Search student, mentor, or session ID"
+                className={adminSearchInputClass}
               />
             </div>
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value)}
-              className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950"
+              aria-label="Filter by status"
+              className={cn(adminSelectClass, "w-[144px] shrink-0")}
             >
               <option value="all">All statuses</option>
               <option value="SCHEDULED">Scheduled</option>
@@ -194,8 +195,31 @@ export function AdminSessionsPageClient({ sessions }: Props) {
               <option value="CANCELLED">Cancelled</option>
               <option value="NO_SHOW">No show</option>
             </select>
-            <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
-            <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+            <div
+              role="group"
+              aria-label="Scheduled date range"
+              className="flex h-11 shrink-0 items-center rounded-[12px] border border-[#CBD5E1] bg-white pl-3 focus-within:border-[#4F46E5] focus-within:ring-2 focus-within:ring-[#4F46E5]/20"
+            >
+              <label className="flex items-center gap-1.5 text-xs font-medium text-[#64748B]">
+                From
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(event) => setStartDate(event.target.value)}
+                  className="h-9 w-[120px] rounded-lg border-0 bg-transparent px-1 text-[13px] text-[#0F172A] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </label>
+              <span className="mx-1 h-5 w-px bg-[#E2E8F0]" aria-hidden="true" />
+              <label className="flex items-center gap-1.5 pl-1.5 text-xs font-medium text-[#64748B]">
+                To
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(event) => setEndDate(event.target.value)}
+                  className="h-9 w-[120px] rounded-lg border-0 bg-transparent px-1 text-[13px] text-[#0F172A] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </label>
+            </div>
           </div>
         )}
       />

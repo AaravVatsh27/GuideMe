@@ -3,18 +3,18 @@
 import type { Route } from "next";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { GraduationCap, Search } from "lucide-react";
 import { toast } from "sonner";
 
-import { Badge } from "@/Frontend/components/ui/badge";
 import { Button } from "@/Frontend/components/ui/button";
-import { Card, CardContent } from "@/Frontend/components/ui/card";
 import { Input } from "@/Frontend/components/ui/input";
 
 import type { getAdminMentorsData } from "@/Backend/server/admin";
+import { cn } from "@/Backend/server/utils";
 
 import { AdminDataTable, type AdminTableColumn } from "./admin-data-table";
 import { AdminStatusBadge } from "./admin-status-badge";
+import { AdminPageHeader, AdminPersonCell, AdminPill, adminSearchInputClass, adminSelectClass } from "./admin-ui";
 import { formatDateOnly } from "./admin-utils";
 
 type Props = {
@@ -53,12 +53,7 @@ export function AdminMentorsPageClient({ mentors }: Props) {
       header: "Mentor",
       accessor: (row) => row.name,
       sortable: true,
-      cell: (row) => (
-        <div>
-          <p className="font-medium text-slate-950">{row.name}</p>
-          <p className="text-xs text-slate-500">{row.college}</p>
-        </div>
-      ),
+      cell: (row) => <AdminPersonCell name={row.name} secondary={row.college} image={row.image} />,
       csvValue: (row) => row.name,
     },
     {
@@ -67,9 +62,7 @@ export function AdminMentorsPageClient({ mentors }: Props) {
       accessor: (row) => row.tier,
       sortable: true,
       cell: (row) => (
-        <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-700">
-          {row.tier}
-        </Badge>
+        <AdminPill tone={row.tier === "VERIFIED" ? "green" : row.tier === "ELITE" ? "indigo" : "gray"}>{row.tier}</AdminPill>
       ),
     },
     {
@@ -131,39 +124,38 @@ export function AdminMentorsPageClient({ mentors }: Props) {
 
   return (
     <div className="space-y-5">
-      <Card className="rounded-[1.75rem] border-slate-200 bg-[linear-gradient(135deg,_#ffffff_0%,_#f8fafc_58%,_#eef6ff_100%)]">
-        <CardContent className="flex flex-col gap-4 p-6 sm:p-7">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">Mentor operations</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Mentors</h2>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
-              Review mentor quality, verify profiles in batches, suspend listings, and adjust marketplace tiering from one table.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <AdminPageHeader
+        eyebrow="Mentor operations"
+        title="Mentors"
+        description="Review mentor quality, verify or suspend profiles, and adjust tiers."
+        stats={[{ label: "Total mentors", value: mentors.length }]}
+      />
 
       <AdminDataTable
         rows={filteredMentors}
         columns={columns}
         getRowId={(row) => row.id}
         fileName="admin-mentors.csv"
+        filtersActive={search.trim().length > 0 || tier !== "all" || status !== "all"}
+        emptyStateWithoutFilters={{ icon: GraduationCap, title: "No mentors yet", caption: "Mentors appear here once they sign up." }}
         onRowClick={(row) => router.push(`/admin/mentors/${row.id}` as Route)}
         renderToolbar={({ selectedRows }) => (
-          <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
-            <div className="relative min-w-[240px] flex-1">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+            <div className="relative min-w-[220px] flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#94A3B8]" aria-hidden="true" />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search mentor, email, or college"
-                className="pl-9"
+                aria-label="Search mentor, email, or college"
+                className={adminSearchInputClass}
               />
             </div>
             <select
               value={tier}
               onChange={(event) => setTier(event.target.value)}
-              className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950"
+              aria-label="Filter by tier"
+              className={adminSelectClass}
             >
               <option value="all">All tiers</option>
               <option value="RISING">Rising</option>
@@ -173,7 +165,8 @@ export function AdminMentorsPageClient({ mentors }: Props) {
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value)}
-              className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950"
+              aria-label="Filter by status"
+              className={adminSelectClass}
             >
               <option value="all">All statuses</option>
               <option value="pending">Pending</option>
@@ -182,7 +175,7 @@ export function AdminMentorsPageClient({ mentors }: Props) {
             </select>
 
             {selectedRows.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Button size="sm" disabled={isSubmitting} onClick={() => runBulkAction("verify", selectedRows.map((row) => row.id))}>
                   Verify
                 </Button>
@@ -192,7 +185,8 @@ export function AdminMentorsPageClient({ mentors }: Props) {
                 <select
                   value={bulkTier}
                   onChange={(event) => setBulkTier(event.target.value)}
-                  className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-950"
+                  aria-label="New tier"
+                  className={cn(adminSelectClass, "h-9")}
                 >
                   <option value="RISING">Rising</option>
                   <option value="VERIFIED">Verified</option>
