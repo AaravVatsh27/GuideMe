@@ -30,6 +30,7 @@ export default async function AdminLayout({
   return (
     <AdminShell
       adminName={session.user.name ?? "Admin"}
+      adminEmail={session.user.email}
       pendingVerificationCount={pendingVerificationCount}
     >
       {children}
