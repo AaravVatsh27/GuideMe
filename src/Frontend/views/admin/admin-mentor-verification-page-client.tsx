@@ -87,11 +87,16 @@ function ApplicationCard({ applicant, onOpen }: { applicant: Applicant; onOpen: 
       className="absolute inset-y-0 left-0 z-10 flex w-[calc(100%-36px)] flex-col rounded-[20px] bg-white p-4 text-left shadow-[0_12px_32px_-12px_rgba(15,23,42,0.35)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 sm:w-[300px]"
     >
       <div className="flex min-h-6 gap-1.5 overflow-hidden">
-        {applicant.profile.specialisations.slice(0, 3).map((topic, index) => (
-          <span key={topic} className={cn("min-w-0 max-w-[120px] shrink truncate rounded-full px-2 py-0.5 text-[11px] font-medium", chipTones[index])}>
+        {applicant.profile.specialisations.slice(0, 2).map((topic, index) => (
+          <span key={topic} className={cn("max-w-[140px] shrink-0 truncate whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium", chipTones[index])}>
             {formatEnumLabel(topic)}
           </span>
         ))}
+        {applicant.profile.specialisations.length > 2 ? (
+          <span className={cn("shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium", chipTones[2])}>
+            +{applicant.profile.specialisations.length - 2}
+          </span>
+        ) : null}
       </div>
       <p className="mt-3 truncate text-base font-semibold text-[#0F172A]">{applicant.name}</p>
       <p className="mt-0.5 text-xs text-[#64748B]">
@@ -145,7 +150,6 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
   const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [carouselId, setCarouselId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [reasonErrorId, setReasonErrorId] = useState<string | null>(null);
 
   const filteredQueue = useMemo(
@@ -249,40 +253,7 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
     const index = filteredQueue.findIndex((mentor) => mentor.id === applicant.id);
     const remaining = filteredQueue.filter((mentor) => mentor.id !== applicant.id);
     setCarouselId(remaining[Math.min(Math.max(index, 0), remaining.length - 1)]?.id ?? null);
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      next.delete(applicant.id);
-      return next;
-    });
     setOpenId(null);
-  }
-
-  const allVisibleSelected = filteredQueue.length > 0 && filteredQueue.every((mentor) => selectedIds.has(mentor.id));
-
-  function toggleAll() {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      for (const mentor of filteredQueue) {
-        if (allVisibleSelected) {
-          next.delete(mentor.id);
-        } else {
-          next.add(mentor.id);
-        }
-      }
-      return next;
-    });
-  }
-
-  function toggleOne(id: string) {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
   }
 
   return (
@@ -301,8 +272,8 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search mentor or college"
-              aria-label="Search mentor or college"
+              placeholder="Filter applicants"
+              aria-label="Filter applicants"
               className="h-11 w-full rounded-full border border-[#E2E8F0] bg-[#F8FAFC] pl-4 pr-11 text-sm text-[#0F172A] placeholder:text-[#64748B] focus:border-[#4F46E5]/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20"
             />
             <Search className="pointer-events-none absolute right-4 top-1/2 size-[18px] -translate-y-1/2 text-[#64748B]" aria-hidden="true" />
@@ -316,7 +287,12 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#4F46E5_0%,#7C3AED_100%)] p-6 text-white sm:p-8">
+      <section
+        className={cn(
+          "relative overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#4F46E5_0%,#7C3AED_100%)] text-white",
+          queue.length > 0 && filteredQueue.length <= 3 ? "p-8" : "p-6 sm:p-8",
+        )}
+      >
         {queue.length === 0 ? (
           <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
             <CheckCircle2 className="size-10 text-white" aria-hidden="true" />
@@ -372,23 +348,11 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
 
       {queue.length > 0 ? (
         <section className="rounded-[24px] border border-[#EEF2FF] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-[#0F172A]">Applications</h2>
-            {selectedIds.size > 0 ? <span className="text-sm text-[#64748B]">{selectedIds.size} selected</span> : null}
-          </div>
+          <h2 className="text-lg font-semibold text-[#0F172A]">Applications</h2>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full min-w-[560px] text-left text-sm">
               <thead>
                 <tr className="border-b border-[#E2E8F0] text-[12px] uppercase tracking-[0.05em] text-[#64748B]">
-                  <th className="w-10 px-3 py-3">
-                    <input
-                      type="checkbox"
-                      checked={allVisibleSelected}
-                      onChange={toggleAll}
-                      aria-label="Select all applications"
-                      className="size-4 accent-[#4F46E5] [color-scheme:light]"
-                    />
-                  </th>
                   <th className="px-3 py-3 font-medium">Applicant</th>
                   <th className="hidden px-3 py-3 font-medium md:table-cell">College</th>
                   <th className="px-3 py-3 font-medium">Year</th>
@@ -399,7 +363,7 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
               <tbody>
                 {filteredQueue.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-3 py-8 text-center text-sm text-[#64748B]">
+                    <td colSpan={5} className="px-3 py-8 text-center text-sm text-[#64748B]">
                       No applications match your search.
                     </td>
                   </tr>
@@ -414,15 +378,6 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
                       }}
                       className="h-14 cursor-pointer border-b border-[#F1F5F9] transition-colors last:border-b-0 hover:bg-[#F8FAFC] focus-visible:bg-[#F8FAFC] focus-visible:outline-none"
                     >
-                      <td className="px-3" onClick={(event) => event.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(applicant.id)}
-                          onChange={() => toggleOne(applicant.id)}
-                          aria-label={`Select ${applicant.name}`}
-                          className="size-4 accent-[#4F46E5] [color-scheme:light]"
-                        />
-                      </td>
                       <td className="px-3">
                         <span className="flex items-center gap-3">
                           <ApplicantAvatar applicant={applicant} className="size-9 text-xs" />
