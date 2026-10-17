@@ -177,7 +177,7 @@ export function AdminShell({ adminName, adminEmail, pendingVerificationCount, ch
   }
 
   return (
-    <div className="relative isolate min-h-screen bg-[#FAF5FF]">
+    <div data-admin-shell className="relative isolate min-h-screen bg-[#FAF5FF]">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[#FAF5FF]" aria-hidden="true" />
       <div className="mx-auto flex max-w-7xl gap-6 p-4 sm:p-6">
         <aside className={cn("sticky top-6 hidden h-[calc(100vh-3rem)] w-[280px] shrink-0 flex-col overflow-hidden p-5 lg:flex", cardSurface)}>

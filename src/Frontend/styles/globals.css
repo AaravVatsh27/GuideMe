@@ -2,7 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* The admin panel is light-only: pages that render the admin shell opt out of the system dark theme. */
+@custom-variant dark (&:is(.dark:not(:has([data-admin-shell])) *));
 
 @theme inline {
   --font-sans: var(--font-sans);
@@ -131,7 +132,12 @@
   --radius: 0.875rem;
 }
 
-.dark {
+html:has([data-admin-shell]) {
+  /* next-themes sets color-scheme inline on <html>; !important keeps native inputs light here. */
+  color-scheme: light !important;
+}
+
+.dark:not(:has([data-admin-shell])) {
   --background: var(--dark-base);
   --foreground: #E2E8F0;
 
