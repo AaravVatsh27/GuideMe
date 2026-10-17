@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { auth } from "@/Backend/auth";
 import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
-import { cancelSessionById } from "@/Backend/server/sessions";
+import { cancelSessionById, toSessionView } from "@/Backend/server/sessions";
 
 const cancelSessionRequestSchema = z.object({
   reason: z.string().trim().min(10).max(280),
@@ -43,5 +43,5 @@ export const POST = withApiErrorHandling(async (
     noShow: parsedBody.data.noShow,
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json({ ...result, session: toSessionView(result.session, session.user.id) });
 }, "/api/sessions/[sessionId]/cancel");

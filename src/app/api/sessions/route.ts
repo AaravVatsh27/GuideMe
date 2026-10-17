@@ -9,6 +9,8 @@ import { db } from "@/Backend/server/db";
 import {
   createSessionBooking,
   sessionListInclude,
+  toSessionListView,
+  toSessionView,
 } from "@/Backend/server/sessions";
 import { createSessionSchema } from "@/Backend/validations/session";
 
@@ -71,7 +73,7 @@ export const GET = withApiErrorHandling(async (request: Request, _context, metad
   ]);
 
   return NextResponse.json({
-    data: sessions,
+    data: sessions.map((record) => toSessionListView(record, session.user.id)),
     page,
     pageSize: limit,
     total,
@@ -112,6 +114,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
     studentId: session.user.id,
     input: parsedBody.data,
   });
+  const sessionView = toSessionView(result.session, session.user.id);
 
   return NextResponse.json(
     result.requiresPayment
@@ -119,11 +122,11 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
           sessionId: result.session.id,
           requiresPayment: true,
           payment: result.paymentOrder,
-          session: result.session,
+          session: sessionView,
         }
       : {
           confirmed: true,
-          session: result.session,
+          session: sessionView,
         },
     { status: 201 },
   );

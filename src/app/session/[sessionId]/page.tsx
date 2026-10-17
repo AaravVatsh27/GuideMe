@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/Backend/auth";
 import { SessionRoomPageClient } from "@/Frontend/components/session/SessionRoomPageClient";
 import { db } from "@/Backend/server/db";
-import { sessionDetailsInclude } from "@/Backend/server/sessions";
+import { sessionDetailsInclude, toSessionView } from "@/Backend/server/sessions";
 
 type SessionPageProps = {
   params: { sessionId: string };
@@ -40,7 +40,7 @@ export default async function SessionPage({ params, searchParams }: SessionPageP
     notFound();
   }
 
-  const serializedSession = JSON.parse(JSON.stringify(session));
+  const serializedSession = JSON.parse(JSON.stringify(toSessionView(session, userSession.user.id)));
 
   return (
     <SessionRoomPageClient

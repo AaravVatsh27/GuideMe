@@ -11,6 +11,7 @@ import {
   completeSessionById,
   markSessionStarted,
   sessionDetailsInclude,
+  toSessionView,
 } from "@/Backend/server/sessions";
 
 const sessionPatchSchema = z.discriminatedUnion("action", [
@@ -54,7 +55,7 @@ export const GET = withApiErrorHandling(async (
     if (cached.studentId !== session.user.id && cached.mentorId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    return NextResponse.json(cached);
+    return NextResponse.json(toSessionView(cached, session.user.id));
   }
 
   const record = await db.session.findUnique({
@@ -74,7 +75,7 @@ export const GET = withApiErrorHandling(async (
 
   cacheSet(cacheKey, record, cacheTtl.sessionDetails).catch(() => {});
 
-  return NextResponse.json(record);
+  return NextResponse.json(toSessionView(record, session.user.id));
 }, "/api/sessions/[sessionId]");
 
 export const PATCH = withApiErrorHandling(async (
@@ -112,7 +113,7 @@ export const PATCH = withApiErrorHandling(async (
         noShow: parsedBody.data.noShow,
       });
 
-      return NextResponse.json(result);
+      return NextResponse.json({ ...result, session: toSessionView(result.session, session.user.id) });
     }
     case "start": {
       const updatedSession = await markSessionStarted({
@@ -121,7 +122,7 @@ export const PATCH = withApiErrorHandling(async (
         startedAt: parsedBody.data.startedAt,
       });
 
-      return NextResponse.json(updatedSession);
+      return NextResponse.json(toSessionView(updatedSession, session.user.id));
     }
     case "complete": {
       const updatedSession = await completeSessionById({
@@ -131,7 +132,7 @@ export const PATCH = withApiErrorHandling(async (
         endedAt: parsedBody.data.endedAt,
       });
 
-      return NextResponse.json(updatedSession);
+      return NextResponse.json(toSessionView(updatedSession, session.user.id));
     }
   }
 }, "/api/sessions/[sessionId]");

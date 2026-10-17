@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { auth } from "@/Backend/auth";
 import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
-import { completeSessionById } from "@/Backend/server/sessions";
+import { completeSessionById, toSessionView } from "@/Backend/server/sessions";
 
 const completeSessionRequestSchema = z.object({
   transcript: z.string().trim().max(12000).optional(),
@@ -43,5 +43,5 @@ export const POST = withApiErrorHandling(async (
     endedAt: parsedBody.data.endedAt,
   });
 
-  return NextResponse.json(updatedSession);
+  return NextResponse.json(toSessionView(updatedSession, session.user.id));
 }, "/api/sessions/[sessionId]/complete");
