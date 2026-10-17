@@ -161,15 +161,24 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   const mentorEarning = bookingSession.price - platformCut;
   const now = new Date();
 
-  await db.$transaction(async (tx) => {
-    await tx.payment.update({
-      where: { sessionId },
+  const captured = await db.$transaction(async (tx) => {
+    // Only the first of this route and the payment webhook to get here records the capture;
+    // the other sees count 0 and skips, so notifications and emails go out once.
+    const { count } = await tx.payment.updateMany({
+      where: {
+        sessionId,
+        status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+      },
       data: {
         razorpayPaymentId,
         status: PaymentStatus.CAPTURED,
         paidAt: now,
       },
     });
+
+    if (count === 0) {
+      return false;
+    }
 
     await tx.session.update({
       where: { id: sessionId },
@@ -223,7 +232,13 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
         metadata: { razorpayOrderId, razorpayPaymentId, amount: bookingSession.price },
       },
     });
+
+    return true;
   });
+
+  if (!captured) {
+    return NextResponse.json({ success: true, sessionId });
+  }
 
   // Send booking confirmation email (fire-and-forget)
   sendBookingConfirmation(

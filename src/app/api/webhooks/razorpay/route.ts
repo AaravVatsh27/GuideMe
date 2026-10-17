@@ -92,9 +92,14 @@ async function handlePaymentCaptured(payload: any, requestId: string) {
   const mentorEarning = payment.amount - platformCut;
   const now = new Date();
 
-  await db.$transaction(async (tx) => {
-    await tx.payment.update({
-      where: { id: payment.id },
+  const captured = await db.$transaction(async (tx) => {
+    // Claim the capture atomically so a concurrent /api/payment/verify call and this
+    // webhook don't both create notifications and send emails.
+    const { count } = await tx.payment.updateMany({
+      where: {
+        id: payment.id,
+        status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+      },
       data: {
         razorpayPaymentId: paymentId,
         status: PaymentStatus.CAPTURED,
@@ -105,6 +110,10 @@ async function handlePaymentCaptured(payload: any, requestId: string) {
         },
       },
     });
+
+    if (count === 0) {
+      return false;
+    }
 
     await tx.session.update({
       where: { id: payment.sessionId },
@@ -133,7 +142,11 @@ async function handlePaymentCaptured(payload: any, requestId: string) {
         metadata: { orderId, paymentId },
       },
     });
+
+    return true;
   });
+
+  if (!captured) return;
 
   sendBookingConfirmation(
     payment.session,
