@@ -21,8 +21,34 @@ const profileUpdateSchema = z.object({
   settings: studentSettingsSchema.optional(),
 });
 
+const DEFAULT_SETTINGS = {
+  notificationsEnabled: true,
+  profileVisibility: "public",
+} as const;
+
 function getSettingsKey(userId: string) {
   return `student:settings:${userId}`;
+}
+
+/**
+ * Upstash deserialises JSON values automatically, so a stored value may come back as an
+ * object (current writes) or as a JSON string (older writes). Both are accepted.
+ */
+async function readStoredSettings(userId: string) {
+  const stored = await getRedis()?.get<unknown>(getSettingsKey(userId));
+  let value: unknown = stored;
+
+  if (typeof stored === "string") {
+    try {
+      value = JSON.parse(stored);
+    } catch {
+      value = null;
+    }
+  }
+
+  const parsed = studentSettingsSchema.safeParse(value ?? {});
+
+  return { ...DEFAULT_SETTINGS, ...(parsed.success ? parsed.data : {}) };
 }
 
 export const GET = withApiErrorHandling(async (_request: Request, _context, metadata) => {
@@ -60,13 +86,13 @@ export const GET = withApiErrorHandling(async (_request: Request, _context, meta
         languagePreference: true,
       },
     }),
-    getRedis()?.get<string>(getSettingsKey(session.user.id)) ?? null,
+    readStoredSettings(session.user.id),
   ]);
 
   return NextResponse.json({
     user,
     studentProfile,
-    settings: settings ? JSON.parse(settings) : { notificationsEnabled: true, profileVisibility: "public" },
+    settings,
   });
 }, "/api/student/profile");
 
@@ -152,7 +178,9 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
   ]);
 
   if (data.settings && redis) {
-    await redis.set(getSettingsKey(session.user.id), JSON.stringify(data.settings), { ex: 60 * 60 * 24 * 30 });
+    // Merge so a partial update doesn't reset the settings it didn't mention.
+    const merged = { ...(await readStoredSettings(session.user.id)), ...data.settings };
+    await redis.set(getSettingsKey(session.user.id), merged, { ex: 60 * 60 * 24 * 30 });
   }
 
   return NextResponse.json({ user, studentProfile });
