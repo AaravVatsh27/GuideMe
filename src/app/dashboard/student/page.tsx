@@ -256,7 +256,8 @@ export default function StudentDashboardPage() {
 
     return "Good evening";
   }, []);
-  const greeting = `${greetingPeriod}, ${data?.greetingName ?? "Student"}`;
+  const greetingName = data?.greetingName?.trim().split(/\s+/)[0] || "Student";
+  const greeting = `${greetingPeriod}, ${greetingName}`;
   const mentors = (matchesData?.matches ?? []).slice(0, 3);
 
   const profile = profileData?.studentProfile ?? null;
@@ -382,20 +383,30 @@ export default function StudentDashboardPage() {
         {[
           {
             label: "Sessions completed",
-            value: data.quickStats.sessionsCompleted.toLocaleString("en-IN"),
+            value: data.quickStats.sessionsCompleted,
             detail: "Meaningful conversations that moved clarity forward.",
+            emptyAction: "Book your first session",
           },
           {
             label: "Mentors tried",
-            value: data.quickStats.mentorsTried.toLocaleString("en-IN"),
+            value: data.quickStats.mentorsTried,
             detail: "Distinct mentors who helped you sharpen your path.",
+            emptyAction: "Find a mentor",
           },
         ].map((stat) => (
           <Card key={stat.label} className="rounded-2xl border-violet-100 bg-white shadow-sm">
             <CardContent className="p-4 sm:p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{stat.label}</p>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{stat.value}</p>
-              <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">{stat.detail}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#475569]">{stat.label}</p>
+              <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{stat.value.toLocaleString("en-IN")}</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-[#64748B]">{stat.detail}</p>
+              {stat.value === 0 ? (
+                <Link
+                  href="/dashboard/student/find-mentor"
+                  className="mt-2 inline-flex text-[13px] font-semibold text-[#4F46E5] underline-offset-4 hover:underline"
+                >
+                  {stat.emptyAction}
+                </Link>
+              ) : null}
             </CardContent>
           </Card>
         ))}

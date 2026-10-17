@@ -12,9 +12,7 @@ import {
   LogOut,
   Search,
   Settings,
-  ShieldCheck,
   User,
-  UserRound,
   type LucideIcon,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
@@ -57,24 +55,21 @@ export function StudentShell({ children }: Props) {
   const headerTitle = activeItem.href === "/dashboard/student" ? "Dashboard" : activeItem.label;
 
   return (
-    <div className="min-h-screen bg-slate-50/70">
+    <div className="relative isolate min-h-screen bg-[#FAF5FF]">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[#FAF5FF]" aria-hidden="true" />
       <div className="mx-auto flex max-w-[1440px] gap-6 px-4 py-4 sm:px-6 lg:px-8">
         {/* Sidebar */}
         <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-[304px] max-w-[304px] shrink-0 flex-col overflow-hidden rounded-2xl border border-violet-200/80 bg-white/90 p-4 shadow-[0_15px_50px_-25px_rgba(124,58,237,0.2)] backdrop-blur-xl lg:flex">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden">
             {/* Brand */}
-            <div className="w-full min-w-0 space-y-2">
+            <div className="w-full min-w-0">
               <div className="flex h-[38px] items-center">
                 <MentraLogo size="sm" layout="horizontal" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-base font-bold tracking-tight text-slate-950">Dashboard</h2>
-                <p className="text-xs text-slate-500 leading-relaxed">Guidance, decisions, and next steps.</p>
               </div>
             </div>
 
             {/* Account Card */}
-            <div className="w-full min-w-0 rounded-xl border border-violet-100/80 bg-violet-50/40 p-3">
+            <div className="mt-5 w-full min-w-0 rounded-xl border border-violet-100/80 bg-violet-50/40 p-3">
               <div className="grid min-w-0 grid-cols-[3rem_1fr] items-start gap-x-3 gap-y-3">
                 <Avatar className="size-12 border border-violet-100 bg-white">
                   <AvatarImage src={data?.user?.image ?? ""} alt={userName} />
@@ -90,16 +85,6 @@ export function StudentShell({ children }: Props) {
                     <p className="break-words text-xs leading-5 text-slate-600">{userEmail || "Signed in account"}</p>
                   </div>
 
-                  <div className="flex min-w-0 flex-col gap-1.5">
-                    <span className="inline-flex min-h-6 w-fit max-w-full items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold leading-4 text-emerald-800">
-                      <ShieldCheck className="size-3.5 shrink-0" />
-                      Signed in
-                    </span>
-                    <span className="inline-flex min-h-6 w-fit max-w-full items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold leading-4 text-slate-700">
-                      <UserRound className="size-3.5 shrink-0" />
-                      {data?.user?.onboardingComplete ? "Onboarding complete" : "Onboarding pending"}
-                    </span>
-                  </div>
                 </div>
               </div>
 
@@ -133,14 +118,16 @@ export function StudentShell({ children }: Props) {
                     className={cn(
                       "flex h-11 w-full min-w-0 items-center gap-3 rounded-xl px-3 text-sm font-medium transition",
                       isActive
-                        ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-500/20"
-                        : "text-slate-600 hover:bg-violet-50 hover:text-violet-900",
+                        ? "bg-[#EEF2FF] text-[#4F46E5]"
+                        : "text-slate-600 hover:bg-[#F5F3FF] hover:text-violet-900",
                     )}
                   >
                     <span
                       className={cn(
                         "flex size-8 shrink-0 items-center justify-center rounded-lg border",
-                        isActive ? "border-white/20 bg-white/20 text-white" : "border-violet-100 bg-white text-slate-500",
+                        isActive
+                          ? "border-[#C7D2FE] bg-[#E0E7FF] text-[#4F46E5]"
+                          : "border-violet-100 bg-white text-slate-500",
                       )}
                     >
                       <item.icon className="size-4" />
