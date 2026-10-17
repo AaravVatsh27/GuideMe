@@ -371,7 +371,15 @@ export const GET = withApiErrorHandling(async (request: Request) => {
   const streamFilters = getStreamFilters(stream);
   const searchSignals = getSearchSignals(q);
 
-  const cacheKey = buildCacheKey(rawQuery);
+  // Key on the validated query only, so unknown parameters can't create new cache entries
+  // or force uncached searches.
+  const cacheKey = buildCacheKey(
+    Object.fromEntries(
+      Object.entries(parsed.data)
+        .filter(([, value]) => value !== undefined)
+        .map(([key, value]) => [key, String(value)]),
+    ),
+  );
   const cached = await cacheGet<MentorSearchResponse>(cacheKey);
 
   if (cached) {
