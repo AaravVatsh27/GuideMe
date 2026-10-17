@@ -20,6 +20,18 @@ npx tsx prisma/seeds/seed.ts
 
 The seed upserts both accounts with the `ADMIN` role and never stores plaintext passwords.
 
+## Email
+
+Mentra sends sign-in links and notifications through [Resend](https://resend.com). Email sign-in is turned on only when both `RESEND_API_KEY` and `EMAIL_FROM` are set.
+
+Before launch:
+
+1. Verify your sending domain in the Resend dashboard.
+2. Set `EMAIL_FROM` to an address on that domain, such as `Mentra <hello@yourdomain.com>`, in `.env.local` and in the production environment.
+3. Optionally set `EMAIL_REPLY_TO`; email footers show it as the support address.
+
+Resend's test sender, `onboarding@resend.dev`, only delivers to the email on your own Resend account, so sign-in emails to anyone else will not arrive. The admin Settings page shows the current `EMAIL_FROM` value as "Support email".
+
 ## Getting Started
 
 Install dependencies and start the development server:
