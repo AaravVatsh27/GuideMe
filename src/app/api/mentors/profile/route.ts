@@ -59,12 +59,15 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
     return NextResponse.json({ error: "Mentor profile not found" }, { status: 404 });
   }
 
-  // Extract availability slots for separate upsert
+  // Pull out fields that are not MentorProfile columns: availability slots and their
+  // timezone are written to Availability, and the avatar is the user's image.
   const {
     availabilitySlots,
     exams,
     specialisations,
     priceMin,
+    timezone,
+    avatarUrl,
     ...profileFields
   } = data;
 
@@ -101,6 +104,13 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
       data: updateData,
     });
 
+    if (avatarUrl !== undefined) {
+      await tx.user.update({
+        where: { id: mentorId },
+        data: { image: avatarUrl },
+      });
+    }
+
     // Replace availability slots if provided
     if (availabilitySlots !== undefined) {
       await tx.availability.deleteMany({ where: { mentorId } });
@@ -112,7 +122,7 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
             dayOfWeek: slot.dayOfWeek,
             startTime: slot.startTime,
             endTime: slot.endTime,
-            timezone: data.timezone ?? "Asia/Kolkata",
+            timezone: timezone ?? "Asia/Kolkata",
             isRecurring: true,
             isActive: true,
           })),
