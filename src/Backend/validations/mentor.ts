@@ -9,6 +9,7 @@ import {
   YEAR_OF_STUDY_VALUES,
 } from "@/Backend/server/mentor-onboarding";
 import { sanitizeText } from "@/Backend/lib/sanitize";
+import { httpsUrlSchema, imageUrlSchema, linkedinUrlSchema } from "@/Backend/validations/url";
 import { z } from "zod";
 
 const currentYear = new Date().getFullYear();
@@ -38,7 +39,15 @@ const timeSlotSchema = z
 
 const optionalUrlSchema = z
   .union([
-    z.string().trim().url("Enter a valid URL"),
+    httpsUrlSchema,
+    z.literal(""),
+    z.null(),
+  ])
+  .transform((value) => value || undefined);
+
+const optionalLinkedinUrlSchema = z
+  .union([
+    linkedinUrlSchema,
     z.literal(""),
     z.null(),
   ])
@@ -212,9 +221,10 @@ export const mentorProfileStepSchema = z.object({
   avatarUrl: z
     .string()
     .trim()
-    .url("Upload an avatar before continuing"),
+    .min(1, "Upload an avatar before continuing")
+    .pipe(imageUrlSchema),
 
-  linkedinUrl: optionalUrlSchema.optional(),
+  linkedinUrl: optionalLinkedinUrlSchema.optional(),
 });
 
 export const mentorAvailabilityStepSchema = z
@@ -328,17 +338,13 @@ export const mentorProfileUpdateSchema = z
       .transform(sanitizeText)
       .optional(),
 
-    avatarUrl: z
-      .string()
-      .trim()
-      .url()
-      .optional(),
+    avatarUrl: imageUrlSchema.optional(),
 
     introVideoUrl:
       optionalUrlSchema.optional(),
 
     linkedinUrl:
-      optionalUrlSchema.optional(),
+      optionalLinkedinUrlSchema.optional(),
 
     timezone: z
       .string()

@@ -27,7 +27,7 @@ const CSP = [
   // Fonts: self + Google Fonts
   "font-src 'self' https://fonts.gstatic.com data:",
   // Images: self + Google user avatars + UploadThing CDN + data URIs
-  "img-src 'self' blob: data: https://lh3.googleusercontent.com https://utfs.io https://*.utfs.io https://uploadthing.com https://*.uploadthing.com https://*.supabase.co",
+  "img-src 'self' blob: data: https://lh3.googleusercontent.com https://utfs.io https://*.utfs.io https://*.ufs.sh https://uploadthing.com https://*.uploadthing.com https://*.supabase.co",
   // API connections: self + Upstash + Razorpay + Daily.co + Sentry + UploadThing + Resend
   "connect-src 'self' https://*.upstash.io https://api.razorpay.com https://livekit.io https://*.daily.co wss://*.daily.co https://*.sentry.io https://uploadthing.com https://*.uploadthing.com https://api.resend.com",
   // Frames: Razorpay payment modal + Daily.co video
@@ -64,6 +64,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "*.utfs.io",
+      },
+      {
+        protocol: "https",
+        hostname: "*.ufs.sh",
       },
       {
         protocol: "https",

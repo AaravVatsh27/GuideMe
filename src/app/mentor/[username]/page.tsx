@@ -12,6 +12,7 @@ import {
 
 import { Badge } from "@/Frontend/components/ui/badge";
 import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
+import { isSafeHttpsUrl } from "@/Backend/validations/url";
 import { db } from "@/Backend/server/db";
 import { getClassOption } from "@/Backend/server/student-onboarding";
 import {
@@ -249,7 +250,7 @@ export default async function PublicMentorProfilePage({ params }: MentorPageProp
                 </p>
 
                 <div className="mt-5 flex flex-wrap gap-2">
-                  {mentorProfile.linkedinUrl ? (
+                  {isSafeHttpsUrl(mentorProfile.linkedinUrl) ? (
                     <a
                       href={mentorProfile.linkedinUrl}
                       target="_blank"

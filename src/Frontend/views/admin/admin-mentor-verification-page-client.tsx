@@ -12,6 +12,7 @@ import { Input } from "@/Frontend/components/ui/input";
 import { Textarea } from "@/Frontend/components/ui/textarea";
 
 import type { getAdminMentorVerificationQueueData } from "@/Backend/server/admin";
+import { isSafeHttpsUrl } from "@/Backend/validations/url";
 
 import { formatCurrency, formatDateTime, formatEnumLabel } from "./admin-utils";
 
@@ -232,7 +233,7 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-white p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">LinkedIn</p>
-                      {mentor.profile.linkedinUrl ? (
+                      {isSafeHttpsUrl(mentor.profile.linkedinUrl) ? (
                         <a
                           href={mentor.profile.linkedinUrl}
                           target="_blank"

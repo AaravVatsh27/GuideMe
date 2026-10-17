@@ -6,6 +6,7 @@ import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
 import { getRedis } from "@/Backend/server/redis";
 import { invalidateMatchingCacheForStudent } from "@/Backend/server/matching";
+import { imageUrlSchema } from "@/Backend/validations/url";
 
 const studentSettingsSchema = z.object({
   notificationsEnabled: z.boolean().optional(),
@@ -14,7 +15,7 @@ const studentSettingsSchema = z.object({
 
 const profileUpdateSchema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
-  image: z.string().trim().url().optional(),
+  image: imageUrlSchema.optional(),
   city: z.string().trim().min(2).max(80).optional(),
   state: z.string().trim().min(2).max(80).optional(),
   languagePreference: z.string().trim().min(2).max(40).optional(),
