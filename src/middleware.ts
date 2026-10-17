@@ -6,6 +6,8 @@ import { getOnboardingPath } from "@/Backend/server/auth-flow";
 
 const { auth } = NextAuth(authEdgeConfig);
 
+const ADMIN_SIGNIN_HEADER = "x-mentra-admin-signin";
+
 function redirectTo(url: URL, pathname: string) {
   return NextResponse.redirect(new URL(pathname, url));
 }
@@ -16,9 +18,13 @@ export default auth((request) => {
   const session = request.auth;
   const user = session?.user;
 
+  // The admin layout trusts this header, so a copy sent by the client is always dropped
+  // and it is only set by the middleware itself, for the admin sign-in page.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete(ADMIN_SIGNIN_HEADER);
+
   if (pathname === "/admin/signin") {
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-mentra-admin-signin", "1");
+    requestHeaders.set(ADMIN_SIGNIN_HEADER, "1");
 
     return NextResponse.next({
       request: {
@@ -56,7 +62,11 @@ export default auth((request) => {
     return redirectTo(nextUrl, onboardingPath);
   }
 
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 });
 
 export const config = {

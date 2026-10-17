@@ -9,6 +9,9 @@ import {
 } from "@prisma/client";
 import { addDays, format, startOfDay, subDays } from "date-fns";
 
+import { redirect } from "next/navigation";
+
+import { auth } from "@/Backend/auth";
 import { getClientIp } from "@/Backend/lib/client-ip";
 import { isEmailAuthEnabled } from "@/Backend/server/auth";
 import { db } from "@/Backend/server/db";
@@ -115,6 +118,22 @@ function getRevenueBuckets(payments: Array<{ paidAt: Date | null; amount: number
   }));
 }
 
+/**
+ * Every admin data loader checks the viewer itself, so admin data is never served
+ * just because a page or layout check was skipped.
+ */
+async function requireAdminViewer() {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/admin/signin");
+  }
+
+  if (session.user.role !== "ADMIN") {
+    redirect("/dashboard");
+  }
+}
+
 export function extractRequestIp(request: Request) {
   return getClientIp(request);
 }
@@ -160,6 +179,8 @@ export function getMentorAdminStatus(input: {
 }
 
 export async function getPendingMentorVerificationCount() {
+  await requireAdminViewer();
+
   return db.mentorVerification.count({
     where: {
       status: VerificationStatus.PENDING,
@@ -168,6 +189,8 @@ export async function getPendingMentorVerificationCount() {
 }
 
 export async function getAdminOverviewData(): Promise<AdminOverviewData> {
+  await requireAdminViewer();
+
   const cacheKey = cacheKeys.adminStats;
   const cached = await cacheGet<AdminOverviewData>(cacheKey);
   if (cached) return cached;
@@ -327,6 +350,8 @@ export async function getAdminOverviewData(): Promise<AdminOverviewData> {
 }
 
 export async function getAdminMentorsData() {
+  await requireAdminViewer();
+
   const mentors = await db.user.findMany({
     where: { role: Role.MENTOR },
     orderBy: { createdAt: "desc" },
@@ -399,6 +424,8 @@ export async function getAdminMentorsData() {
 }
 
 export async function getAdminMentorVerificationQueueData() {
+  await requireAdminViewer();
+
   const mentors = await db.user.findMany({
     where: {
       role: Role.MENTOR,
@@ -493,6 +520,8 @@ export async function getAdminMentorVerificationQueueData() {
 }
 
 export async function getAdminMentorDetailData(mentorId: string) {
+  await requireAdminViewer();
+
   return db.user.findFirst({
     where: {
       id: mentorId,
@@ -578,6 +607,8 @@ export async function getAdminMentorDetailData(mentorId: string) {
 }
 
 export async function getAdminSessionsData() {
+  await requireAdminViewer();
+
   const sessions = await db.session.findMany({
     orderBy: { scheduledAt: "desc" },
     select: {
@@ -654,6 +685,8 @@ export async function getAdminSessionsData() {
 }
 
 export async function getAdminPaymentsData() {
+  await requireAdminViewer();
+
   const [payments, payouts] = await Promise.all([
     db.payment.findMany({
       orderBy: { createdAt: "desc" },
@@ -716,6 +749,8 @@ export async function getAdminPaymentsData() {
 }
 
 export async function getAdminUsersData() {
+  await requireAdminViewer();
+
   const users = await db.user.findMany({
     orderBy: { createdAt: "desc" },
     select: {
@@ -751,6 +786,8 @@ export async function getAdminUsersData() {
 }
 
 export async function getAdminNotificationsData() {
+  await requireAdminViewer();
+
   return db.notification.findMany({
     take: 200,
     orderBy: { createdAt: "desc" },
@@ -774,6 +811,8 @@ export async function getAdminNotificationsData() {
 }
 
 export async function getAdminSettingsData() {
+  await requireAdminViewer();
+
   const [userCount, mentorCount, sessionCount, notificationCount] = await Promise.all([
     db.user.count(),
     db.user.count({ where: { role: Role.MENTOR } }),
