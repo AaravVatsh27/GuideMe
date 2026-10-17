@@ -2,6 +2,8 @@ import Link from "next/link";
 import {
   CalendarClock,
   CalendarRange,
+  Check,
+  Circle,
   Globe,
   IndianRupee,
   Sparkles,
@@ -18,7 +20,6 @@ import { cn } from "@/Backend/server/utils";
 import { getMentorDashboardData } from "@/Frontend/views/dashboard/mentor/mentor-dashboard-data";
 import {
   formatCurrency,
-  formatResponseRate,
   formatShortDateTime,
   formatTrend,
   getInitials,
@@ -31,7 +32,7 @@ function getSlotCount(startTime: string, endTime: string) {
 }
 
 const secondaryActionClass =
-  "inline-flex min-h-10 items-center justify-center rounded-full border border-violet-200 bg-white px-4 text-sm font-semibold text-violet-900 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20";
+  "inline-flex min-h-11 items-center justify-center rounded-full border border-violet-300 bg-white px-4 text-sm font-semibold text-[#1E1B4B] transition-colors hover:border-violet-400 hover:bg-violet-50 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:ring-offset-2";
 
 const topicLabelMap: Record<string, string> = {
   STREAM_SELECTION: "Stream selection",
@@ -105,7 +106,9 @@ export default async function MentorDashboardPage() {
     {
       label: "This week earnings",
       value: formatCurrency(data.overview.thisWeekEarnings),
-      detail: `Response rate is holding at ${formatResponseRate(data.overview.responseRate)}.`,
+      detail: data.overview.thisWeekEarnings > 0
+        ? "Earned this week"
+        : "No earnings yet. Earnings appear after your first completed session.",
       icon: IndianRupee,
     },
     {
@@ -143,7 +146,7 @@ export default async function MentorDashboardPage() {
   return (
     <div className="min-h-full min-w-0 max-w-full space-y-3 bg-[#FAF5FF]">
       <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Card className="overflow-hidden rounded-2xl border border-[#E9D5FF] bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.08),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(236,72,153,0.06),transparent_40%),linear-gradient(135deg,#ffffff_0%,#faf5ff_60%,#fdf2f8_100%)]">
+        <Card className="overflow-hidden rounded-2xl border border-[#E9D5FF] bg-[linear-gradient(135deg,#FCFAFF_0%,#FAF5FF_55%,#FDF7FC_100%)]">
           <CardContent className="p-5 sm:p-6">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7C3AED]">
               {isApproved ? "Mentor overview" : isRejected ? "Action required" : "Submitted for review"}
@@ -272,7 +275,7 @@ export default async function MentorDashboardPage() {
       </section>
 
       <section className="grid items-start gap-3 lg:grid-cols-[1.1fr_0.9fr]">
-        <Card className="rounded-2xl border-slate-200 bg-white">
+        <Card className="self-start rounded-2xl border-slate-200 bg-white">
           <CardHeader className="flex flex-row items-center justify-between gap-2 px-4 pb-1.5 pt-3 sm:px-5">
             <div>
               <CardTitle className="text-base text-slate-950">Upcoming sessions</CardTitle>
@@ -350,7 +353,7 @@ export default async function MentorDashboardPage() {
             </CardContent>
           </Card>
         ) : !isApproved || !hasMeaningfulActivity ? (
-          <Card className="rounded-2xl border-violet-200 bg-violet-50/70">
+          <Card className="self-start rounded-2xl border-violet-200 bg-violet-50/70">
             <CardHeader className="px-4 pb-1.5 pt-3 sm:px-5">
               <CardTitle className="flex items-center gap-2 text-base text-slate-950">
                 <Sparkles className="size-4 text-violet-700" />
@@ -359,25 +362,42 @@ export default async function MentorDashboardPage() {
               <p className="mt-0.5 text-[11px] text-slate-600">Steps to complete before you start taking sessions.</p>
             </CardHeader>
             <CardContent className="px-4 pb-3 pt-0 sm:px-5">
-              <div className="grid gap-1.5 sm:grid-cols-2">
-                {[
-                  { label: "Review your mentor profile", actionable: true },
-                  { label: "Set your availability", actionable: true },
-                  { label: "Keep profile details complete", actionable: true },
-                  { label: "Wait for verification", actionable: false },
-                ].map((step) => (
-                  <div
-                    key={step.label}
-                    className={cn(
-                      "rounded-lg border px-2.5 py-1.5 text-[11px] leading-5",
-                      step.actionable
-                        ? "border-violet-200 bg-white/80 text-slate-700"
-                        : "border-slate-200 bg-slate-50/70 text-slate-500",
-                    )}
-                  >
-                    {step.label}
-                  </div>
-                ))}
+              <div className="space-y-3">
+                {([
+                  { label: "Review your mentor profile", href: "/dashboard/mentor/profile", actionable: true, done: false },
+                  { label: "Set your availability", href: "/dashboard/mentor/availability", actionable: true, done: totalOpenSlots > 0 },
+                  { label: "Keep profile details complete", actionable: false, done: false },
+                  { label: "Wait for verification", actionable: false, done: false },
+                ] as const).map((step) => {
+                  const statusClass = step.done
+                    ? "border-emerald-500 bg-emerald-500 text-white"
+                    : step.actionable
+                      ? "border-[#4F46E5] text-[#4F46E5]"
+                      : "border-slate-300 bg-slate-100 text-slate-400";
+
+                  const content = (
+                    <>
+                      <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-full border-2", statusClass)}>
+                        {step.done ? <Check className="size-3" strokeWidth={3} /> : <Circle className="size-2 fill-current" />}
+                      </span>
+                      <span className={cn("text-sm", !step.actionable && !step.done && "text-[#94A3B8]")}>{step.label}</span>
+                    </>
+                  );
+
+                  return step.actionable ? (
+                    <Link
+                      key={step.label}
+                      href={step.href}
+                      className="flex items-center gap-3 text-[#4F46E5] transition-colors hover:underline"
+                    >
+                      {content}
+                    </Link>
+                  ) : (
+                    <div key={step.label} className="flex items-center gap-3">
+                      {content}
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -394,18 +414,18 @@ export default async function MentorDashboardPage() {
         )}
       </section>
 
-      <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid items-stretch gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {quickStats.map((stat) => (
-          <Card key={stat.label} className="rounded-xl border-slate-200 bg-white">
+          <Card key={stat.label} className="h-full rounded-xl border-slate-200 bg-white">
             <CardContent className="px-3 py-2.5">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[11px] font-medium text-slate-500">{stat.label}</p>
-                <span className="flex size-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600">
+                <p className="text-[13px] font-medium text-[#475569]">{stat.label}</p>
+                <span className="flex size-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600">
                   <stat.icon className="size-3.5" />
                 </span>
               </div>
               <p className="mt-1 text-lg font-semibold tracking-tight text-slate-950">{stat.value}</p>
-              <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{stat.detail}</p>
+              <p className="mt-0.5 text-[13px] leading-[1.4] text-[#64748B]">{stat.detail}</p>
             </CardContent>
           </Card>
         ))}
@@ -557,7 +577,7 @@ export default async function MentorDashboardPage() {
                         {data.mentor.name}
                       </h3>
 
-                      <p className="mt-1 break-words text-sm leading-6 text-slate-600">
+                      <p className="mt-1 break-words text-sm leading-6 text-slate-600 normal-case">
                         {displayHeadline}
                       </p>
                     </div>
@@ -623,7 +643,7 @@ export default async function MentorDashboardPage() {
                   Public bio
                 </p>
 
-                <p className="mt-2 max-w-4xl break-words text-sm leading-6 text-slate-700">
+                <p className="mt-2 max-w-4xl break-words text-sm leading-6 text-slate-700 normal-case">
                   {displayBio}
                 </p>
               </div>

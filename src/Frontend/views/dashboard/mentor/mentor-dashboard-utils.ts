@@ -67,6 +67,15 @@ export function getInitials(name: string | null | undefined) {
   return parts.map((part) => part.charAt(0).toUpperCase()).join("");
 }
 
+export function getMentorDisplayName(name: string | null | undefined) {
+  const normalizedName = (name ?? "").trim();
+  const enrollmentSuffixPattern =
+    /^(.+?)\s+[A-Z]{2,}(?:[-/]\d+){2,}(?:[-/][A-Z0-9]+)*$/;
+  const match = normalizedName.match(enrollmentSuffixPattern);
+
+  return match?.[1]?.trim() || normalizedName || "Mentor";
+}
+
 export function getFirstName(name: string | null | undefined) {
   const [first = "Student"] = (name ?? "").trim().split(/\s+/).filter(Boolean);
   return first || "Student";

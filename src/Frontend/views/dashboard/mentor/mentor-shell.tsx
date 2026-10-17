@@ -22,7 +22,7 @@ import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/Frontend/components/ui/dropdown-menu";
 import { cn } from "@/Backend/server/utils";
 
-import { getInitials } from "./mentor-dashboard-utils";
+import { getInitials, getMentorDisplayName } from "./mentor-dashboard-utils";
 
 const navItems = [
   { href: "/dashboard/mentor", label: "Overview", icon: LayoutGrid },
@@ -57,7 +57,7 @@ export function MentorShell({ children }: Props) {
   const router = useRouter();
   const { data } = useSession();
 
-  const userName = data?.user?.name ?? "Mentor";
+  const userName = getMentorDisplayName(data?.user?.name);
   const userEmail = data?.user?.email ?? "";
   const initials = getInitials(userName);
   const activeItem =
@@ -75,12 +75,6 @@ export function MentorShell({ children }: Props) {
               <div className="flex h-[38px] items-center">
                 <MentraLogo size="sm" layout="horizontal" />
               </div>
-              <h2 className="mt-3 text-lg font-bold tracking-tight text-slate-950">
-                Dashboard
-              </h2>
-              <p className="mt-1 text-sm leading-5 text-slate-600">
-                Manage your sessions, availability, profile, and mentor growth in one place.
-              </p>
             </div>
 
             {/* Account card */}
@@ -138,7 +132,7 @@ export function MentorShell({ children }: Props) {
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1 pb-28 lg:pb-0">
+        <div className="min-w-0 flex-1 bg-[#FAF5FF] pb-28 lg:pb-0">
           <header className="sticky top-4 z-20 mb-5 flex items-center justify-between gap-4 rounded-[1.5rem] border border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-700">Mentra</p>
