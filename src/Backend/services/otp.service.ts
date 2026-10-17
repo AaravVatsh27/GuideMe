@@ -11,6 +11,7 @@ import { generateOTP, isValidOtp, normalizeOtp } from "@/Backend/lib/otp";
 const OTP_KEY_PREFIX = "verification:email:otp";
 const OTP_COOLDOWN_PREFIX = "verification:email:cooldown";
 const OTP_SENDS_PREFIX = "verification:email:sends";
+const OTP_ATTEMPTS_PREFIX = "verification:email:attempts";
 const SEND_RATE_LIMIT_WINDOW_SECONDS = 60 * 60;
 
 export const OTP_PURPOSE = {
@@ -23,7 +24,10 @@ type StoredOtpChallenge = {
   email: string;
   purpose: OtpPurpose;
   otpHash: string;
-  attempts: number;
+  /** The account that requested the code; only that account can redeem it. */
+  subjectId?: string;
+  /** Legacy field; attempts are now counted atomically in a separate key. */
+  attempts?: number;
   createdAt: string;
   expiresAt: string;
 };
@@ -31,6 +35,7 @@ type StoredOtpChallenge = {
 export type CreateOtpChallengeInput = {
   email: string;
   purpose?: OtpPurpose;
+  subjectId?: string;
 };
 
 export type CreateOtpChallengeResult =
@@ -51,6 +56,7 @@ export type VerifyOtpChallengeInput = {
   email: string;
   otp: string;
   purpose?: OtpPurpose;
+  subjectId?: string;
 };
 
 export type VerifyOtpChallengeResult =
@@ -89,6 +95,10 @@ function cooldownKey(email: string): string {
 
 function sendsKey(email: string): string {
   return redisKey(OTP_SENDS_PREFIX, emailKeyPart(email));
+}
+
+function attemptsKey(email: string): string {
+  return redisKey(OTP_ATTEMPTS_PREFIX, emailKeyPart(email));
 }
 
 async function getPositiveTtlSeconds(key: string): Promise<number> {
@@ -132,6 +142,7 @@ async function getHourlySendCount(email: string): Promise<number> {
 export async function createOtpChallenge({
   email,
   purpose = OTP_PURPOSE.COLLEGE_EMAIL_VERIFICATION,
+  subjectId,
 }: CreateOtpChallengeInput): Promise<CreateOtpChallengeResult> {
   const redis = getRedis();
 
@@ -182,11 +193,12 @@ export async function createOtpChallenge({
     email: normalizedEmail,
     purpose,
     otpHash: hashOtp({ email: normalizedEmail, otp, purpose }),
-    attempts: 0,
+    subjectId,
     createdAt: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
   };
 
+  await redis.del(attemptsKey(normalizedEmail));
   await redis.set(otpKey(normalizedEmail), challenge, { ex: OTP_TTL_SECONDS });
 
   return {
@@ -202,6 +214,7 @@ export async function verifyOtpChallenge({
   email,
   otp,
   purpose = OTP_PURPOSE.COLLEGE_EMAIL_VERIFICATION,
+  subjectId,
 }: VerifyOtpChallengeInput): Promise<VerifyOtpChallengeResult> {
   const redis = getRedis();
 
@@ -221,21 +234,41 @@ export async function verifyOtpChallenge({
   }
 
   const key = otpKey(normalizedEmail);
+  const attemptKey = attemptsKey(normalizedEmail);
   const challenge = await redis.get<StoredOtpChallenge>(key);
 
-  if (!challenge || challenge.purpose !== purpose) {
+  if (
+    !challenge ||
+    challenge.purpose !== purpose ||
+    (challenge.subjectId && challenge.subjectId !== subjectId)
+  ) {
     return { ok: false, reason: "expired" };
   }
 
-  if (challenge.attempts >= MAX_OTP_ATTEMPTS) {
-    await redis.del(key);
+  // Count the attempt atomically before checking the code, so parallel guesses
+  // cannot all observe the same attempt count.
+  const attempts = await redis.incr(attemptKey);
+
+  if (attempts === 1) {
+    await redis.expire(attemptKey, OTP_TTL_SECONDS);
+  }
+
+  if (attempts > MAX_OTP_ATTEMPTS) {
+    await redis.del(key, attemptKey);
     return { ok: false, reason: "max_attempts_exceeded", remainingAttempts: 0 };
   }
 
   const candidateHash = hashOtp({ email: normalizedEmail, otp: normalizedOtp, purpose });
 
   if (safeCompareHex(candidateHash, challenge.otpHash)) {
-    await redis.del(key);
+    // Only the request that deletes the challenge succeeds, so a code is redeemed once.
+    const deleted = await redis.del(key);
+    await redis.del(attemptKey);
+
+    if (deleted === 0) {
+      return { ok: false, reason: "expired" };
+    }
+
     return {
       ok: true,
       email: normalizedEmail,
@@ -243,33 +276,16 @@ export async function verifyOtpChallenge({
     };
   }
 
-  const attempts = challenge.attempts + 1;
   const remainingAttempts = Math.max(MAX_OTP_ATTEMPTS - attempts, 0);
 
-  if (attempts >= MAX_OTP_ATTEMPTS) {
-    await redis.del(key);
+  if (remainingAttempts === 0) {
+    await redis.del(key, attemptKey);
     return {
       ok: false,
       reason: "max_attempts_exceeded",
       remainingAttempts: 0,
     };
   }
-
-  const ttl = await getPositiveTtlSeconds(key);
-
-  if (ttl <= 0) {
-    await redis.del(key);
-    return { ok: false, reason: "expired" };
-  }
-
-  await redis.set(
-    key,
-    {
-      ...challenge,
-      attempts,
-    },
-    { ex: ttl },
-  );
 
   return {
     ok: false,
@@ -285,7 +301,8 @@ export async function invalidateOtpChallenge(email: string): Promise<void> {
     return;
   }
 
-  await redis.del(otpKey(normalizeEmail(email)));
+  const normalizedEmail = normalizeEmail(email);
+  await redis.del(otpKey(normalizedEmail), attemptsKey(normalizedEmail));
 }
 
 export async function getOtpRateLimitState(email: string): Promise<OtpRateLimitState> {

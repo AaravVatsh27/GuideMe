@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/Backend/auth";
+import { db } from "@/Backend/server/db";
 import { OTP_TTL_SECONDS } from "@/constants/verification";
 import { getRedis } from "@/Backend/lib/redis";
 import { isVerifiableInstitutionalEmail, resolveCollegeFromEmail } from "@/Backend/services/college.service";
@@ -81,6 +82,21 @@ export async function POST(request: Request) {
     );
   }
 
+  const claimedByAnotherMentor = await db.mentorProfile.findFirst({
+    where: {
+      verifiedCollegeEmail: email,
+      NOT: { userId: mentorId },
+    },
+    select: { userId: true },
+  });
+
+  if (claimedByAnotherMentor) {
+    return NextResponse.json(
+      { success: false, message: "This college email is already verified on another account." },
+      { status: 409 },
+    );
+  }
+
   const mentorLimit = await consumeMentorSendLimit(mentorId);
 
   if (!mentorLimit.ok) {
@@ -98,6 +114,7 @@ export async function POST(request: Request) {
   const challenge = await createOtpChallenge({
     email,
     purpose: OTP_PURPOSE.COLLEGE_EMAIL_VERIFICATION,
+    subjectId: mentorId,
   });
 
   if (!challenge.ok) {

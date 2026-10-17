@@ -65,6 +65,7 @@ export async function POST(request: Request) {
     email,
     otp: parsed.data.otp,
     purpose: OTP_PURPOSE.COLLEGE_EMAIL_VERIFICATION,
+    subjectId: mentorId,
   });
 
   if (!verification.ok) {
@@ -93,6 +94,18 @@ export async function POST(request: Request) {
 
     if (!profile) {
       return null;
+    }
+
+    const claimedByAnotherMentor = await tx.mentorProfile.findFirst({
+      where: {
+        verifiedCollegeEmail: verification.email,
+        NOT: { userId: mentorId },
+      },
+      select: { userId: true },
+    });
+
+    if (claimedByAnotherMentor) {
+      return "email_taken" as const;
     }
 
     const createdEvidence = await tx.verificationEvidence.create({
@@ -145,6 +158,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { success: false, message: "Mentor profile not found." },
       { status: 404 },
+    );
+  }
+
+  if (result === "email_taken") {
+    return NextResponse.json(
+      { success: false, message: "This college email is already verified on another account." },
+      { status: 409 },
     );
   }
 
