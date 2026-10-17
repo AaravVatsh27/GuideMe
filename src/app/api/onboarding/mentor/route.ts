@@ -524,11 +524,9 @@ export const PATCH = withApiErrorHandling(
         }
 
         /*
-         * MentorTier remains the mentor-trust field.
-         * Do NOT put InstitutionTier into this column.
+         * MentorTier is the mentor-trust field and is assigned by admins
+         * during verification, so the submitted value is never stored.
          */
-        createStepData.tier = stepData.tier;
-        updateStepData.tier = stepData.tier;
 
         break;
       }
@@ -803,11 +801,9 @@ export const PATCH = withApiErrorHandling(
                   .college,
 
               /*
-               * Mentor trust tier remains independent
-               * from InstitutionTier.
+               * Mentor trust tier is admin-assigned and
+               * is not taken from the submission.
                */
-              tier:
-                finalValidation.data.tier,
 
               degree:
                 finalValidation.data.degree,

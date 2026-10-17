@@ -271,10 +271,7 @@ export const mentorProfileUpdateSchema = z
      */
     college: optionalShortTextSchema.optional(),
 
-    /**
-     * Mentor trust tier.
-     */
-    tier: mentorTierSchema.optional(),
+    // Mentor trust tier is assigned by admins only and is deliberately not editable here.
 
     degree: degreeSchema.optional(),
 

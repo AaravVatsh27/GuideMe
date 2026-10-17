@@ -133,7 +133,6 @@ export function MentorProfilePageClient({ mentor }: Props) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           college: formState.college,
-          tier: formState.tier,
           degree: formState.degree,
           branch: formState.branch,
           yearOfStudy: formState.yearOfStudy ? Number.parseInt(formState.yearOfStudy, 10) : undefined,
@@ -248,9 +247,9 @@ export function MentorProfilePageClient({ mentor }: Props) {
                 <select
                   id="mentor-tier"
                   value={formState.tier}
-                  onChange={(event) => setFormState((current) => ({ ...current, tier: event.target.value }))}
+                  disabled
                   style={{ colorScheme: "light" }}
-                  className="!h-11 !w-full !rounded-xl !border !border-slate-200 !bg-white !px-3.5 !text-sm !font-medium !text-[#1E1B4B] !shadow-none !outline-none focus:!border-violet-400 focus:!ring-2 focus:!ring-violet-500/20"
+                  className="!h-11 !w-full !cursor-not-allowed !rounded-xl !border !border-slate-200 !bg-slate-50 !px-3.5 !text-sm !font-medium !text-[#1E1B4B] !shadow-none !outline-none focus:!border-violet-400 focus:!ring-2 focus:!ring-violet-500/20"
                 >
                   {tierOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -259,7 +258,7 @@ export function MentorProfilePageClient({ mentor }: Props) {
                   ))}
                 </select>
                 <p className="text-xs leading-5 text-slate-600">
-                  Tier is separate from verification status.
+                  Your tier is assigned by the GuideMe team when your profile is verified.
                 </p>
               </div>
               <div className="space-y-2">
