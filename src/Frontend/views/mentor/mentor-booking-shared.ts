@@ -1,3 +1,5 @@
+export { formatCurrency } from "@/shared/format";
+
 export const IST_TIMEZONE = "Asia/Kolkata";
 export const FREE_INTRO_DURATION = 10;
 export const PENDING_BOOKING_STORAGE_PREFIX = "guideme:mentor-pending-paid-booking:";
@@ -174,9 +176,6 @@ export function buildScheduledAt(date: string, slot: string) {
   return new Date(`${date}T${slot}:00+05:30`).toISOString();
 }
 
-export function formatCurrency(value: number) {
-  return `INR ${value.toLocaleString("en-IN")}`;
-}
 
 export function getPendingBookingStorageKey(mentorId: string) {
   return `${PENDING_BOOKING_STORAGE_PREFIX}${mentorId}`;

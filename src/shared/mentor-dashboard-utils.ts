@@ -1,5 +1,9 @@
 import { format } from "date-fns";
 
+import { getInitials as getSharedInitials } from "@/shared/format";
+
+export { formatCurrency } from "@/shared/format";
+
 const ACRONYM_LABELS: Record<string, string> = {
   AI: "AI",
   CA: "CA",
@@ -21,9 +25,6 @@ const ACRONYM_LABELS: Record<string, string> = {
   UPSC: "UPSC",
 };
 
-export function formatCurrency(value: number | null | undefined) {
-  return `INR ${(value ?? 0).toLocaleString("en-IN")}`;
-}
 
 export function formatDateTime(value: string | Date) {
   return format(new Date(value), "EEE, d MMM yyyy 'at' h:mm a");
@@ -53,19 +54,6 @@ export function formatEnumLabel(value: string | null | undefined) {
     .join(" ");
 }
 
-export function getInitials(name: string | null | undefined) {
-  const parts = (name ?? "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
-
-  if (parts.length === 0) {
-    return "G";
-  }
-
-  return parts.map((part) => part.charAt(0).toUpperCase()).join("");
-}
 
 export function getMentorDisplayName(name: string | null | undefined) {
   const normalizedName = (name ?? "").trim();
@@ -138,4 +126,8 @@ export function escapeCsvValue(value: string | number | null | undefined) {
   }
 
   return text;
+}
+
+export function getInitials(name: string | null | undefined) {
+  return getSharedInitials(name, "G");
 }

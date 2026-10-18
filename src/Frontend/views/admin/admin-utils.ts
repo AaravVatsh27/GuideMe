@@ -1,7 +1,4 @@
-export function formatCurrency(value: number | null | undefined) {
-  return `₹${(value ?? 0).toLocaleString("en-IN")}`;
-}
-
+export { formatCurrency } from "@/shared/format";
 export function formatDateTime(value: string | Date | null | undefined) {
   if (!value) {
     return "Not available";

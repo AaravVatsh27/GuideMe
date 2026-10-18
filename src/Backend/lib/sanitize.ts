@@ -1,23 +1,21 @@
-import DOMPurify from "isomorphic-dompurify";
+const SCRIPT_OR_STYLE_BLOCK = /<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
+const HTML_TAG = /<\/?[a-z!][^>]*>/gi;
+const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
 
 /**
- * Strip ALL HTML from a string — use for plain-text fields (bio, headline, notes).
- * Returns an empty string if the input is falsy.
+ * Turns user input into plain text for fields like bio, headline and notes:
+ * removes HTML tags (and the contents of script/style blocks) and control characters.
+ * The text is stored unescaped; React escapes it when rendering, so characters such as
+ * "&" are not stored as HTML entities.
  */
 export function sanitizeText(input: string): string {
   if (!input) return "";
-  return DOMPurify.sanitize(input.trim(), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
-}
 
-/**
- * Allow a safe subset of HTML — use for rich-text fields if ever needed.
- */
-export function sanitizeRichText(input: string): string {
-  if (!input) return "";
-  return DOMPurify.sanitize(input.trim(), {
-    ALLOWED_TAGS: ["b", "i", "em", "strong", "ul", "ol", "li", "p", "br", "a"],
-    ALLOWED_ATTR: ["href", "target", "rel"],
-  });
+  return input
+    .replace(SCRIPT_OR_STYLE_BLOCK, "")
+    .replace(HTML_TAG, "")
+    .replace(CONTROL_CHARACTERS, "")
+    .trim();
 }
 
 /**
@@ -25,11 +23,4 @@ export function sanitizeRichText(input: string): string {
  */
 export function isValidIndianPhone(phone: string): boolean {
   return /^(?:\+91|0)?[6-9]\d{9}$/.test(phone.trim());
-}
-
-/**
- * Validates an E.164 international phone number.
- */
-export function isValidE164Phone(phone: string): boolean {
-  return /^\+[1-9]\d{6,14}$/.test(phone.trim());
 }

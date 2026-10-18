@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Frontend/components/
 import { Textarea } from "@/Frontend/components/ui/textarea";
 
 import type { getAdminMentorVerificationQueueData } from "@/Backend/server/admin";
+import { getInitials } from "@/shared/format";
 import { cn } from "@/Frontend/lib/utils";
 import { isSafeHttpsUrl } from "@/shared/validations/url";
 
@@ -40,15 +41,6 @@ const tabTriggerClass =
 
 const sectionLabel = "text-xs font-semibold uppercase tracking-[0.12em] text-[#64748B]";
 
-function getInitials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "?";
-}
 
 function ApplicantAvatar({ applicant, className }: { applicant: Applicant; className: string }) {
   if (applicant.image) {

@@ -38,6 +38,7 @@ import { Skeleton } from "@/Frontend/components/ui/skeleton";
 import { Textarea } from "@/Frontend/components/ui/textarea";
 import { SESSION_JOIN_EARLY_WINDOW_MINUTES } from "@/shared/constants";
 import { cn } from "@/Frontend/lib/utils";
+import { formatCurrency } from "@/shared/format";
 
 type SessionStatus = "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
 type SessionType = "INTRO" | "PAID";
@@ -207,9 +208,6 @@ async function submitReview(sessionId: string, payload: {
   return response.json();
 }
 
-function formatCurrency(value: number | null | undefined) {
-  return `INR ${(value ?? 0).toLocaleString("en-IN")}`;
-}
 
 function formatShortTimestamp(value: string) {
   return new Date(value).toLocaleString("en-IN", {

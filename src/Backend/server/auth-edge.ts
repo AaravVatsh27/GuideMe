@@ -1,12 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 
-const AUTH_ROLES = ["STUDENT", "MENTOR", "ADMIN"] as const;
-
-type AuthRole = (typeof AUTH_ROLES)[number];
-
-function isAuthRole(value: unknown): value is AuthRole {
-  return typeof value === "string" && AUTH_ROLES.includes(value as AuthRole);
-}
+import { isAuthRole } from "@/shared/roles";
 
 export const authEdgeConfig = {
   trustHost: true,

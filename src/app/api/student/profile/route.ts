@@ -4,7 +4,7 @@ import { z } from "zod";
 import { auth } from "@/Backend/auth";
 import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
-import { getRedis } from "@/Backend/server/redis";
+import { getRedis } from "@/Backend/lib/redis";
 import { invalidateMatchingCacheForStudent } from "@/Backend/server/matching";
 import { imageUrlSchema } from "@/shared/validations/url";
 

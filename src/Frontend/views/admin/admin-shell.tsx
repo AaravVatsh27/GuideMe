@@ -23,6 +23,7 @@ import {
 import { signOut } from "next-auth/react";
 
 import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
+import { getInitials as getSharedInitials } from "@/shared/format";
 import { cn } from "@/Frontend/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/Frontend/components/ui/dropdown-menu";
 
@@ -71,15 +72,6 @@ function isNavItemMatch(pathname: string, href: string) {
   return pathname === href || (href !== "/admin" && pathname.startsWith(href));
 }
 
-function getInitials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "A";
-}
 
 function AdminAvatar({ adminName, size }: { adminName: string; size: "sm" | "lg" }) {
   return (
@@ -90,7 +82,7 @@ function AdminAvatar({ adminName, size }: { adminName: string; size: "sm" | "lg"
       )}
       aria-hidden="true"
     >
-      {getInitials(adminName)}
+      {getSharedInitials(adminName, "A")}
     </span>
   );
 }

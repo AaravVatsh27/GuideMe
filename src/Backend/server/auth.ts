@@ -7,8 +7,8 @@ import { compare } from "bcryptjs";
 import { getClientIp } from "@/Backend/lib/client-ip";
 import { adminLoginLimiter } from "@/Backend/lib/ratelimit";
 import { db } from "@/Backend/server/db";
+import { isAuthRole } from "@/shared/roles";
 
-const AUTH_ROLES = ["STUDENT", "MENTOR", "ADMIN"] as const;
 export const isEmailAuthEnabled = Boolean(
   process.env.RESEND_API_KEY && process.env.EMAIL_FROM,
 );
@@ -16,7 +16,6 @@ export const isGoogleAuthEnabled = Boolean(
   process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET,
 );
 
-type AuthRole = (typeof AUTH_ROLES)[number];
 type AuthClaims = {
   id?: string;
   role?: string;
@@ -25,10 +24,6 @@ type AuthClaims = {
 
 // How often a signed-in user's role and account status are re-read from the database.
 const CLAIMS_REFRESH_INTERVAL_SECONDS = 60;
-
-function isAuthRole(value: unknown): value is AuthRole {
-  return typeof value === "string" && AUTH_ROLES.includes(value as AuthRole);
-}
 
 /**
  * Loads the authoritative role and onboarding state for a user.

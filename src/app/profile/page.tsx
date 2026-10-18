@@ -23,6 +23,7 @@ import {
 import { db } from "@/Backend/server/db";
 
 import { ProfileSignOutButton } from "@/Frontend/views/profile/profile-sign-out-button";
+import { formatCurrency as formatRupees } from "@/shared/format";
 
 const joinedDateFormatter = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
@@ -52,11 +53,7 @@ function formatLabel(value: string | null | undefined) {
 }
 
 function formatCurrency(value: number | null | undefined) {
-  if (typeof value !== "number") {
-    return "Not set yet";
-  }
-
-  return `Rs. ${value}`;
+  return typeof value === "number" ? formatRupees(value) : "Not set yet";
 }
 
 function toRoute(path: string) {

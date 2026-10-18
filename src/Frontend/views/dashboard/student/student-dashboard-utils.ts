@@ -6,6 +6,9 @@ import {
   SCHOOL_STREAM_OPTIONS,
   UG_FOCUS_OPTIONS,
 } from "@/shared/student-onboarding";
+import { getInitials as getSharedInitials } from "@/shared/format";
+
+export { formatCurrency } from "@/shared/format";
 
 const ACRONYM_LABELS: Record<string, string> = {
   AI: "AI",
@@ -34,9 +37,6 @@ const ENUM_LABEL_OVERRIDES: Record<string, string> = {
   UNDECIDED: "Not sure yet",
 };
 
-export function formatCurrency(value: number | null | undefined) {
-  return `INR ${(value ?? 0).toLocaleString("en-IN")}`;
-}
 
 export function formatDateTime(value: string | Date) {
   return format(new Date(value), "EEE, d MMM yyyy 'at' h:mm a");
@@ -70,19 +70,6 @@ export function formatActivityLabel(action: string) {
   return formatEnumLabel(action);
 }
 
-export function getInitials(name: string | null | undefined) {
-  const parts = (name ?? "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
-
-  if (parts.length === 0) {
-    return "G";
-  }
-
-  return parts.map((part) => part.charAt(0).toUpperCase()).join("");
-}
 
 const CLASS_LABELS: Record<string, string> = Object.fromEntries(
   CLASS_OPTIONS.map((option) => [option.value, option.label]),
@@ -222,4 +209,8 @@ export function truncateSentence(value: string, maxLength: number): string {
     return `${sliced.slice(0, lastSpace).trimEnd()}…`;
   }
   return `${sliced.trimEnd()}…`;
+}
+
+export function getInitials(name: string | null | undefined) {
+  return getSharedInitials(name, "G");
 }

@@ -25,18 +25,14 @@ Everything here runs on the server: database access, authentication, payments, e
 | `razorpay.ts` | Razorpay payments: orders, signature checks, refunds. |
 | `resend.ts` | Sends emails through Resend using the templates in `/emails`. |
 | `openai.ts` | AI-generated post-session summaries. |
-| `redis.ts` | Upstash Redis client used by the student and mentor profile API routes. |
 
 ## `lib/`: small server utilities
 
-`api-helpers.ts` (JSON responses, error handling, rate-limit wrapper for API routes), `require-auth.ts`, `ratelimit.ts` (named rate limiters), `cache.ts` + `redis.ts` (Redis cache helpers), `otp.ts` + `hash.ts` (one-time codes), `sanitize.ts` (cleaning user text), `client-ip.ts`, `institution.ts`, `logger.ts`.
+`api-helpers.ts` (JSON responses, error handling, rate-limit wrapper for API routes), `ratelimit.ts` (named rate limiters), `cache.ts` + `redis.ts` (the one Upstash Redis client and cache helpers), `otp.ts` + `hash.ts` (one-time codes), `sanitize.ts` (cleaning user text), `client-ip.ts`, `logger.ts`.
 
-## `services/` and `repositories/`: college email verification
+## `services/`: college email verification
 
-The `/api/v1/verification/*` and `/api/v1/institutions/*` routes use these layers:
-
-- `services/`: business rules: `college.service.ts` (is this a college email?), `otp.service.ts` (issue and check codes), `email.service.ts` (send the code), `verification.service.ts`.
-- `repositories/`: database queries for colleges, mentors and verifications.
+The `/api/v1/verification/*` and `/api/v1/institutions/*` routes use `college.service.ts` (is this a college email?), `otp.service.ts` (issue and check codes) and `email.service.ts` (send the code).
 
 ## `validations/`: request schemas (Zod)
 

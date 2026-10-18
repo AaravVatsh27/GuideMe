@@ -25,6 +25,7 @@ import {
   type PublicPlatformSnapshot,
   type PublicReviewSpotlight,
 } from "@/Backend/server/public-data";
+import { formatCurrency } from "@/shared/format";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +35,6 @@ function formatNumber(value: number) {
   return value.toLocaleString("en-IN");
 }
 
-function formatCurrency(value: number) {
-  return `₹${Math.round(value).toLocaleString("en-IN")}`;
-}
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-IN", {

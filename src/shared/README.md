@@ -9,6 +9,8 @@ Pure constants and helper functions with no database access, no secrets and no R
 | `mentor-onboarding.ts` | Mentor onboarding options and labels (exams, degrees, years, help topics, availability days) plus related types. |
 | `student-onboarding.ts` | Student onboarding options and labels (class, board, stream, languages, state, mentorship needs, decision stage) plus related types. |
 | `mentor-dashboard-utils.ts` | Formatting helpers for the mentor dashboard (currency, dates, initials, slot keys, trends). Used by the server loader and the dashboard UI. |
+| `format.ts` | `formatCurrency` and `getInitials`, used everywhere amounts and avatars are shown. |
+| `roles.ts` | The user roles (`STUDENT`, `MENTOR`, `ADMIN`) and the `isAuthRole` check. |
 | `validations/url.ts` | Safe-URL checks (`isSafeHttpsUrl`, LinkedIn and image URL schemas). |
 
 Other shared folders: `src/types/` (TypeScript types, including the next-auth session type) and `src/constants/` (college-verification limits).
