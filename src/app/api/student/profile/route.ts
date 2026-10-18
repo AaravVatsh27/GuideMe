@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
 import { getRedis } from "@/Backend/lib/redis";
 import { invalidateMatchingCacheForStudent } from "@/Backend/server/matching";
 import { imageUrlSchema } from "@/shared/validations/url";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const studentSettingsSchema = z.object({
   notificationsEnabled: z.boolean().optional(),
@@ -52,16 +52,9 @@ async function readStoredSettings(userId: string) {
   return { ...DEFAULT_SETTINGS, ...(parsed.success ? parsed.data : {}) };
 }
 
-export const GET = withApiErrorHandling(async (_request: Request, _context, metadata) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  metadata.setUserId(session.user.id);
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can access profile settings" }, { status: 403 });
-  }
-
+export const GET = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can access profile settings" },
+  async (_request: Request, _context, { session }) => {
   const [user, studentProfile, settings] = await Promise.all([
     db.user.findUnique({
       where: { id: session.user.id },
@@ -97,20 +90,13 @@ export const GET = withApiErrorHandling(async (_request: Request, _context, meta
   });
 }, "/api/student/profile");
 
-export const PATCH = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  metadata.setUserId(session.user.id);
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can update profile settings" }, { status: 403 });
-  }
-
+export const PATCH = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can update profile settings" },
+  async (request: Request, _context, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsed = profileUpdateSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid payload", issues: parsed.error.flatten() }, { status: 400 });
+    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
   }
 
   const data = parsed.data;
@@ -187,16 +173,9 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
   return NextResponse.json({ user, studentProfile });
 }, "/api/student/profile");
 
-export const POST = withApiErrorHandling(async (_request: Request, _context, metadata) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  metadata.setUserId(session.user.id);
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can refresh matching" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can refresh matching" },
+  async (_request: Request, _context, { session }) => {
   await invalidateMatchingCacheForStudent(session.user.id);
   return NextResponse.json({ success: true });
 }, "/api/student/profile");

@@ -10,9 +10,10 @@ import {
   getExamLabel,
   getHelpTopicLabel,
 } from "@/shared/mentor-onboarding";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { searchLimiter } from "@/Backend/lib/ratelimit";
 import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const SCHOOL_MENTOR_YEARS = [1, 2] as const;
 const UG_MENTOR_YEARS = [3, 4, 5, 6] as const;
@@ -341,18 +342,14 @@ function computeRelevanceScore(input: {
   return Number(score.toFixed(2));
 }
 
-export const GET = withApiErrorHandling(async (request: Request) => {
+export const GET = defineRoute(
+  { auth: "none", rateLimit: searchLimiter },
+  async (request: Request) => {
   const rawQuery = Object.fromEntries(new URL(request.url).searchParams.entries());
-
-  const denied = await applyRateLimit(searchLimiter, getRateLimitId(request));
-  if (denied) return denied;
   const parsed = searchQuerySchema.safeParse(rawQuery);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid query parameters", issues: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid query parameters", 400, parsed.error.flatten());
   }
 
   const {

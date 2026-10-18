@@ -2,8 +2,7 @@ import { PaymentStatus, SessionStatus, SessionType } from "@prisma/client";
 import { addMinutes } from "date-fns";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
 import {
   createDailyMeetingToken,
@@ -13,20 +12,11 @@ import {
   SESSION_JOIN_EARLY_WINDOW_MINUTES,
   SESSION_ROOM_GRACE_MINUTES,
 } from "@/shared/constants";
+import { defineRoute } from "@/Backend/lib/define-route";
 
-export const GET = withApiErrorHandling(async (
-  _request: Request,
-  context: { params: { sessionId: string } },
-  metadata,
-) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
+export const GET = defineRoute(
+  {},
+  async (_request: Request, context: { params: { sessionId: string } }, { session }) => {
   const record = await db.session.findUnique({
     where: {
       id: context.params.sessionId,
@@ -60,29 +50,23 @@ export const GET = withApiErrorHandling(async (
   });
 
   if (!record) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    return apiErrorResponse("Session not found", 404);
   }
 
   if (record.studentId !== session.user.id && record.mentorId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiErrorResponse("Forbidden", 403);
   }
 
   if (record.status !== SessionStatus.SCHEDULED && record.status !== SessionStatus.ONGOING) {
-    return NextResponse.json(
-      { error: `This session is ${record.status.toLowerCase()}` },
-      { status: 409 },
-    );
+    return apiErrorResponse(`This session is ${record.status.toLowerCase()}`, 409);
   }
 
   if (record.type === SessionType.PAID && record.payment?.status !== PaymentStatus.CAPTURED) {
-    return NextResponse.json(
-      { error: "Payment must be completed before joining this session" },
-      { status: 402 },
-    );
+    return apiErrorResponse("Payment must be completed before joining this session", 402);
   }
 
   if (!record.meetingLink) {
-    return NextResponse.json({ error: "Meeting room is not ready yet" }, { status: 409 });
+    return apiErrorResponse("Meeting room is not ready yet", 409);
   }
 
   const roomOpensAt = addMinutes(record.scheduledAt, -SESSION_JOIN_EARLY_WINDOW_MINUTES);
@@ -93,7 +77,7 @@ export const GET = withApiErrorHandling(async (
   const now = new Date();
 
   if (now > roomClosesAt) {
-    return NextResponse.json({ error: "This session's room has closed" }, { status: 409 });
+    return apiErrorResponse("This session's room has closed", 409);
   }
 
   if (now < roomOpensAt) {

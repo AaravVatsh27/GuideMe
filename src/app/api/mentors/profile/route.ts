@@ -1,38 +1,22 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/Backend/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
 import { generalLimiter } from "@/Backend/lib/ratelimit";
 import { db } from "@/Backend/server/db";
 import { calculateFortyFiveMinutePrice, retireMentorAvailability } from "@/shared/mentor-onboarding";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
 import { mentorProfileUpdateSchema } from "@/Backend/validations/mentor";
+import { defineRoute } from "@/Backend/lib/define-route";
 
-export const PATCH = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-
-  const denied = await applyRateLimit(generalLimiter, getRateLimitId(request, session?.user?.id));
-  if (denied) return denied;
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "MENTOR") {
-    return NextResponse.json({ error: "Only mentors can update their profile" }, { status: 403 });
-  }
-
+export const PATCH = defineRoute(
+  { roles: ["MENTOR"], forbiddenMessage: "Only mentors can update their profile", rateLimit: generalLimiter },
+  async (request: Request, _context, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsed = mentorProfileUpdateSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid payload", issues: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
   }
 
   const data = parsed.data;
@@ -40,10 +24,7 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
   const hasPriceUpdate = data.priceMin !== undefined || data.priceMax !== undefined;
 
   if (data.priceMax !== undefined && data.priceMin === undefined) {
-    return NextResponse.json(
-      { error: "priceMin is required when updating pricing" },
-      { status: 400 },
-    );
+    return apiErrorResponse("priceMin is required when updating pricing", 400);
   }
 
   const existing = await db.mentorProfile.findUnique({
@@ -56,7 +37,7 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
   });
 
   if (!existing) {
-    return NextResponse.json({ error: "Mentor profile not found" }, { status: 404 });
+    return apiErrorResponse("Mentor profile not found", 404);
   }
 
   // Pull out fields that are not MentorProfile columns: availability slots and their

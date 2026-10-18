@@ -28,7 +28,7 @@ Everything here runs on the server: database access, authentication, payments, e
 
 ## `lib/`: small server utilities
 
-`api-helpers.ts` (JSON responses, error handling, rate-limit wrapper for API routes), `ratelimit.ts` (named rate limiters), `cache.ts` + `redis.ts` (the one Upstash Redis client and cache helpers), `otp.ts` + `hash.ts` (one-time codes), `sanitize.ts` (cleaning user text), `client-ip.ts`, `logger.ts`.
+`define-route.ts` (`defineRoute`, the wrapper every API route uses for auth, roles, rate limits and errors), `api-helpers.ts` (the standard error response and error handling), `ratelimit.ts` (named rate limiters), `cache.ts` + `redis.ts` (the one Upstash Redis client and cache helpers), `otp.ts` + `hash.ts` (one-time codes), `sanitize.ts` (cleaning user text), `client-ip.ts`, `logger.ts`.
 
 ## `services/`: college email verification
 

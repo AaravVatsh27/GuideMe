@@ -2,13 +2,13 @@ import { NotificationType, Role, SessionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/Backend/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
 import { generalLimiter } from "@/Backend/lib/ratelimit";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
 import { db } from "@/Backend/server/db";
 import { createReviewSchema } from "@/Backend/validations/review";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 type ReviewCreateResponse = {
   review: {
@@ -29,30 +29,14 @@ type ReviewCreateResponse = {
   };
 };
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-
-  const denied = await applyRateLimit(generalLimiter, getRateLimitId(request, session?.user?.id));
-  if (denied) return denied;
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== Role.STUDENT) {
-    return NextResponse.json({ error: "Only students can submit reviews" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can submit reviews", rateLimit: generalLimiter },
+  async (request: Request, _context, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsed = createReviewSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid review payload", issues: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid review payload", 400, parsed.error.flatten());
   }
 
   const sessionRecord = await db.session.findUnique({
@@ -88,26 +72,23 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   });
 
   if (!sessionRecord) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    return apiErrorResponse("Session not found", 404);
   }
 
   if (sessionRecord.studentId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiErrorResponse("Forbidden", 403);
   }
 
   if (sessionRecord.mentor.role !== Role.MENTOR) {
-    return NextResponse.json({ error: "Invalid mentor session" }, { status: 409 });
+    return apiErrorResponse("Invalid mentor session", 409);
   }
 
   if (sessionRecord.status !== SessionStatus.COMPLETED) {
-    return NextResponse.json(
-      { error: "Reviews can only be submitted after a session is completed" },
-      { status: 409 },
-    );
+    return apiErrorResponse("Reviews can only be submitted after a session is completed", 409);
   }
 
   if (sessionRecord.review) {
-    return NextResponse.json({ error: "A review already exists for this session" }, { status: 409 });
+    return apiErrorResponse("A review already exists for this session", 409);
   }
 
   const created = await db.$transaction(async (tx) => {

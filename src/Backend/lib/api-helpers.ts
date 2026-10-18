@@ -8,16 +8,15 @@ import { getClientIp } from "@/Backend/lib/client-ip";
 import { log } from "@/Backend/lib/logger";
 import type { RateLimiter } from "@/Backend/lib/ratelimit";
 
-interface ApiSuccessResponse<T = unknown> {
-  success: true;
-  data: T;
-}
-
+/**
+ * The one error shape every API route returns: `error` is a human-readable message and
+ * `issues` carries validation details when there are any.
+ */
 interface ApiErrorResponse {
   success: false;
   error: string;
   status: number;
-  details?: unknown;
+  issues?: unknown;
 }
 
 type ApiRouteMetadata = {
@@ -28,7 +27,7 @@ type ApiRouteMetadata = {
 
 type ApiStatusError = Error & { status: number; details?: unknown };
 
-type ApiHandlerContext = ApiRouteMetadata & {
+export type ApiHandlerContext = ApiRouteMetadata & {
   setUserId: (userId?: string | null) => void;
 };
 
@@ -99,13 +98,6 @@ export async function applyRateLimit(
 // ─── Response helpers ─────────────────────────────────────────────────────────
 
 /**
- * Consistent success envelope: { success: true, data: ... }
- */
-export function apiResponse<T>(data: T, httpStatus = 200): NextResponse<ApiSuccessResponse<T>> {
-  return NextResponse.json({ success: true, data } as ApiSuccessResponse<T>, { status: httpStatus });
-}
-
-/**
  * Consistent error envelope: { success: false, error: ..., details?: ... }
  */
 export function apiError(
@@ -117,7 +109,7 @@ export function apiError(
     success: false,
     error: message,
     status,
-    ...(details !== undefined ? { details } : {}),
+    ...(details !== undefined ? { issues: details } : {}),
   };
 }
 
@@ -271,13 +263,4 @@ export function withApiErrorHandling<TRequest extends Request = Request, TContex
       );
     }
   };
-}
-
-/**
- * Returns a 400 response for Zod validation failures using the flattened error format.
- */
-export function validationError(
-  flattenedErrors: { fieldErrors: Record<string, string[] | undefined>; formErrors: string[] },
-): NextResponse {
-  return apiErrorResponse("Validation failed", 400, flattenedErrors);
 }

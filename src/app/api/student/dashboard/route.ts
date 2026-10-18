@@ -2,20 +2,12 @@ import { SessionStatus } from "@prisma/client";
 import { addHours, isAfter, isBefore, subDays } from "date-fns";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
+import { defineRoute } from "@/Backend/lib/define-route";
 
-export const GET = withApiErrorHandling(async (_request: Request, _context, metadata) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  metadata.setUserId(session.user.id);
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can access this endpoint" }, { status: 403 });
-  }
-
+export const GET = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can access this endpoint" },
+  async (_request: Request, _context, { session }) => {
   const now = new Date();
   const next24Hours = addHours(now, 24);
 

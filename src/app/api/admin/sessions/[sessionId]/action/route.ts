@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { extractRequestIp } from "@/Backend/server/admin";
 import { db } from "@/Backend/server/db";
 import { cancelSessionById, completeSessionById } from "@/Backend/server/sessions";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const adminSessionActionSchema = z.discriminatedUnion("action", [
   z.object({
@@ -17,31 +17,14 @@ const adminSessionActionSchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-export const POST = withApiErrorHandling(async (
-  request: Request,
-  context: { params: { sessionId: string } },
-  metadata,
-) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["ADMIN"], forbiddenMessage: "Admin access required" },
+  async (request: Request, context: { params: { sessionId: string } }, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsed = adminSessionActionSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid payload", issues: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
   }
 
   const ipAddress = extractRequestIp(request);

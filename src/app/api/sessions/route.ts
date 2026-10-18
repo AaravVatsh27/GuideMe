@@ -2,8 +2,7 @@ import { Prisma, SessionStatus, SessionType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { bookingLimiter, generalLimiter } from "@/Backend/lib/ratelimit";
 import { db } from "@/Backend/server/db";
 import {
@@ -13,6 +12,7 @@ import {
   toSessionView,
 } from "@/Backend/server/sessions";
 import { createSessionSchema } from "@/Backend/validations/session";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const listSessionsQuerySchema = z.object({
   status: z.nativeEnum(SessionStatus).optional(),
@@ -21,33 +21,14 @@ const listSessionsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(10).default(10),
 });
 
-export const GET = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-
-  const denied = await applyRateLimit(generalLimiter, getRateLimitId(request, session?.user?.id));
-  if (denied) return denied;
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "STUDENT" && session.user.role !== "MENTOR") {
-    return NextResponse.json({ error: "Only students and mentors can access sessions" }, { status: 403 });
-  }
-
+export const GET = defineRoute(
+  { roles: ["STUDENT", "MENTOR"], forbiddenMessage: "Only students and mentors can access sessions", rateLimit: generalLimiter },
+  async (request: Request, _context, { session }) => {
   const query = Object.fromEntries(new URL(request.url).searchParams.entries());
   const parsedQuery = listSessionsQuerySchema.safeParse(query);
 
   if (!parsedQuery.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid query parameters",
-        issues: parsedQuery.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid query parameters", 400, parsedQuery.error.flatten());
   }
 
   const { status, type, page, limit } = parsedQuery.data;
@@ -81,33 +62,14 @@ export const GET = withApiErrorHandling(async (request: Request, _context, metad
   });
 }, "/api/sessions");
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-
-  const denied = await applyRateLimit(bookingLimiter, getRateLimitId(request, session?.user?.id));
-  if (denied) return denied;
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can book sessions" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can book sessions", rateLimit: bookingLimiter },
+  async (request: Request, _context, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsedBody = createSessionSchema.safeParse(payload);
 
   if (!parsedBody.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid session payload",
-        issues: parsedBody.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid session payload", 400, parsedBody.error.flatten());
   }
 
   const result = await createSessionBooking({

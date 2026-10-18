@@ -1,24 +1,17 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const saveMentorSchema = z.object({
   mentorId: z.string().uuid(),
 });
 
-export const GET = withApiErrorHandling(async (_request: Request, _context, metadata) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  metadata.setUserId(session.user.id);
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can access saved mentors" }, { status: 403 });
-  }
-
+export const GET = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can access saved mentors" },
+  async (_request: Request, _context, { session }) => {
   const saved = await db.savedMentor.findMany({
     where: { studentId: session.user.id },
     orderBy: { createdAt: "desc" },
@@ -48,20 +41,13 @@ export const GET = withApiErrorHandling(async (_request: Request, _context, meta
   return NextResponse.json({ data: saved });
 }, "/api/student/saved-mentors");
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  metadata.setUserId(session.user.id);
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can save mentors" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can save mentors" },
+  async (request: Request, _context, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsed = saveMentorSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid payload", issues: parsed.error.flatten() }, { status: 400 });
+    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
   }
 
   const mentor = await db.user.findUnique({
@@ -69,7 +55,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
     select: { id: true, role: true, isActive: true },
   });
   if (!mentor || mentor.role !== "MENTOR" || !mentor.isActive) {
-    return NextResponse.json({ error: "Mentor not found" }, { status: 404 });
+    return apiErrorResponse("Mentor not found", 404);
   }
 
   const saved = await db.savedMentor.upsert({

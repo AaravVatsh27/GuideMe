@@ -2,39 +2,23 @@ import { SessionStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { cacheDel, cacheKeys } from "@/Backend/lib/cache";
 import { db } from "@/Backend/server/db";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const createSessionNoteSchema = z.object({
   content: z.string().trim().min(1).max(1000),
 });
 
-export const POST = withApiErrorHandling(async (
-  request: Request,
-  context: { params: { sessionId: string } },
-  metadata,
-) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
+export const POST = defineRoute(
+  {},
+  async (request: Request, context: { params: { sessionId: string } }, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsedBody = createSessionNoteSchema.safeParse(payload);
 
   if (!parsedBody.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid note payload",
-        issues: parsedBody.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid note payload", 400, parsedBody.error.flatten());
   }
 
   const record = await db.session.findUnique({
@@ -50,19 +34,19 @@ export const POST = withApiErrorHandling(async (
   });
 
   if (!record) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    return apiErrorResponse("Session not found", 404);
   }
 
   if (record.studentId !== session.user.id && record.mentorId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiErrorResponse("Forbidden", 403);
   }
 
   if (record.studentId !== session.user.id) {
-    return NextResponse.json({ error: "Only the student can add session notes here" }, { status: 403 });
+    return apiErrorResponse("Only the student can add session notes here", 403);
   }
 
   if (record.status === SessionStatus.CANCELLED || record.status === SessionStatus.NO_SHOW) {
-    return NextResponse.json({ error: "Notes cannot be added to a cancelled session" }, { status: 409 });
+    return apiErrorResponse("Notes cannot be added to a cancelled session", 409);
   }
 
   const note = await db.sessionNote.create({

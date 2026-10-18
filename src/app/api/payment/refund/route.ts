@@ -2,8 +2,7 @@ import { PaymentStatus, PayoutStatus, SessionStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
 import { log } from "@/Backend/lib/logger";
 import { paymentLimiter } from "@/Backend/lib/ratelimit";
@@ -11,11 +10,23 @@ import { extractRequestIp } from "@/Backend/server/admin";
 import { db } from "@/Backend/server/db";
 import { createRefund } from "@/Backend/server/razorpay";
 import { sendRefundConfirmationEmail } from "@/Backend/server/resend";
+import { defineRoute } from "@/Backend/lib/define-route";
+import { timingSafeEqual } from "node:crypto";
 
 const refundSchema = z.object({
   sessionId: z.string().uuid("sessionId must be a valid UUID"),
   reason: z.string().trim().min(10).max(280),
 });
+
+function secretsMatch(candidate: string | undefined, secret: string) {
+  if (!candidate) {
+    return false;
+  }
+
+  const left = Buffer.from(candidate);
+  const right = Buffer.from(secret);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
 
 function isSystemRequest(request: Request) {
   const configuredSecret = process.env.GUIDEME_SYSTEM_SECRET?.trim();
@@ -27,34 +38,29 @@ function isSystemRequest(request: Request) {
   const bearerToken = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
   const headerToken = request.headers.get("x-guideme-system-secret")?.trim();
 
-  return bearerToken === configuredSecret || headerToken === configuredSecret;
+  return secretsMatch(bearerToken, configuredSecret) || secretsMatch(headerToken, configuredSecret);
 }
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
+// Called by admins from the panel, or by internal jobs with the system secret,
+// so auth is optional here and checked below.
+export const POST = defineRoute(
+  { auth: "optional", rateLimit: paymentLimiter },
+  async (request: Request, _context, { session, metadata }) => {
   const systemRequest = isSystemRequest(request);
 
-  const denied = await applyRateLimit(paymentLimiter, getRateLimitId(request, session?.user?.id));
-  if (denied) return denied;
-
-  if (!systemRequest && !session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!systemRequest && !session) {
+    return apiErrorResponse("Unauthorized", 401);
   }
 
-  metadata.setUserId(session?.user?.id);
-
   if (!systemRequest && session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Admin or system access required" }, { status: 403 });
+    return apiErrorResponse("Admin or system access required", 403);
   }
 
   const payload = await request.json().catch(() => null);
   const parsed = refundSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid payload", issues: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
   }
 
   const { sessionId, reason } = parsed.data;
@@ -78,25 +84,22 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   });
 
   if (!payment) {
-    return NextResponse.json({ error: "Payment not found for this session" }, { status: 404 });
+    return apiErrorResponse("Payment not found for this session", 404);
   }
 
   if (payment.status !== PaymentStatus.CAPTURED) {
-    return NextResponse.json(
-      { error: `Cannot refund a payment with status: ${payment.status}` },
-      { status: 409 },
-    );
+    return apiErrorResponse(`Cannot refund a payment with status: ${payment.status}`, 409);
   }
 
   if (!payment.razorpayPaymentId) {
-    return NextResponse.json({ error: "No captured payment ID on record" }, { status: 409 });
+    return apiErrorResponse("No captured payment ID on record", 409);
   }
 
   if (
     payment.refundStatus === PaymentStatus.REFUNDED ||
     payment.refundStatus === PaymentStatus.PARTIALLY_REFUNDED
   ) {
-    return NextResponse.json({ error: "Payment is already refunded" }, { status: 409 });
+    return apiErrorResponse("Payment is already refunded", 409);
   }
 
   const existingPayout = payment.session.payout;

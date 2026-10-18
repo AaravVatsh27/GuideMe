@@ -1,8 +1,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { log } from "@/Backend/lib/logger";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 /**
  * Daily.co sends a HMAC-SHA256 signature in the `Daily-Webhook-Timestamp` and
@@ -30,7 +31,10 @@ function verifyDailySignature(body: string, signature: string): boolean {
   return timingSafeEqual(expectedBuf, receivedBuf);
 }
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
+// Signed by the provider and retried from shared IPs: no session, no rate limit.
+export const POST = defineRoute(
+  { auth: "none", rateLimit: null },
+  async (request: Request, _context, { metadata }) => {
   // Read raw body for signature verification — must happen before any JSON parse
   const body = await request.text();
 
@@ -44,7 +48,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
       requestId: metadata.requestId,
       route: "/api/webhooks/daily",
     });
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    return apiErrorResponse("Invalid signature", 401);
   }
 
   const event = JSON.parse(body) as { type: string; payload?: unknown };

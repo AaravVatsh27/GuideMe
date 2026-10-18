@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const requestSchema = z.object({
   submittedName: z
@@ -21,31 +21,14 @@ function normalizeName(name: string) {
     .trim();
 }
 
-export const POST = withApiErrorHandling(async (request: Request) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (session.user.role !== "MENTOR") {
-    return NextResponse.json(
-      { error: "Only mentors can suggest institutions" },
-      { status: 403 },
-    );
-  }
-
+export const POST = defineRoute(
+  { roles: ["MENTOR"], forbiddenMessage: "Only mentors can suggest institutions" },
+  async (request: Request, _context, { session }) => {
   const body = await request.json().catch(() => null);
   const parsed = requestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid request",
-        issues: parsed.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid request", 400, parsed.error.flatten());
   }
 
   const { submittedName } = parsed.data;

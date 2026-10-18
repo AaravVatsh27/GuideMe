@@ -7,13 +7,14 @@ import {
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
 import { log } from "@/Backend/lib/logger";
 import { PLATFORM_CUT } from "@/shared/constants";
 import { db } from "@/Backend/server/db";
 import { sendBookingConfirmation, sendPaymentFailureEmail, sendRefundConfirmationEmail } from "@/Backend/server/resend";
 import { refundPaymentForClosedSession, releaseBookingIfSlotLost } from "@/Backend/server/sessions";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 function verifyWebhookSignature(body: string, signature: string): boolean {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
@@ -339,7 +340,10 @@ async function handleRefundProcessed(payload: any, requestId: string) {
   ]).catch(() => {});
 }
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
+// Signed by the provider and retried from shared IPs: no session, no rate limit.
+export const POST = defineRoute(
+  { auth: "none", rateLimit: null },
+  async (request: Request, _context, { metadata }) => {
   const signature =
     request.headers.get("x-razorpay-signature") ??
     request.headers.get("Razorpay-Signature") ??
@@ -351,7 +355,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
       requestId: metadata.requestId,
       route: "/api/webhooks/razorpay",
     });
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    return apiErrorResponse("Invalid signature", 400);
   }
 
   const event = JSON.parse(body) as { event: string; payload: unknown };

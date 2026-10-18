@@ -2,43 +2,27 @@ import { PaymentStatus, SessionStatus, SessionType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { cacheDel, cacheKeys } from "@/Backend/lib/cache";
 import { paymentLimiter } from "@/Backend/lib/ratelimit";
 import { DEFAULT_CURRENCY, PLATFORM_CUT } from "@/shared/constants";
 import { db } from "@/Backend/server/db";
 import { createOrder } from "@/Backend/server/razorpay";
 import { expireUnpaidBooking, isBookingHoldExpired } from "@/Backend/server/sessions";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const createOrderSchema = z.object({
   sessionId: z.string().uuid("sessionId must be a valid UUID"),
 });
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-
-  const denied = await applyRateLimit(paymentLimiter, getRateLimitId(request, session?.user?.id));
-  if (denied) return denied;
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can create payment orders" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can create payment orders", rateLimit: paymentLimiter },
+  async (request: Request, _context, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsed = createOrderSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid payload", issues: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
   }
 
   const { sessionId } = parsed.data;
@@ -54,35 +38,29 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   });
 
   if (!bookingSession) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    return apiErrorResponse("Session not found", 404);
   }
 
   if (bookingSession.studentId !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiErrorResponse("Forbidden", 403);
   }
 
   if (bookingSession.type !== SessionType.PAID) {
-    return NextResponse.json({ error: "Only paid sessions require a payment order" }, { status: 400 });
+    return apiErrorResponse("Only paid sessions require a payment order", 400);
   }
 
   if (bookingSession.status !== SessionStatus.SCHEDULED) {
-    return NextResponse.json(
-      { error: `Session is already ${bookingSession.status.toLowerCase()}` },
-      { status: 409 },
-    );
+    return apiErrorResponse(`Session is already ${bookingSession.status.toLowerCase()}`, 409);
   }
 
   // Return existing captured payment
   if (bookingSession.payment?.status === PaymentStatus.CAPTURED) {
-    return NextResponse.json({ error: "Session is already paid" }, { status: 409 });
+    return apiErrorResponse("Session is already paid", 409);
   }
 
   if (isBookingHoldExpired(bookingSession, bookingSession.payment?.status)) {
     await expireUnpaidBooking(sessionId);
-    return NextResponse.json(
-      { error: "This booking was not paid in time and has been released. Please book the slot again." },
-      { status: 410 },
-    );
+    return apiErrorResponse("This booking was not paid in time and has been released. Please book the slot again.", 410);
   }
 
   // Reuse existing pending order if present

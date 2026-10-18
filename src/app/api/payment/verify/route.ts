@@ -8,8 +8,7 @@ import {
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { cacheDel, cacheKeys } from "@/Backend/lib/cache";
 import { log } from "@/Backend/lib/logger";
 import { paymentLimiter } from "@/Backend/lib/ratelimit";
@@ -18,6 +17,7 @@ import { db } from "@/Backend/server/db";
 import { verifyPaymentSignature } from "@/Backend/server/razorpay";
 import { refundPaymentForClosedSession, releaseBookingIfSlotLost } from "@/Backend/server/sessions";
 import { sendBookingConfirmation } from "@/Backend/server/resend";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const verifyPaymentSchema = z.object({
   razorpayOrderId: z.string().trim().min(1),
@@ -26,30 +26,14 @@ const verifyPaymentSchema = z.object({
   sessionId: z.string().uuid(),
 });
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-
-  const denied = await applyRateLimit(paymentLimiter, getRateLimitId(request, session?.user?.id));
-  if (denied) return denied;
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can verify payments" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can verify payments", rateLimit: paymentLimiter },
+  async (request: Request, _context, { session, metadata }) => {
   const payload = await request.json().catch(() => null);
   const parsed = verifyPaymentSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid payload", issues: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
   }
 
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature, sessionId } = parsed.data;
@@ -75,7 +59,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
       },
     });
 
-    return NextResponse.json({ error: "Payment verification failed" }, { status: 400 });
+    return apiErrorResponse("Payment verification failed", 400);
   }
 
   const bookingSession = await db.session.findUnique({
@@ -112,19 +96,19 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   });
 
   if (!bookingSession) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    return apiErrorResponse("Session not found", 404);
   }
 
   if (bookingSession.studentId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiErrorResponse("Forbidden", 403);
   }
 
   if (!bookingSession.payment) {
-    return NextResponse.json({ error: "Payment record not found" }, { status: 404 });
+    return apiErrorResponse("Payment record not found", 404);
   }
 
   if (bookingSession.type !== SessionType.PAID) {
-    return NextResponse.json({ error: "Only paid sessions can be verified" }, { status: 400 });
+    return apiErrorResponse("Only paid sessions can be verified", 400);
   }
 
   if (
@@ -133,10 +117,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
     bookingSession.payment?.razorpayOrderId === razorpayOrderId &&
     (await refundPaymentForClosedSession({ sessionId, razorpayPaymentId }))
   ) {
-    return NextResponse.json(
-      { error: "This booking was cancelled before your payment completed. A full refund has been issued." },
-      { status: 409 },
-    );
+    return apiErrorResponse("This booking was cancelled before your payment completed. A full refund has been issued.", 409);
   }
 
   if (
@@ -144,14 +125,11 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
     bookingSession.status === SessionStatus.NO_SHOW ||
     bookingSession.status === SessionStatus.COMPLETED
   ) {
-    return NextResponse.json(
-      { error: `Cannot verify payment for a ${bookingSession.status.toLowerCase()} session` },
-      { status: 409 },
-    );
+    return apiErrorResponse(`Cannot verify payment for a ${bookingSession.status.toLowerCase()} session`, 409);
   }
 
   if (bookingSession.payment.razorpayOrderId !== razorpayOrderId) {
-    return NextResponse.json({ error: "Order does not match payment record" }, { status: 409 });
+    return apiErrorResponse("Order does not match payment record", 409);
   }
 
   // Already captured — idempotent response
@@ -160,13 +138,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   }
 
   if (await releaseBookingIfSlotLost({ sessionId, razorpayPaymentId })) {
-    return NextResponse.json(
-      {
-        error:
-          "This slot was booked by someone else before your payment completed. A full refund has been issued.",
-      },
-      { status: 409 },
-    );
+    return apiErrorResponse("This slot was booked by someone else before your payment completed. A full refund has been issued.", 409);
   }
 
   const platformCut = Math.round(bookingSession.price * PLATFORM_CUT);

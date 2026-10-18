@@ -1,8 +1,10 @@
 import { db } from "@/Backend/server/db";
 import { NextResponse } from "next/server";
+import { defineRoute } from "@/Backend/lib/define-route";
 
-export async function GET(request: Request) {
-  try {
+export const GET = defineRoute(
+  { auth: "none" },
+  async (request: Request) => {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";
     const limitParam = searchParams.get("limit");
@@ -57,11 +59,6 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({ results });
-  } catch (error) {
-    console.error("Institution search failed:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  "/api/v1/institutions/search",
+);

@@ -2,10 +2,11 @@ import { MentorTier, VerificationEvidenceType, VerificationProvider, Verificatio
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
 import { db } from "@/Backend/server/db";
 import { isVerifiableInstitutionalEmail, resolveCollegeFromEmail } from "@/Backend/services/college.service";
 import { OTP_PURPOSE, verifyOtpChallenge } from "@/Backend/services/otp.service";
+import { defineRoute } from "@/Backend/lib/define-route";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 
 const verifyEmailSchema = z.object({
   email: z.string().trim().email(),
@@ -26,39 +27,22 @@ function shouldUpgradeTier(currentTier: MentorTier | undefined, verifiedTier: Me
   return currentTier === MentorTier.RISING && TIER_RANK[verifiedTier] > TIER_RANK[currentTier];
 }
 
-export async function POST(request: Request) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-  }
-
-  if (session.user.role !== "MENTOR") {
-    return NextResponse.json(
-      { success: false, message: "Only mentors can verify college email." },
-      { status: 403 },
-    );
-  }
-
+export const POST = defineRoute(
+  { roles: ["MENTOR"], forbiddenMessage: "Only mentors can verify college email." },
+  async (request: Request, _context, { session }) => {
   const mentorId = session.user.id;
   const payload = await request.json().catch(() => null);
   const parsed = verifyEmailSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { success: false, message: "Please enter your institutional email address." },
-      { status: 400 },
-    );
+    return apiErrorResponse("Please enter your institutional email address.", 400);
   }
 
   const email = parsed.data.email.trim().toLowerCase();
   const college = await resolveCollegeFromEmail(email);
 
   if (!college || !isVerifiableInstitutionalEmail(email, college)) {
-    return NextResponse.json(
-      { success: false, message: "Please enter your institutional email address." },
-      { status: 400 },
-    );
+    return apiErrorResponse("Please enter your institutional email address.", 400);
   }
 
   const verification = await verifyOtpChallenge({
@@ -71,16 +55,9 @@ export async function POST(request: Request) {
   if (!verification.ok) {
     const status = verification.reason === "redis_unavailable" ? 503 : 400;
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          status === 503
+    return apiErrorResponse(status === 503
             ? "Verification is temporarily unavailable. Please try again later."
-            : "Invalid or expired verification code.",
-      },
-      { status },
-    );
+            : "Invalid or expired verification code.", status);
   }
 
   const result = await db.$transaction(async (tx) => {
@@ -155,17 +132,11 @@ export async function POST(request: Request) {
   });
 
   if (!result) {
-    return NextResponse.json(
-      { success: false, message: "Mentor profile not found." },
-      { status: 404 },
-    );
+    return apiErrorResponse("Mentor profile not found.", 404);
   }
 
   if (result === "email_taken") {
-    return NextResponse.json(
-      { success: false, message: "This college email is already verified on another account." },
-      { status: 409 },
-    );
+    return apiErrorResponse("This college email is already verified on another account.", 409);
   }
 
   return NextResponse.json({
@@ -181,4 +152,6 @@ export async function POST(request: Request) {
       status: result.status,
     },
   });
-}
+},
+  "/api/v1/verification/email/verify",
+);

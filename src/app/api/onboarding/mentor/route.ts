@@ -2,8 +2,8 @@ import { Prisma, type MentorTier } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth, updateSession } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { updateSession } from "@/Backend/auth";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { DEFAULT_TIMEZONE } from "@/shared/constants";
 import { db } from "@/Backend/server/db";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
@@ -18,6 +18,7 @@ import {
   mentorPricingStepSchema,
   mentorProfileStepSchema,
 } from "@/Backend/validations/mentor";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const patchRequestSchema = z.object({
   step: z.number().int().min(1).max(7),
@@ -275,28 +276,9 @@ function getValidatedStepData(
   }
 }
 
-export const PATCH = withApiErrorHandling(
-  async (request: Request, _context, metadata) => {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    metadata.setUserId(session.user.id);
-
-    if (session.user.role !== "MENTOR") {
-      return NextResponse.json(
-        {
-          error:
-            "Only mentors can use this onboarding flow",
-        },
-        { status: 403 },
-      );
-    }
+export const PATCH = defineRoute(
+  { roles: ["MENTOR"], forbiddenMessage: "Only mentors can use this onboarding flow" },
+  async (request: Request, _context, { session }) => {
 
     const payload = await request
       .json()
@@ -306,14 +288,7 @@ export const PATCH = withApiErrorHandling(
       patchRequestSchema.safeParse(payload);
 
     if (!parsedRequest.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid onboarding request",
-          issues:
-            parsedRequest.error.flatten(),
-        },
-        { status: 400 },
-      );
+      return apiErrorResponse("Invalid onboarding request", 400, parsedRequest.error.flatten());
     }
 
     const existing = await db.user.findUnique({
@@ -372,10 +347,7 @@ export const PATCH = withApiErrorHandling(
     });
 
     if (!existing) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 },
-      );
+      return apiErrorResponse("User not found", 404);
     }
 
     const existingDraft =
@@ -393,14 +365,7 @@ export const PATCH = withApiErrorHandling(
       );
 
     if (!validatedStep.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid step data",
-          issues:
-            validatedStep.error.flatten(),
-        },
-        { status: 400 },
-      );
+      return apiErrorResponse("Invalid step data", 400, validatedStep.error.flatten());
     }
 
     const finalValidation =
@@ -414,15 +379,7 @@ export const PATCH = withApiErrorHandling(
       finalValidation &&
       !finalValidation.success
     ) {
-      return NextResponse.json(
-        {
-          error:
-            "Complete all required mentor onboarding fields before submitting",
-          issues:
-            finalValidation.error.flatten(),
-        },
-        { status: 400 },
-      );
+      return apiErrorResponse("Complete all required mentor onboarding fields before submitting", 400, finalValidation.error.flatten());
     }
 
     const maxSavedStep = Math.max(
@@ -481,13 +438,7 @@ export const PATCH = withApiErrorHandling(
             });
 
           if (!institution) {
-            return NextResponse.json(
-              {
-                error:
-                  "The selected institution could not be found.",
-              },
-              { status: 400 },
-            );
+            return apiErrorResponse("The selected institution could not be found.", 400);
           }
 
           createStepData.institutionId =

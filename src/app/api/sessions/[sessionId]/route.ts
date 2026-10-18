@@ -2,8 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
 import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 import {
@@ -13,6 +12,7 @@ import {
   sessionDetailsInclude,
   toSessionView,
 } from "@/Backend/server/sessions";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const sessionPatchSchema = z.discriminatedUnion("action", [
   z.object({
@@ -35,25 +35,15 @@ type SessionDetailsResponse = Prisma.SessionGetPayload<{
   include: typeof sessionDetailsInclude;
 }>;
 
-export const GET = withApiErrorHandling(async (
-  _request: Request,
-  context: { params: { sessionId: string } },
-  metadata,
-) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
+export const GET = defineRoute(
+  {},
+  async (_request: Request, context: { params: { sessionId: string } }, { session }) => {
   const cacheKey = cacheKeys.session(context.params.sessionId);
   const cached = await cacheGet<SessionDetailsResponse>(cacheKey);
 
   if (cached) {
     if (cached.studentId !== session.user.id && cached.mentorId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiErrorResponse("Forbidden", 403);
     }
     return NextResponse.json(toSessionView(cached, session.user.id));
   }
@@ -66,11 +56,11 @@ export const GET = withApiErrorHandling(async (
   });
 
   if (!record) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    return apiErrorResponse("Session not found", 404);
   }
 
   if (record.studentId !== session.user.id && record.mentorId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiErrorResponse("Forbidden", 403);
   }
 
   cacheSet(cacheKey, record, cacheTtl.sessionDetails).catch(() => {});
@@ -78,30 +68,14 @@ export const GET = withApiErrorHandling(async (
   return NextResponse.json(toSessionView(record, session.user.id));
 }, "/api/sessions/[sessionId]");
 
-export const PATCH = withApiErrorHandling(async (
-  request: Request,
-  context: { params: { sessionId: string } },
-  metadata,
-) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
+export const PATCH = defineRoute(
+  {},
+  async (request: Request, context: { params: { sessionId: string } }, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsedBody = sessionPatchSchema.safeParse(payload);
 
   if (!parsedBody.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid session update payload",
-        issues: parsedBody.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid session update payload", 400, parsedBody.error.flatten());
   }
 
   switch (parsedBody.data.action) {

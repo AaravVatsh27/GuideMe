@@ -1,39 +1,23 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { cancelSessionById, toSessionView } from "@/Backend/server/sessions";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const cancelSessionRequestSchema = z.object({
   reason: z.string().trim().min(10).max(280),
   noShow: z.boolean().optional(),
 });
 
-export const POST = withApiErrorHandling(async (
-  request: Request,
-  context: { params: { sessionId: string } },
-  metadata,
-) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
+export const POST = defineRoute(
+  {},
+  async (request: Request, context: { params: { sessionId: string } }, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsedBody = cancelSessionRequestSchema.safeParse(payload);
 
   if (!parsedBody.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid cancellation payload",
-        issues: parsedBody.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid cancellation payload", 400, parsedBody.error.flatten());
   }
 
   const result = await cancelSessionById({

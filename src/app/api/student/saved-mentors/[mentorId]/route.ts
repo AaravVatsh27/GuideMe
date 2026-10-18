@@ -1,25 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 type RouteParams = { params: Promise<{ mentorId: string }> };
 
-export const DELETE = withApiErrorHandling(async (
-  _request: Request,
-  context: RouteParams,
-  metadata,
-) => {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  metadata.setUserId(session.user.id);
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can remove saved mentors" }, { status: 403 });
-  }
-
+export const DELETE = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can remove saved mentors" },
+  async (_request: Request, context: RouteParams, { session }) => {
   const { mentorId } = await context.params;
   await db.savedMentor.deleteMany({
     where: {

@@ -2,13 +2,13 @@ import { PayoutStatus, SessionStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { log } from "@/Backend/lib/logger";
 import { generalLimiter } from "@/Backend/lib/ratelimit";
 import { extractRequestIp } from "@/Backend/server/admin";
 import { db } from "@/Backend/server/db";
 import { sendPayoutConfirmation } from "@/Backend/server/resend";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const processPayoutsSchema = z.object({
   payoutIds: z.array(z.string().uuid()).min(1).max(50),
@@ -17,30 +17,14 @@ const processPayoutsSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-
-  const denied = await applyRateLimit(generalLimiter, getRateLimitId(request, session?.user?.id));
-  if (denied) return denied;
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["ADMIN"], forbiddenMessage: "Admin access required", rateLimit: generalLimiter },
+  async (request: Request, _context, { session, metadata }) => {
   const payload = await request.json().catch(() => null);
   const parsed = processPayoutsSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid payload", issues: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
   }
 
   const { payoutIds, transactionId, upiId, notes } = parsed.data;
@@ -70,10 +54,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   });
 
   if (payouts.length === 0) {
-    return NextResponse.json(
-      { error: "No pending payouts for completed sessions found for the given IDs" },
-      { status: 404 },
-    );
+    return apiErrorResponse("No pending payouts for completed sessions found for the given IDs", 404);
   }
 
   const skipped = payoutIds.filter((id) => !payouts.find((p) => p.id === id));

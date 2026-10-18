@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { emailPreviewRegistry, emailPreviewTemplates, renderEmailTemplate } from "@emails";
+import { defineRoute } from "@/Backend/lib/define-route";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 
 type RouteParams = { params: Promise<{ template: string }> };
 
-export const GET = withApiErrorHandling(async (
-  request: Request,
-  context: RouteParams,
-) => {
+export const GET = defineRoute(
+  { auth: "optional" },
+  async (request: Request, context: RouteParams, { session }) => {
+  // Previews are a development tool; in production only admins may see them.
+  if (process.env.NODE_ENV === "production" && session?.user.role !== "ADMIN") {
+    return apiErrorResponse("Not found", 404);
+  }
+
   const { template } = await context.params;
   const preview = emailPreviewRegistry[template as keyof typeof emailPreviewRegistry];
 

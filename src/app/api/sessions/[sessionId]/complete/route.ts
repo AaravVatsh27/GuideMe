@@ -1,39 +1,23 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { completeSessionById, toSessionView } from "@/Backend/server/sessions";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const completeSessionRequestSchema = z.object({
   transcript: z.string().trim().max(12000).optional(),
   endedAt: z.coerce.date().optional(),
 });
 
-export const POST = withApiErrorHandling(async (
-  request: Request,
-  context: { params: { sessionId: string } },
-  metadata,
-) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
+export const POST = defineRoute(
+  {},
+  async (request: Request, context: { params: { sessionId: string } }, { session }) => {
   const payload = await request.json().catch(() => ({}));
   const parsedBody = completeSessionRequestSchema.safeParse(payload);
 
   if (!parsedBody.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid completion payload",
-        issues: parsedBody.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid completion payload", 400, parsedBody.error.flatten());
   }
 
   const updatedSession = await completeSessionById({

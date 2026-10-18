@@ -1,12 +1,13 @@
 import { addDays, addMinutes } from "date-fns";
 import { NextResponse } from "next/server";
 
-import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 import { generalLimiter } from "@/Backend/lib/ratelimit";
 import { DEFAULT_TIMEZONE, SESSION_DURATIONS } from "@/shared/constants";
 import { db } from "@/Backend/server/db";
 import { slotHoldingSessionWhere } from "@/Backend/server/sessions";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 type RouteParams = { params: Promise<{ username: string }> };
 
@@ -103,14 +104,13 @@ function zonedTimeToDate(dateKey: string, time: string, timeZone: string) {
   return new Date(wallClockAsUtc - offsetAtGuess);
 }
 
-export const GET = withApiErrorHandling(async (request: Request, context: RouteParams) => {
+export const GET = defineRoute(
+  { auth: "none", rateLimit: generalLimiter },
+  async (request: Request, context: RouteParams) => {
   const { username } = await context.params;
 
-  const denied = await applyRateLimit(generalLimiter, getRateLimitId(request));
-  if (denied) return denied;
-
   if (!username || username.length < 2) {
-    return NextResponse.json({ error: "Invalid username" }, { status: 400 });
+    return apiErrorResponse("Invalid username", 400);
   }
 
   const mentor = await db.user.findFirst({
@@ -132,7 +132,7 @@ export const GET = withApiErrorHandling(async (request: Request, context: RouteP
   });
 
   if (!mentor) {
-    return NextResponse.json({ error: "Mentor not found" }, { status: 404 });
+    return apiErrorResponse("Mentor not found", 404);
   }
 
   const now = new Date();

@@ -2,39 +2,22 @@ import { NotificationType, Role } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const flagReviewSchema = z.object({
   reason: z.string().trim().min(5).max(280).optional(),
 });
 
-export const POST = withApiErrorHandling(async (
-  request: Request,
-  context: { params: { reviewId: string } },
-  metadata,
-) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "MENTOR") {
-    return NextResponse.json({ error: "Only mentors can flag reviews" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["MENTOR"], forbiddenMessage: "Only mentors can flag reviews" },
+  async (request: Request, context: { params: { reviewId: string } }, { session }) => {
   const payload = await request.json().catch(() => ({}));
   const parsed = flagReviewSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid payload", issues: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
   }
 
   const review = await db.review.findUnique({
@@ -50,11 +33,11 @@ export const POST = withApiErrorHandling(async (
   });
 
   if (!review) {
-    return NextResponse.json({ error: "Review not found" }, { status: 404 });
+    return apiErrorResponse("Review not found", 404);
   }
 
   if (review.mentorId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiErrorResponse("Forbidden", 403);
   }
 
   const admins = await db.user.findMany({

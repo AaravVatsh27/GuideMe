@@ -2,8 +2,7 @@ import { MentorTier, VerificationStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import {
   autoAssignMentorTier,
   extractRequestIp,
@@ -12,6 +11,7 @@ import {
 import { db } from "@/Backend/server/db";
 import { sendWelcomeMentorEmail } from "@/Backend/server/resend";
 import { getAppUrl } from "@/Backend/lib/env";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const bulkMentorActionSchema = z.discriminatedUnion("action", [
   z.object({
@@ -29,27 +29,14 @@ const bulkMentorActionSchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["ADMIN"], forbiddenMessage: "Admin access required" },
+  async (request: Request, _context, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsed = bulkMentorActionSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid payload", issues: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
   }
 
   const mentors = await db.user.findMany({
@@ -72,7 +59,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   });
 
   if (mentors.length === 0) {
-    return NextResponse.json({ error: "No mentors found" }, { status: 404 });
+    return apiErrorResponse("No mentors found", 404);
   }
 
   const ipAddress = extractRequestIp(request);

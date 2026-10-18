@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth, updateSession } from "@/Backend/auth";
-import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
+import { updateSession } from "@/Backend/auth";
+import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
 import { invalidateMatchingCacheForStudent } from "@/Backend/server/matching";
 import {
@@ -32,6 +32,7 @@ import {
   type SchoolingMode,
   type TargetExam,
 } from "@prisma/client";
+import { defineRoute } from "@/Backend/lib/define-route";
 
 const STUDENT_DASHBOARD_PATH = "/dashboard/student";
 const STUDENT_DRAFT_STREAM = "UNDECIDED";
@@ -188,45 +189,20 @@ function buildPersistedStudentProfile(
   };
 }
 
-export const PATCH = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json(
-      { error: "Only students can save this onboarding flow" },
-      { status: 403 },
-    );
-  }
-
+export const PATCH = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can save this onboarding flow" },
+  async (request: Request, _context, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsedRequest = patchRequestSchema.safeParse(payload);
 
   if (!parsedRequest.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid onboarding request",
-        issues: parsedRequest.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid onboarding request", 400, parsedRequest.error.flatten());
   }
 
   const validatedStep = getValidatedStepData(parsedRequest.data.step, parsedRequest.data.data);
 
   if (!validatedStep.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid step data",
-        issues: validatedStep.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid step data", 400, validatedStep.error.flatten());
   }
 
   const existing = await db.user.findUnique({
@@ -259,7 +235,7 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
   });
 
   if (!existing) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return apiErrorResponse("User not found", 404);
   }
 
   const savedStep = Math.max(existing.onboardingStep, parsedRequest.data.step);
@@ -297,30 +273,14 @@ export const PATCH = withApiErrorHandling(async (request: Request, _context, met
   });
 }, "/api/onboarding/student");
 
-export const POST = withApiErrorHandling(async (request: Request, _context, metadata) => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  metadata.setUserId(session.user.id);
-
-  if (session.user.role !== "STUDENT") {
-    return NextResponse.json({ error: "Only students can complete this onboarding flow" }, { status: 403 });
-  }
-
+export const POST = defineRoute(
+  { roles: ["STUDENT"], forbiddenMessage: "Only students can complete this onboarding flow" },
+  async (request: Request, _context, { session }) => {
   const payload = await request.json().catch(() => null);
   const parsed = studentOnboardingSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid onboarding data",
-        issues: parsed.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return apiErrorResponse("Invalid onboarding data", 400, parsed.error.flatten());
   }
 
   // Only validated values are written; the raw request body is never used directly.
