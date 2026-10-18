@@ -29,9 +29,9 @@ const chipTones = [
 
 // Cards peeking out behind the front card of the carousel.
 const stackLayers = [
-  { offset: 1, background: "bg-white/60" },
-  { offset: 2, background: "bg-white/35" },
-  { offset: 3, background: "bg-white/20" },
+  { offset: 1, background: "border border-[#E0E7FF] bg-white/70" },
+  { offset: 2, background: "border border-[#E0E7FF] bg-white/45" },
+  { offset: 3, background: "border border-[#E0E7FF] bg-white/25" },
 ];
 
 // Explicit light colors: the shared Tabs switch to dark-theme colors when <html> has the dark class.
@@ -84,7 +84,7 @@ function ApplicationCard({ applicant, onOpen }: { applicant: Applicant; onOpen: 
       type="button"
       onClick={onOpen}
       aria-label={`Open application from ${applicant.name}`}
-      className="relative z-10 flex w-[calc(100%-36px)] flex-col rounded-[20px] bg-white p-4 text-left shadow-[0_12px_32px_-12px_rgba(15,23,42,0.35)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 sm:w-[300px]"
+      className="relative z-10 flex w-[calc(100%-36px)] flex-col rounded-[20px] bg-white p-4 text-left shadow-[0_12px_32px_-16px_rgba(79,70,229,0.25)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 sm:w-[300px]"
     >
       <div className="flex min-h-6 gap-1.5 overflow-hidden">
         {applicant.profile.specialisations.slice(0, 2).map((topic, index) => (
@@ -289,22 +289,22 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
 
       <section
         className={cn(
-          "relative overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#4F46E5_0%,#7C3AED_100%)] text-white",
+          "relative overflow-hidden rounded-[24px] border border-[#E0E7FF] bg-[linear-gradient(135deg,#F5F3FF_0%,#EEF2FF_100%)] text-[#0F172A]",
           queue.length > 0 && filteredQueue.length <= 3 ? "p-8" : "p-6 sm:p-8",
         )}
       >
         {queue.length === 0 ? (
           <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
-            <CheckCircle2 className="size-10 text-white" aria-hidden="true" />
-            <p className="mt-3 text-lg font-semibold">All caught up</p>
-            <p className="mt-1 text-sm text-white/80">No mentor applications are waiting for review.</p>
+            <CheckCircle2 className="size-10 text-[#16A34A]" aria-hidden="true" />
+            <p className="mt-3 text-lg font-semibold text-[#0F172A]">All caught up</p>
+            <p className="mt-1 text-sm text-[#64748B]">No mentor applications are waiting for review.</p>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold">Applications to review:</h2>
+              <h2 className="text-lg font-semibold text-[#0F172A]">Applications to review:</h2>
               {filteredQueue.length > 0 ? (
-                <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium" aria-live="polite">
+                <span className="rounded-full bg-[#FFFFFF] px-2.5 py-0.5 text-xs font-medium text-[#64748B]" aria-live="polite">
                   {carouselIndex + 1} of {filteredQueue.length}
                 </span>
               ) : null}
@@ -334,13 +334,13 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
                   onClick={() => step(1)}
                   disabled={filteredQueue.length < 2}
                   aria-label="Next application"
-                  className="absolute -right-3 top-1/2 z-20 flex size-11 sm:right-0 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#4F46E5] shadow-[0_8px_20px_-8px_rgba(15,23,42,0.45)] transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 disabled:opacity-50 disabled:hover:scale-100"
+                  className="absolute -right-3 top-1/2 z-20 flex size-11 sm:right-0 -translate-y-1/2 items-center justify-center rounded-full border border-[#E2E8F0] bg-white text-[#4F46E5] shadow-[0_4px_12px_-6px_rgba(15,23,42,0.18)] transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]/40 disabled:opacity-50 disabled:hover:scale-100"
                 >
                   <ChevronRight className="size-5" />
                 </button>
               </div>
             ) : (
-              <p className="mt-5 text-sm text-white/80">No applications match your search.</p>
+              <p className="mt-5 text-sm text-[#64748B]">No applications match your search.</p>
             )}
           </>
         )}

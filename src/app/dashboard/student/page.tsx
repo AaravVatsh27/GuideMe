@@ -414,10 +414,10 @@ export default function StudentDashboardPage() {
 
       {/* Upcoming session */}
       {data.upcomingSession ? (
-        <Card className="rounded-2xl border-violet-200 bg-gradient-to-br from-violet-700 via-fuchsia-600 to-pink-500 text-white shadow-md">
+        <Card className="rounded-2xl border border-[#E0E7FF] bg-[linear-gradient(135deg,#F5F3FF_0%,#EEF2FF_100%)] text-[#0F172A] shadow-sm">
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="flex items-center gap-2 text-base font-bold text-white">
-              <CalendarClock className="size-4 text-violet-100" />
+            <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0F172A]">
+              <CalendarClock className="size-4 text-[#4F46E5]" />
               Next session
             </CardTitle>
           </CardHeader>
@@ -427,11 +427,11 @@ export default function StudentDashboardPage() {
                 src={data.upcomingSession.mentor.image}
                 alt={data.upcomingSession.mentor.name}
                 fallback={getInitials(data.upcomingSession.mentor.name)}
-                className="size-11 ring-2 ring-white/30"
+                className="size-11 ring-2 ring-white"
               />
               <div>
-                <p className="font-semibold text-white text-sm">{data.upcomingSession.mentor.name}</p>
-                <p className="text-xs text-violet-100">
+                <p className="font-semibold text-[#0F172A] text-sm">{data.upcomingSession.mentor.name}</p>
+                <p className="text-xs text-[#64748B]">
                   {data.upcomingSession.mentor.mentorProfile?.headline ??
                     data.upcomingSession.mentor.mentorProfile?.college ??
                     "Mentor session"}
@@ -439,17 +439,17 @@ export default function StudentDashboardPage() {
               </div>
             </div>
 
-            <div className="grid gap-2 rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm sm:grid-cols-2">
+            <div className="grid gap-2 rounded-xl border border-[#E0E7FF] bg-white p-3 sm:grid-cols-2">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-100">Scheduled</p>
-                <p className="mt-1 text-xs font-medium text-white">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#4F46E5]">Scheduled</p>
+                <p className="mt-1 text-xs font-medium text-[#334155]">
                   {formatDateTime(data.upcomingSession.scheduledAt)}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-100">Countdown</p>
-                <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-white">
-                  <Clock3 className="size-3.5 text-violet-100" />
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#4F46E5]">Countdown</p>
+                <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-[#334155]">
+                  <Clock3 className="size-3.5 text-[#4F46E5]" />
                   {countdown?.label ?? "Starting soon"}
                 </p>
               </div>
@@ -461,18 +461,18 @@ export default function StudentDashboardPage() {
                   href={data.upcomingSession.meetingLink}
                   target="_blank"
                   rel="noreferrer"
-                  className={buttonVariants({ size: "sm", className: "rounded-xl bg-white text-violet-900 hover:bg-violet-50 font-semibold text-xs" })}
+                  className={buttonVariants({ size: "sm", className: "rounded-xl bg-[#4F46E5] text-white hover:bg-[#4338CA] font-semibold text-xs" })}
                 >
                   Join session
                 </a>
               ) : (
-                <Link href="/dashboard/student/sessions" className={buttonVariants({ size: "sm", className: "rounded-xl bg-white text-violet-900 hover:bg-violet-50 font-semibold text-xs" })}>
+                <Link href="/dashboard/student/sessions" className={buttonVariants({ size: "sm", className: "rounded-xl bg-[#4F46E5] text-white hover:bg-[#4338CA] font-semibold text-xs" })}>
                   Open sessions
                 </Link>
               )}
               <Link
                 href={getMentorDiscoveryHref(data.upcomingSession.mentor.id)}
-                className="inline-flex h-8 items-center justify-center rounded-xl border border-white/30 bg-white/10 px-3 text-xs font-medium text-white transition hover:bg-white/20"
+                className="inline-flex h-8 items-center justify-center rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-medium text-[#4F46E5] transition hover:bg-[#F8FAFC]"
               >
                 View mentor
               </Link>

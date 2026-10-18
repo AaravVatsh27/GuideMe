@@ -140,9 +140,9 @@ export function StudentShell({ children }: Props) {
           </div>
 
           {/* Bottom Keep Momentum Card (Never clipped) */}
-          <div className="mt-4 w-full min-w-0 shrink-0 rounded-xl bg-gradient-to-br from-violet-700 via-fuchsia-600 to-pink-500 p-3 text-white shadow-md">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-100">Keep momentum</p>
-            <p className="mt-1.5 text-xs leading-relaxed text-violet-50">
+          <div className="mt-4 w-full min-w-0 shrink-0 rounded-xl border border-[#E0E7FF] bg-[linear-gradient(135deg,#F5F3FF_0%,#EEF2FF_100%)] p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4F46E5]">Keep momentum</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-[#334155]">
               Use saved mentors and session history to make your next move sharper.
             </p>
           </div>

@@ -124,9 +124,9 @@ export function MentorShell({ children }: Props) {
             </nav>
           </div>
 
-          <div className="mt-5 shrink-0 rounded-2xl bg-[linear-gradient(135deg,#7C3AED_0%,#9333EA_55%,#EC4899_100%)] p-4 text-white shadow-[0_16px_40px_-24px_rgba(124,58,237,0.65)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/75">Keep quality high</p>
-            <p className="mt-2 text-sm leading-5 text-white/90">
+          <div className="mt-5 shrink-0 rounded-2xl border border-[#E0E7FF] bg-[linear-gradient(135deg,#F5F3FF_0%,#EEF2FF_100%)] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#4F46E5]">Keep quality high</p>
+            <p className="mt-2 text-sm leading-5 text-[#334155]">
               Your rank grows with every great session.
             </p>
           </div>

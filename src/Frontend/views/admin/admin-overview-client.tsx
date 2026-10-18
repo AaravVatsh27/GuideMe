@@ -243,22 +243,26 @@ export function AdminOverviewClient({ data }: Props) {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[24px] border-transparent! bg-[linear-gradient(135deg,#4F46E5_0%,#7C3AED_100%)] text-white">
+        <Card className="rounded-[24px] border border-[#EEF2FF] bg-white">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle className="flex items-center gap-2 text-lg text-white">
-              <AlertTriangle className="size-5 text-white" />
+            <CardTitle className="flex items-center gap-2 text-lg text-[#0F172A]">
+              <span className="flex size-8 items-center justify-center rounded-lg bg-[#EEF2FF]">
+                <AlertTriangle className="size-4 text-[#4F46E5]" aria-hidden="true" />
+              </span>
               Alerts
             </CardTitle>
-            <Badge variant="outline" className="rounded-full border-transparent bg-white/20 text-white">
+            <Badge variant="outline" className="rounded-full border-transparent bg-[#EEF2FF] text-[#4F46E5]">
               {alertCount}
             </Badge>
           </CardHeader>
           <CardContent>
             {alertCount === 0 ? (
               <div className="flex min-h-[140px] flex-col items-center justify-center text-center">
-                <CheckCircle2 className="size-8 text-white" aria-hidden="true" />
-                <p className="mt-3 text-base font-semibold text-white">All clear</p>
-                <p className="mt-1 text-[13px] text-white/80">
+                <span className="flex size-12 items-center justify-center rounded-full bg-[#DCFCE7]">
+                  <CheckCircle2 className="size-6 text-[#16A34A]" aria-hidden="true" />
+                </span>
+                <p className="mt-3 text-base font-semibold text-[#0F172A]">All clear</p>
+                <p className="mt-1 text-[13px] text-[#64748B]">
                   No failed payments, no-shows, or flagged reviews right now.
                 </p>
               </div>
@@ -267,37 +271,37 @@ export function AdminOverviewClient({ data }: Props) {
                 {data.alerts.failedPayments.length > 0 ? (
                   <Link
                     href="/admin/payments"
-                    className="flex items-center justify-between rounded-xl bg-white/10 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/15"
+                    className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm font-medium text-[#0F172A] transition-colors hover:bg-[#F8FAFC]"
                   >
                     <span className="flex items-center gap-2">
-                      <span className="size-2 rounded-full bg-red-400" aria-hidden="true" />
+                      <span className="size-2 rounded-full bg-red-500" aria-hidden="true" />
                       Failed payments
                     </span>
-                    <span className="font-semibold text-white">{data.alerts.failedPayments.length}</span>
+                    <span className="font-semibold text-[#0F172A]">{data.alerts.failedPayments.length}</span>
                   </Link>
                 ) : null}
                 {data.alerts.mentorNoShows.length > 0 ? (
                   <Link
                     href="/admin/sessions"
-                    className="flex items-center justify-between rounded-xl bg-white/10 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/15"
+                    className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm font-medium text-[#0F172A] transition-colors hover:bg-[#F8FAFC]"
                   >
                     <span className="flex items-center gap-2">
-                      <span className="size-2 rounded-full bg-amber-300" aria-hidden="true" />
+                      <span className="size-2 rounded-full bg-amber-500" aria-hidden="true" />
                       Mentor no-shows
                     </span>
-                    <span className="font-semibold text-white">{data.alerts.mentorNoShows.length}</span>
+                    <span className="font-semibold text-[#0F172A]">{data.alerts.mentorNoShows.length}</span>
                   </Link>
                 ) : null}
                 {data.alerts.flaggedReviews.length > 0 ? (
                   <Link
                     href="/admin/notifications"
-                    className="flex items-center justify-between rounded-xl bg-white/10 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/15"
+                    className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm font-medium text-[#0F172A] transition-colors hover:bg-[#F8FAFC]"
                   >
                     <span className="flex items-center gap-2">
-                      <span className="size-2 rounded-full bg-sky-300" aria-hidden="true" />
+                      <span className="size-2 rounded-full bg-blue-500" aria-hidden="true" />
                       Flagged reviews
                     </span>
-                    <span className="font-semibold text-white">{data.alerts.flaggedReviews.length}</span>
+                    <span className="font-semibold text-[#0F172A]">{data.alerts.flaggedReviews.length}</span>
                   </Link>
                 ) : null}
               </div>
