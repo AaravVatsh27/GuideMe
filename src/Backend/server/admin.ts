@@ -18,6 +18,7 @@ import { getClientIp } from "@/Backend/lib/client-ip";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
 import { isEmailAuthEnabled } from "@/Backend/server/auth";
 import { db } from "@/Backend/server/db";
+import { getAppUrl } from "@/Backend/lib/env";
 
 type AdminMentorStatus = "PENDING" | "VERIFIED" | "SUSPENDED" | "REJECTED";
 
@@ -851,7 +852,7 @@ export async function getAdminSettingsData() {
   return {
     system: {
       emailAuthEnabled: isEmailAuthEnabled,
-      appUrl: process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.AUTH_URL?.trim() || "http://localhost:3000",
+      appUrl: getAppUrl(),
       supportEmail: process.env.EMAIL_FROM?.trim() || "not-configured",
     },
     counters: {

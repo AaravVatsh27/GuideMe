@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "@/Frontend/styles/globals.css";
 import { AppProviders } from "@/app/providers";
 import { ErrorBoundary } from "@/Frontend/components/ErrorBoundary";
+import { getAppUrl } from "@/Backend/lib/env";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -22,11 +23,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-      process.env.AUTH_URL?.trim() ||
-      "http://localhost:3000",
-  ),
+  metadataBase: new URL(getAppUrl()),
   title: {
     default: "Mentra - Your Senior Friend · Your Guide",
     template: "%s | Mentra",

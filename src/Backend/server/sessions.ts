@@ -32,6 +32,7 @@ import {
 import type { CreateSessionInput } from "@/Backend/validations/session";
 import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
 import { log } from "@/Backend/lib/logger";
+import { getAppUrl } from "@/Backend/lib/env";
 
 type CreateSessionBookingInput = {
   studentId: string;
@@ -348,12 +349,7 @@ function buildSessionReceipt(sessionId: string) {
 }
 
 function buildAbsoluteUrl(pathname: string) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.AUTH_URL?.trim() ||
-    "http://localhost:3000";
-
-  return new URL(pathname, baseUrl).toString();
+  return new URL(pathname, getAppUrl()).toString();
 }
 
 function isParticipant(session: { studentId: string; mentorId: string }, userId: string) {

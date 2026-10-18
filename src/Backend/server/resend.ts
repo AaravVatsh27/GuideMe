@@ -10,6 +10,7 @@ import {
   renderEmailTemplate,
 } from "@emails";
 import { DEFAULT_CURRENCY, PLATFORM_NAME } from "@/shared/constants";
+import { getAppUrl } from "@/Backend/lib/env";
 
 type EmailUser = Pick<User, "name" | "email"> & {
   role?: User["role"];
@@ -64,10 +65,6 @@ function getEmailFromAddress() {
   }
 
   return from;
-}
-
-function getAppUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.AUTH_URL?.trim() || "http://localhost:3000";
 }
 
 function formatMoney(amount: number) {

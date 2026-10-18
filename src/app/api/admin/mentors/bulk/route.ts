@@ -11,6 +11,7 @@ import {
 } from "@/Backend/server/admin";
 import { db } from "@/Backend/server/db";
 import { sendWelcomeMentorEmail } from "@/Backend/server/resend";
+import { getAppUrl } from "@/Backend/lib/env";
 
 const bulkMentorActionSchema = z.discriminatedUnion("action", [
   z.object({
@@ -75,7 +76,7 @@ export const POST = withApiErrorHandling(async (request: Request, _context, meta
   }
 
   const ipAddress = extractRequestIp(request);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.AUTH_URL?.trim() || "http://localhost:3000";
+  const appUrl = getAppUrl();
   const now = new Date();
 
   await db.$transaction(async (tx) => {

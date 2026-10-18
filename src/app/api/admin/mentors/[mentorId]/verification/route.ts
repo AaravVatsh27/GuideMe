@@ -14,6 +14,7 @@ import {
   sendMentorVerificationRejectedEmail,
   sendWelcomeMentorEmail,
 } from "@/Backend/server/resend";
+import { getAppUrl } from "@/Backend/lib/env";
 
 const verificationActionSchema = z.discriminatedUnion("decision", [
   z.object({
@@ -83,7 +84,7 @@ export const POST = withApiErrorHandling(async (
   const tier = autoAssignMentorTier(mentor.mentorProfile?.college);
   const now = new Date();
   const ipAddress = extractRequestIp(request);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.AUTH_URL?.trim() || "http://localhost:3000";
+  const appUrl = getAppUrl();
 
   await db.$transaction(async (tx) => {
     if (parsed.data.decision === "approve") {
