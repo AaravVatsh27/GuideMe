@@ -16,14 +16,14 @@ import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
 import { Badge } from "@/Frontend/components/ui/badge";
 import { buttonVariants } from "@/Frontend/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
-import { cn } from "@/Backend/server/utils";
-import { getMentorDashboardData } from "@/Frontend/views/dashboard/mentor/mentor-dashboard-data";
+import { cn } from "@/Frontend/lib/utils";
+import { getMentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
 import {
   formatCurrency,
   formatShortDateTime,
   formatTrend,
   getInitials,
-} from "@/Frontend/views/dashboard/mentor/mentor-dashboard-utils";
+} from "@/shared/mentor-dashboard-utils";
 
 function getSlotCount(startTime: string, endTime: string) {
   const startHour = Number.parseInt(startTime.split(":")[0] ?? "0", 10);

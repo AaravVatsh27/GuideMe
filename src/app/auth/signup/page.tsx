@@ -8,7 +8,7 @@ import {
   getFirstSearchParam,
   isTruthySearchParam,
 } from "@/Frontend/views/auth/search-params";
-import { AUTH_DEFAULT_REDIRECT, getOnboardingPath } from "@/Backend/server/auth-flow";
+import { AUTH_DEFAULT_REDIRECT, getOnboardingPath } from "@/shared/auth-flow";
 import { isGoogleAuthEnabled } from "@/Backend/server/auth";
 import { getAuthShellContent } from "@/Backend/server/public-data";
 

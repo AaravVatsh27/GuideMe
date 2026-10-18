@@ -8,7 +8,7 @@ import {
   EMPTY_MENTOR_DRAFT,
   type MentorExamEntry,
   type MentorOnboardingDraft,
-} from "@/Backend/server/mentor-onboarding";
+} from "@/shared/mentor-onboarding";
 
 import { MentorOnboardingWizard } from "@/Frontend/views/onboarding/mentor-onboarding-wizard";
 

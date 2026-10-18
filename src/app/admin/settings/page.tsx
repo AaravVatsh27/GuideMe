@@ -1,5 +1,5 @@
 import { getAdminSettingsData } from "@/Backend/server/admin";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 import { adminCardClass, AdminPageHeader } from "@/Frontend/views/admin/admin-ui";
 

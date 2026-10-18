@@ -13,9 +13,9 @@ import {
 
 import { auth } from "@/Backend/auth";
 import { db } from "@/Backend/server/db";
-import { AVAILABILITY_DAYS, getDegreeLabel, getExamLabel, getHelpTopicLabel, getYearOfStudyLabel } from "@/Backend/server/mentor-onboarding";
+import { AVAILABILITY_DAYS, getDegreeLabel, getExamLabel, getHelpTopicLabel, getYearOfStudyLabel } from "@/shared/mentor-onboarding";
 
-import { formatEnumLabel, getFirstName, normalizeResponseRate } from "./mentor-dashboard-utils";
+import { formatEnumLabel, getFirstName, normalizeResponseRate } from "@/shared/mentor-dashboard-utils";
 
 type DayHour = {
   dayOfWeek: number;

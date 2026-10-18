@@ -5,7 +5,7 @@ import Link from "next/link";
 import * as Sentry from "@sentry/nextjs";
 import { AlertCircle, Home, Mail, RotateCcw } from "lucide-react";
 
-import { MentraLogo } from "@/components/brand/MentraLogo";
+import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
 
 export default function Error({
   error,

@@ -1,6 +1,6 @@
 import type { Route } from "next";
 import Link from "next/link";
-import { MentraLogo } from "@/components/brand/MentraLogo";
+import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
 
 export function HomepageFooter() {
   return (

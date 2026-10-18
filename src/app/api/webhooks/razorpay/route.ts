@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
 import { log } from "@/Backend/lib/logger";
-import { PLATFORM_CUT } from "@/Backend/server/constants";
+import { PLATFORM_CUT } from "@/shared/constants";
 import { db } from "@/Backend/server/db";
 import { sendBookingConfirmation, sendPaymentFailureEmail, sendRefundConfirmationEmail } from "@/Backend/server/resend";
 import { refundPaymentForClosedSession, releaseBookingIfSlotLost } from "@/Backend/server/sessions";

@@ -7,7 +7,6 @@ import {
   getAuthCallbackUrl,
   getFirstSearchParam,
 } from "@/Frontend/views/auth/search-params";
-import { buttonVariants } from "@/Frontend/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,9 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/Frontend/components/ui/card";
-import { getAuthErrorCopy } from "@/Backend/server/auth-flow";
+import { getAuthErrorCopy } from "@/shared/auth-flow";
 import { getAuthShellContent } from "@/Backend/server/public-data";
-import { cn } from "@/Backend/server/utils";
 
 type AuthErrorPageProps = {
   searchParams?: AuthPageSearchParams;

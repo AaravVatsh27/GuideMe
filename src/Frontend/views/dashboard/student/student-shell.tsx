@@ -20,8 +20,8 @@ import { signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Frontend/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/Frontend/components/ui/dropdown-menu";
 import { getInitials } from "@/Frontend/views/dashboard/student/student-dashboard-utils";
-import { MentraLogo } from "@/components/brand/MentraLogo";
-import { cn } from "@/Backend/server/utils";
+import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
+import { cn } from "@/Frontend/lib/utils";
 
 const navItems = [
   { href: "/dashboard/student", label: "Overview", icon: LayoutGrid },

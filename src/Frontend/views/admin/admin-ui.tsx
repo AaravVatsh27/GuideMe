@@ -1,6 +1,6 @@
 import { Check, type LucideIcon } from "lucide-react";
 
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 // Shared look for the admin list pages (Users, Mentors, Sessions, Payments, Notifications, Settings).
 

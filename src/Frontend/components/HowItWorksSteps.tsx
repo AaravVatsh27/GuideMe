@@ -3,7 +3,7 @@
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { ArrowRight, Check, Clock, Compass, Flame, Users } from "lucide-react";
 
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 type Step = {
   number: string;

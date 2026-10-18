@@ -25,7 +25,7 @@ import { Calendar } from "@/Frontend/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
 import { Textarea } from "@/Frontend/components/ui/textarea";
 import { queryKeys } from "@/Frontend/lib/react-query";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 import {
   CheckoutDismissedError,

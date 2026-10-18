@@ -19,7 +19,7 @@ import {
   PLATFORM_CUT,
   SESSION_JOIN_EARLY_WINDOW_MINUTES,
   UNPAID_BOOKING_HOLD_MINUTES,
-} from "@/Backend/server/constants";
+} from "@/shared/constants";
 import { createDailyRoom } from "@/Backend/server/daily";
 import { db } from "@/Backend/server/db";
 import { createOrder, createRefund } from "@/Backend/server/razorpay";

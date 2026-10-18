@@ -10,8 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Frontend/components/
 import { Textarea } from "@/Frontend/components/ui/textarea";
 
 import type { getAdminMentorVerificationQueueData } from "@/Backend/server/admin";
-import { cn } from "@/Backend/server/utils";
-import { isSafeHttpsUrl } from "@/Backend/validations/url";
+import { cn } from "@/Frontend/lib/utils";
+import { isSafeHttpsUrl } from "@/shared/validations/url";
 
 import { formatCurrency, formatDateOnly, formatDateTime, formatEnumLabel } from "./admin-utils";
 

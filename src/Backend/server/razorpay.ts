@@ -4,7 +4,7 @@ import Razorpay from "razorpay";
 import type { Orders } from "razorpay/dist/types/orders";
 import type { Refunds } from "razorpay/dist/types/refunds";
 
-import { DEFAULT_CURRENCY } from "@/Backend/server/constants";
+import { DEFAULT_CURRENCY } from "@/shared/constants";
 
 export type RazorpayOrderNotes = Record<string, string | number>;
 

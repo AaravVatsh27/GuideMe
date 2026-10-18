@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
-import { MentraLogo } from "@/components/brand/MentraLogo";
+import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
 
 type AuthShellProps = {
   children: ReactNode;

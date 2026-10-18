@@ -9,7 +9,7 @@ import {
   WelcomeMentor,
   renderEmailTemplate,
 } from "@emails";
-import { DEFAULT_CURRENCY, PLATFORM_NAME } from "@/Backend/server/constants";
+import { DEFAULT_CURRENCY, PLATFORM_NAME } from "@/shared/constants";
 
 type EmailUser = Pick<User, "name" | "email"> & {
   role?: User["role"];

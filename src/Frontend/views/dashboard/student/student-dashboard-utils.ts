@@ -1,11 +1,11 @@
 import { format } from "date-fns";
-import { getExamLabel } from "@/Backend/server/mentor-onboarding";
+import { getExamLabel } from "@/shared/mentor-onboarding";
 import {
   BOARD_OPTIONS,
   CLASS_OPTIONS,
   SCHOOL_STREAM_OPTIONS,
   UG_FOCUS_OPTIONS,
-} from "@/Backend/server/student-onboarding";
+} from "@/shared/student-onboarding";
 
 const ACRONYM_LABELS: Record<string, string> = {
   AI: "AI",

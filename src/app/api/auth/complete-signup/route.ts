@@ -4,7 +4,7 @@ import { z } from "zod";
 import { auth, updateSession } from "@/Backend/auth";
 import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { authLimiter } from "@/Backend/lib/ratelimit";
-import { AUTH_DEFAULT_REDIRECT, getOnboardingPath } from "@/Backend/server/auth-flow";
+import { AUTH_DEFAULT_REDIRECT, getOnboardingPath } from "@/shared/auth-flow";
 import { db } from "@/Backend/server/db";
 
 const completeSignupSchema = z.object({

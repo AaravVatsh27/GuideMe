@@ -5,24 +5,18 @@ import {
   ArrowRight,
   Check,
   ChevronDown,
-  Clock,
-  CreditCard,
   GraduationCap,
   HeartHandshake,
-  HelpCircle,
   Lock,
-  RotateCcw,
   ShieldCheck,
   Sparkles,
   Star,
   Users,
-  X,
   Zap,
 } from "lucide-react";
 
-import { MentraLogo } from "@/components/brand/MentraLogo";
-import { HomepageHeader } from "@/components/brand/HomepageHeader";
-import { HomepageFooter } from "@/components/brand/HomepageFooter";
+import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
+import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
 import { HowItWorksSteps } from "@/Frontend/components/HowItWorksSteps";
 import {
   getPublicPlatformSnapshot,

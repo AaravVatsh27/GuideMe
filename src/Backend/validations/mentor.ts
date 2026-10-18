@@ -1,4 +1,4 @@
-import { DEFAULT_TIMEZONE, MAX_PRICE, MIN_PRICE } from "@/Backend/server/constants";
+import { DEFAULT_TIMEZONE, MAX_PRICE, MIN_PRICE } from "@/shared/constants";
 import {
   calculateFortyFiveMinutePrice,
   DEGREE_VALUES,
@@ -7,9 +7,9 @@ import {
   MENTOR_TIER_VALUES,
   PRICING_POINTS,
   YEAR_OF_STUDY_VALUES,
-} from "@/Backend/server/mentor-onboarding";
+} from "@/shared/mentor-onboarding";
 import { sanitizeText } from "@/Backend/lib/sanitize";
-import { httpsUrlSchema, imageUrlSchema, linkedinUrlSchema } from "@/Backend/validations/url";
+import { httpsUrlSchema, imageUrlSchema, linkedinUrlSchema } from "@/shared/validations/url";
 import { z } from "zod";
 
 const currentYear = new Date().getFullYear();

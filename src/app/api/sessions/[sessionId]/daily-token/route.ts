@@ -12,7 +12,7 @@ import {
 import {
   SESSION_JOIN_EARLY_WINDOW_MINUTES,
   SESSION_ROOM_GRACE_MINUTES,
-} from "@/Backend/server/constants";
+} from "@/shared/constants";
 
 export const GET = withApiErrorHandling(async (
   _request: Request,

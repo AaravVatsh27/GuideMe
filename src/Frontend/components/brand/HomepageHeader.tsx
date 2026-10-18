@@ -15,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 
-import { MentraLogo } from "@/components/brand/MentraLogo";
+import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
 
 export function HomepageHeader() {
   const pathname = usePathname();

@@ -4,10 +4,10 @@ import { z } from "zod";
 
 import { auth, updateSession } from "@/Backend/auth";
 import { withApiErrorHandling } from "@/Backend/lib/api-helpers";
-import { DEFAULT_TIMEZONE } from "@/Backend/server/constants";
+import { DEFAULT_TIMEZONE } from "@/shared/constants";
 import { db } from "@/Backend/server/db";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
-import { calculateFortyFiveMinutePrice, retireMentorAvailability } from "@/Backend/server/mentor-onboarding";
+import { calculateFortyFiveMinutePrice, retireMentorAvailability } from "@/shared/mentor-onboarding";
 import {
   mentorAvailabilityStepSchema,
   mentorCourseStepSchema,

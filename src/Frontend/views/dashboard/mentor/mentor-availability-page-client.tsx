@@ -10,10 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/
 import { Input } from "@/Frontend/components/ui/input";
 import { Label } from "@/Frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/Frontend/components/ui/select";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
-import type { MentorDashboardData } from "./mentor-dashboard-data";
-import { buildSlotKey, hourLabel, slotTimeValue } from "./mentor-dashboard-utils";
+import type { MentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
+import { buildSlotKey, hourLabel, slotTimeValue } from "@/shared/mentor-dashboard-utils";
 
 type Props = {
   mentorId: string;

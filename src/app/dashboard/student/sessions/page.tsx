@@ -28,7 +28,7 @@ import { Card, CardContent, CardTitle } from "@/Frontend/components/ui/card";
 import { Skeleton } from "@/Frontend/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/Frontend/components/ui/tabs";
 import { queryKeys } from "@/Frontend/lib/react-query";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 type SessionStatus = "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
 type SessionTab = "upcoming" | "past" | "cancelled";

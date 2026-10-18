@@ -13,7 +13,6 @@ import {
   BriefcaseBusiness,
   Building2,
   CalendarRange,
-  Check,
   CheckCircle2,
   CircleHelp,
   Compass,
@@ -38,16 +37,7 @@ import { useSession } from "next-auth/react";
 import { CoachingMode, DecisionStage, MentorshipNeed, SchoolingMode, TargetExam } from "@prisma/client";
 import { toast } from "sonner";
 
-import { DashboardAccountPanel } from "@/Frontend/views/dashboard/dashboard-account-panel";
 import { Button } from "@/Frontend/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/Frontend/components/ui/card";
 import { Input } from "@/Frontend/components/ui/input";
 import {
   BOARD_OPTIONS,
@@ -55,14 +45,8 @@ import {
   CLASS_OPTIONS,
   CONFUSION_TYPE_VALUES,
   getAllowedStreamValues,
-  getBoardOption,
-  getClassOption,
   getConfusionOptions,
-  getConfusionOption,
   getIndianCitiesForState,
-  getStepThreeOptions,
-  getStepThreeQuestion,
-  getStreamOption,
   INDIAN_STATE_VALUES,
   LANGUAGE_VALUES,
   requiresBoard,
@@ -75,8 +59,8 @@ import {
   type LanguageValue,
   type StreamValue,
   type StudentClassValue,
-} from "@/Backend/server/student-onboarding";
-import { cn } from "@/Backend/server/utils";
+} from "@/shared/student-onboarding";
+import { cn } from "@/Frontend/lib/utils";
 
 type StudentOnboardingWizardProps = {
   userName: string;
@@ -120,8 +104,6 @@ const STEP_COPY = {
   6: "What’s on your mind?",
   7: "Where are you based?",
 } as const;
-const LOCATION_FIELD_CLASS_NAME =
-  "h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-950 focus:ring-4 focus:ring-slate-950/5";
 
 const ICON_MAP = {
   atom: Atom,
@@ -267,15 +249,15 @@ function sanitizeDraft(
   return nextDraft;
 }
 
-function getNextStep(step: WizardStep, studentClass?: StudentClassValue): WizardStep {
+function getNextStep(step: WizardStep): WizardStep {
   return Math.min(step + 1, TOTAL_STEPS) as WizardStep;
 }
 
-function getPreviousStep(step: WizardStep, studentClass?: StudentClassValue): WizardStep {
+function getPreviousStep(step: WizardStep): WizardStep {
   return Math.max(step - 1, 1) as WizardStep;
 }
 
-function normalizeStep(step: number | undefined, draft: StudentOnboardingDraft): WizardStep {
+function normalizeStep(step: number | undefined): WizardStep {
   return (typeof step === "number" ? Math.min(Math.max(step, 1), TOTAL_STEPS) : 1) as WizardStep;
 }
 
@@ -343,28 +325,14 @@ function isStepValid(step: WizardStep, draft: StudentOnboardingDraft) {
   }
 }
 
-function getProgressWidth(step: WizardStep) {
-  return `${(step / TOTAL_STEPS) * 100}%`;
-}
-
-function getUserInitials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part.trim()[0] ?? "")
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 export function StudentOnboardingWizard({
-  userName,
   initialDraft,
   savedStep,
 }: StudentOnboardingWizardProps) {
   const sanitizedInitialDraft = sanitizeDraft(initialDraft);
   const initialResumeStep = getResumeStep(savedStep, sanitizedInitialDraft);
   const router = useRouter();
-  const { data, update } = useSession();
+  const { update } = useSession();
   const [direction, setDirection] = useState(1);
   const [currentStep, setCurrentStep] = useState<WizardStep>(initialResumeStep);
   const [draft, setDraft] = useState<StudentOnboardingDraft>(sanitizedInitialDraft);
@@ -372,11 +340,7 @@ export function StudentOnboardingWizard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>(savedStep > 0 ? "saved" : "idle");
-  const [lastSavedStep, setLastSavedStep] = useState(savedStep);
-  const displayName = data?.user?.name ?? userName;
-  const userEmail = data?.user?.email ?? "";
-  const userImage = data?.user?.image ?? null;
-  const accountInitials = getUserInitials(displayName);
+  const [, setLastSavedStep] = useState(savedStep);
 
   useEffect(() => {
     const storedValue = window.localStorage.getItem(STUDENT_ONBOARDING_STORAGE_KEY);
@@ -389,7 +353,7 @@ export function StudentOnboardingWizard({
     try {
       const parsed = JSON.parse(storedValue) as StoredWizardState;
       const sanitizedStoredDraft = sanitizeDraft(parsed.data);
-      const restoredStep = normalizeStep(parsed.step, sanitizedStoredDraft);
+      const restoredStep = normalizeStep(parsed.step);
       const firstIncompleteStep = getFirstIncompleteStep(sanitizedStoredDraft);
       const localResumeStep = Math.min(restoredStep, firstIncompleteStep) as WizardStep;
 
@@ -540,36 +504,6 @@ export function StudentOnboardingWizard({
     }));
   }
 
-  function handleStreamSelect(value: StreamValue) {
-    updateDraft((current) => ({
-      ...current,
-      stream: value,
-    }));
-  }
-
-  function handleConfusionToggle(value: ConfusionTypeValue) {
-    updateDraft((current) => {
-      const isSelected = current.confusionTypes.includes(value);
-
-      if (isSelected) {
-        return {
-          ...current,
-          confusionTypes: current.confusionTypes.filter((item) => item !== value),
-        };
-      }
-
-      if (current.confusionTypes.length >= MAX_CONFUSIONS) {
-        toast.error("Pick up to 3 confusion areas.");
-        return current;
-      }
-
-      return {
-        ...current,
-        confusionTypes: [...current.confusionTypes, value],
-      };
-    });
-  }
-
   async function goToNextStep() {
     if (!isStepValid(currentStep, draft)) {
       return;
@@ -582,7 +516,7 @@ export function StudentOnboardingWizard({
     try {
       await persistStep(currentStep);
       setDirection(1);
-      setCurrentStep(getNextStep(currentStep, draft.class));
+      setCurrentStep(getNextStep(currentStep));
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "We could not save this step.",
@@ -592,7 +526,7 @@ export function StudentOnboardingWizard({
 
   function goToPreviousStep() {
     setDirection(-1);
-    setCurrentStep(getPreviousStep(currentStep, draft.class));
+    setCurrentStep(getPreviousStep(currentStep));
   }
 
   async function handleComplete() {
@@ -674,10 +608,6 @@ export function StudentOnboardingWizard({
     }
   }
 
-  const classOption = getClassOption(draft.class);
-  const boardOption = getBoardOption(draft.board);
-  const streamOption = getStreamOption(draft.stream, draft.class);
-  const confusionOptions = getConfusionOptions(draft.class);
   const canContinue = isStepValid(currentStep, draft);
   const isBusy = isSubmitting || saveState === "saving";
   const cityValue = draft.city;
@@ -690,10 +620,6 @@ export function StudentOnboardingWizard({
         : city.toLowerCase().includes(normalizedCityValue),
     )
     .slice(0, 12);
-  const cityMatchesSelectedState =
-    cityValue.trim().length === 0 ||
-    !draft.state ||
-    availableCities.some((city) => city.toLowerCase() === normalizedCityValue);
 
   if (!isHydrated) {
     return (
@@ -713,7 +639,6 @@ export function StudentOnboardingWizard({
   const targetExamOptions = Object.values(TargetExam);
   const mentorshipOptions = Object.values(MentorshipNeed);
   const decisionStageOptions = Object.values(DecisionStage);
-  const stepLabel = STEP_COPY[currentStep as keyof typeof STEP_COPY];
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(124,58,237,0.12),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(236,72,153,0.12),_transparent_28%),linear-gradient(135deg,_#faf5ff_0%,_#f5f3ff_42%,_#ffffff_100%)] px-4 py-6 sm:px-6 lg:px-8">

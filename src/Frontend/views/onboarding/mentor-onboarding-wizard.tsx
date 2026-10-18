@@ -30,7 +30,7 @@ import {
   CardTitle,
 } from "@/Frontend/components/ui/card";
 import { Input } from "@/Frontend/components/ui/input";
-import { DEFAULT_TIMEZONE, PLATFORM_CUT } from "@/Backend/server/constants";
+import { DEFAULT_TIMEZONE, PLATFORM_CUT } from "@/shared/constants";
 import {
   AVAILABILITY_DAYS,
   AVAILABILITY_SLOTS,
@@ -53,9 +53,9 @@ import {
   type MentorTierValue,
   type MentorOnboardingStep,
   type YearOfStudyValue,
-} from "@/Backend/server/mentor-onboarding";
-import { uploadFiles } from "@/Backend/server/uploadthing";
-import { cn } from "@/Backend/server/utils";
+} from "@/shared/mentor-onboarding";
+import { uploadFiles } from "@/Frontend/lib/uploadthing";
+import { cn } from "@/Frontend/lib/utils";
 
 type MentorOnboardingWizardProps = {
   userName: string;

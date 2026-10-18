@@ -22,8 +22,8 @@ import {
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
-import { MentraLogo } from "@/components/brand/MentraLogo";
-import { cn } from "@/Backend/server/utils";
+import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
+import { cn } from "@/Frontend/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/Frontend/components/ui/dropdown-menu";
 
 const navItems = [

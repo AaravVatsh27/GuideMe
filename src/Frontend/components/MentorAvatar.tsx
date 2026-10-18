@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 type MentorAvatarProps = {
   src?: string | null;

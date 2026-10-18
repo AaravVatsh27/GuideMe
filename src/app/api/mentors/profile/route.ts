@@ -5,7 +5,7 @@ import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/
 import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
 import { generalLimiter } from "@/Backend/lib/ratelimit";
 import { db } from "@/Backend/server/db";
-import { calculateFortyFiveMinutePrice, retireMentorAvailability } from "@/Backend/server/mentor-onboarding";
+import { calculateFortyFiveMinutePrice, retireMentorAvailability } from "@/shared/mentor-onboarding";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
 import { mentorProfileUpdateSchema } from "@/Backend/validations/mentor";
 

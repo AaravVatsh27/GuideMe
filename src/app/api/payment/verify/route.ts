@@ -13,7 +13,7 @@ import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/
 import { cacheDel, cacheKeys } from "@/Backend/lib/cache";
 import { log } from "@/Backend/lib/logger";
 import { paymentLimiter } from "@/Backend/lib/ratelimit";
-import { PLATFORM_CUT } from "@/Backend/server/constants";
+import { PLATFORM_CUT } from "@/shared/constants";
 import { db } from "@/Backend/server/db";
 import { verifyPaymentSignature } from "@/Backend/server/razorpay";
 import { refundPaymentForClosedSession, releaseBookingIfSlotLost } from "@/Backend/server/sessions";

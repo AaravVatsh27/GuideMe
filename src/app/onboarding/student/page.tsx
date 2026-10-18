@@ -9,7 +9,7 @@ import {
 
 import { auth } from "@/Backend/auth";
 import { db } from "@/Backend/server/db";
-import { getOnboardingPath } from "@/Backend/server/auth-flow";
+import { getOnboardingPath } from "@/shared/auth-flow";
 import {
   type BoardValue,
   type ConfusionTypeValue,
@@ -17,7 +17,7 @@ import {
   type LanguageValue,
   type StreamValue,
   type StudentClassValue,
-} from "@/Backend/server/student-onboarding";
+} from "@/shared/student-onboarding";
 
 import { StudentOnboardingWizard } from "@/Frontend/views/onboarding/student-onboarding-wizard";
 

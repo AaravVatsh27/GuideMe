@@ -13,13 +13,13 @@ import {
   getClassOption,
   getConfusionOption,
   getStreamOption,
-} from "@/Backend/server/student-onboarding";
+} from "@/shared/student-onboarding";
 import {
   getDegreeLabel,
   getExamLabel,
   getHelpTopicLabel,
   getYearOfStudyLabel,
-} from "@/Backend/server/mentor-onboarding";
+} from "@/shared/mentor-onboarding";
 import { db } from "@/Backend/server/db";
 
 import { ProfileSignOutButton } from "@/Frontend/views/profile/profile-sign-out-button";

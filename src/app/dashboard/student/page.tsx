@@ -27,7 +27,6 @@ import { buttonVariants } from "@/Frontend/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
 import { Skeleton } from "@/Frontend/components/ui/skeleton";
 import { queryKeys } from "@/Frontend/lib/react-query";
-import { cn } from "@/Backend/server/utils";
 
 type DashboardResponse = {
   greetingName: string;

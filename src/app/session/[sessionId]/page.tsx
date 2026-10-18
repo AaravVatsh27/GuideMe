@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/Backend/auth";
-import { SessionRoomPageClient } from "@/Frontend/components/session/SessionRoomPageClient";
+import { SessionRoomPageClient } from "@/Frontend/views/session/SessionRoomPageClient";
 import { db } from "@/Backend/server/db";
 import { sessionDetailsInclude, toSessionView } from "@/Backend/server/sessions";
 

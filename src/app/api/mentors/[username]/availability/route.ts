@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 import { generalLimiter } from "@/Backend/lib/ratelimit";
-import { DEFAULT_TIMEZONE, SESSION_DURATIONS } from "@/Backend/server/constants";
+import { DEFAULT_TIMEZONE, SESSION_DURATIONS } from "@/shared/constants";
 import { db } from "@/Backend/server/db";
 import { slotHoldingSessionWhere } from "@/Backend/server/sessions";
 

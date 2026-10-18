@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/Frontend/components/ui/card";
 import type { Metadata } from "next";
 
-import { getMentorDashboardData } from "@/Frontend/views/dashboard/mentor/mentor-dashboard-data";
+import { getMentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
 import { MentorReviewsPageClient } from "@/Frontend/views/dashboard/mentor/mentor-reviews-page-client";
 
 export const metadata: Metadata = {

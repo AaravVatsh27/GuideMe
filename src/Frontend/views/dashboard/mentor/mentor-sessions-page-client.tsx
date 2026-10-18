@@ -9,9 +9,9 @@ import { Badge } from "@/Frontend/components/ui/badge";
 import { Button, buttonVariants } from "@/Frontend/components/ui/button";
 import { Card, CardContent } from "@/Frontend/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/Frontend/components/ui/tabs";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
-import type { MentorDashboardData } from "./mentor-dashboard-data";
+import type { MentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
 import {
   escapeCsvValue,
   formatCurrency,
@@ -19,7 +19,7 @@ import {
   formatDateTime,
   formatEnumLabel,
   getInitials,
-} from "./mentor-dashboard-utils";
+} from "@/shared/mentor-dashboard-utils";
 
 type SessionTab = "upcoming" | "completed" | "cancelled";
 

@@ -16,7 +16,7 @@ import {
 import { Button } from "@/Frontend/components/ui/button";
 import { Calendar } from "@/Frontend/components/ui/calendar";
 import { queryKeys } from "@/Frontend/lib/react-query";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 import {
   EMPTY_AVAILABILITY,

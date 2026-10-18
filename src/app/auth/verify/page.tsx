@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from "@/Frontend/components/ui/card";
 import { getAuthShellContent } from "@/Backend/server/public-data";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 type VerifyPageProps = {
   searchParams?: AuthPageSearchParams;

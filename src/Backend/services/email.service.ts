@@ -1,4 +1,4 @@
-import { PLATFORM_NAME } from "@/Backend/server/constants";
+import { PLATFORM_NAME } from "@/shared/constants";
 import { sendEmail } from "@/Backend/server/resend";
 
 interface CollegeOtpParams {

@@ -9,7 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/Frontend/components/ui/dropdown-menu";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 import { adminCardClass, AdminCheckbox, adminToolbarButtonClass, type AdminEmptyStateConfig } from "./admin-ui";
 import { downloadCsv } from "./admin-utils";

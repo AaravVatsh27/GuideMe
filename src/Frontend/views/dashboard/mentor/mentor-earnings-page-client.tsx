@@ -11,8 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/
 import { Input } from "@/Frontend/components/ui/input";
 import { Label } from "@/Frontend/components/ui/label";
 
-import type { MentorDashboardData } from "./mentor-dashboard-data";
-import { formatCurrency, formatDateOnly, formatShortDateTime } from "./mentor-dashboard-utils";
+import type { MentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
+import { formatCurrency, formatDateOnly, formatShortDateTime } from "@/shared/mentor-dashboard-utils";
 
 type Props = {
   mentorId: string;

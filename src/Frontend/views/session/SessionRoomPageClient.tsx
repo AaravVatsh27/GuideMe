@@ -36,8 +36,8 @@ import {
 import { Label } from "@/Frontend/components/ui/label";
 import { Skeleton } from "@/Frontend/components/ui/skeleton";
 import { Textarea } from "@/Frontend/components/ui/textarea";
-import { SESSION_JOIN_EARLY_WINDOW_MINUTES } from "@/Backend/server/constants";
-import { cn } from "@/Backend/server/utils";
+import { SESSION_JOIN_EARLY_WINDOW_MINUTES } from "@/shared/constants";
+import { cn } from "@/Frontend/lib/utils";
 
 type SessionStatus = "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
 type SessionType = "INTRO" | "PAID";

@@ -21,11 +21,11 @@ import {
   getDegreeLabel,
   getExamLabel,
   getHelpTopicLabel,
-} from "@/Backend/server/mentor-onboarding";
-import { cn } from "@/Backend/server/utils";
+} from "@/shared/mentor-onboarding";
+import { cn } from "@/Frontend/lib/utils";
 
-import type { MentorDashboardData } from "./mentor-dashboard-data";
-import { formatCurrency, getInitials } from "./mentor-dashboard-utils";
+import type { MentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
+import { formatCurrency, getInitials } from "@/shared/mentor-dashboard-utils";
 
 type Props = {
   mentor: MentorDashboardData["mentor"];

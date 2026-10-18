@@ -10,8 +10,8 @@ import {
   Star,
 } from "lucide-react";
 
-import { HomepageHeader } from "@/components/brand/HomepageHeader";
-import { HomepageFooter } from "@/components/brand/HomepageFooter";
+import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
+import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
 import { log } from "@/Backend/lib/logger";
 import { db } from "@/Backend/server/db";
 import { getPublicPlatformSnapshot } from "@/Backend/server/public-data";
@@ -87,7 +87,7 @@ async function getPopularMentors(): Promise<RecommendedMentor[]> {
 }
 
 export default async function NotFound() {
-  const [popularMentors, snapshot] = await Promise.all([
+  const [popularMentors] = await Promise.all([
     getPopularMentors(),
     getPublicPlatformSnapshot().catch(() => null),
   ]);

@@ -20,7 +20,7 @@ import {
   CardTitle,
 } from "@/Frontend/components/ui/card";
 import { Input } from "@/Frontend/components/ui/input";
-import { getAuthErrorCopy } from "@/Backend/server/auth-flow";
+import { getAuthErrorCopy } from "@/shared/auth-flow";
 
 type SignInViewProps = {
   callbackUrl: string;

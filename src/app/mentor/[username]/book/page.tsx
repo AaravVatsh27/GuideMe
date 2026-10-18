@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/Frontend/components/ui/card";
 import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
 import { db } from "@/Backend/server/db";
 import { buttonVariants } from "@/Frontend/components/ui/button";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 import { MentorBookingPageClient } from "@/Frontend/views/mentor/mentor-booking-page-client";
 

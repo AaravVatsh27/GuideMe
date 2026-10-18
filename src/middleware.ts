@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authEdgeConfig } from "@/Backend/server/auth-edge";
-import { getOnboardingPath } from "@/Backend/server/auth-flow";
+import { getOnboardingPath } from "@/shared/auth-flow";
 
 const { auth } = NextAuth(authEdgeConfig);
 

@@ -9,7 +9,7 @@ import {
   HELP_TOPIC_OPTIONS,
   getExamLabel,
   getHelpTopicLabel,
-} from "@/Backend/server/mentor-onboarding";
+} from "@/shared/mentor-onboarding";
 import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { searchLimiter } from "@/Backend/lib/ratelimit";
 import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";

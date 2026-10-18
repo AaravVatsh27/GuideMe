@@ -28,8 +28,8 @@ import {
   getAuthErrorCopy,
   getOnboardingPath,
   SIGNUP_ROLE_STORAGE_KEY,
-} from "@/Backend/server/auth-flow";
-import { cn } from "@/Backend/server/utils";
+} from "@/shared/auth-flow";
+import { cn } from "@/Frontend/lib/utils";
 
 type SignupViewProps = {
   callbackUrl: string;

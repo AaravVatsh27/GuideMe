@@ -8,8 +8,8 @@ import type {
 } from "@prisma/client";
 
 import { db } from "@/Backend/server/db";
-import { getExamLabel, getHelpTopicLabel } from "@/Backend/server/mentor-onboarding";
-import { isSchoolClass, isUGClass } from "@/Backend/server/student-onboarding";
+import { getExamLabel, getHelpTopicLabel } from "@/shared/mentor-onboarding";
+import { isSchoolClass, isUGClass } from "@/shared/student-onboarding";
 import { cacheDel, cacheDelPattern, cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 
 const MIN_MATCH_SCORE = 30;

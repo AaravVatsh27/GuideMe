@@ -52,6 +52,40 @@ npm run lint    # Next.js lint
 npx tsc --noEmit -p .   # type check
 ```
 
+## Project Structure
+
+```
+src/
+├── app/        Routes. Folder names are URLs: page.tsx = a page, api/**/route.ts = an endpoint
+├── Frontend/   UI only: components, page views, styles, browser helpers
+├── Backend/    Server only: database, auth, payments, email, video, validation
+├── shared/     Constants and helpers used by both the UI and the server
+├── types/      Shared TypeScript types (incl. the next-auth session type)
+├── constants/  College-verification limits
+└── middleware.ts   Redirects signed-out / not-yet-onboarded users
+emails/         React Email templates (sent by src/Backend/server/resend.ts)
+prisma/         Database schema, migrations and seed scripts
+public/         Images served as-is (logos, avatars, hero art)
+```
+
+Each folder has its own README: [src/app](src/app/README.md), [src/Frontend](src/Frontend/README.md), [src/Backend](src/Backend/README.md), [src/shared](src/shared/README.md).
+
+### Where each feature lives
+
+| Feature | URL | Route file (`src/app`) | UI (`src/Frontend`) | Server code (`src/Backend`, `src/shared`) | API (`src/app/api`) |
+| --- | --- | --- | --- | --- | --- |
+| Landing page | `/` | `page.tsx` (whole page inline) | `components/brand/HomepageHeader`, `HomepageFooter`, `MentraLogo`; `components/HowItWorksSteps` | `server/public-data.ts` | `public/landing` |
+| Sign in / sign up | `/auth/signin`, `/auth/signup`, `/auth/verify`, `/auth/error` | `auth/*/page.tsx` | `views/auth/` (`signin-view`, `signup-view`, `auth-shell`) | `auth.ts`, `server/auth.ts`, `server/auth-adapter.ts`, `server/auth-edge.ts`, `shared/auth-flow.ts` | `auth/[...nextauth]`, `auth/complete-signup` |
+| Onboarding | `/onboarding/student`, `/onboarding/mentor` | `onboarding/*/page.tsx` | `views/onboarding/*-wizard.tsx` | `shared/student-onboarding.ts`, `shared/mentor-onboarding.ts` | `onboarding/*`, `uploadthing`, `v1/verification/*`, `v1/institutions/*` |
+| Student dashboard | `/dashboard/student/**` | `dashboard/student/**` (client pages) | `views/dashboard/student/` | `server/matching.ts`, `server/sessions.ts` | `student/*`, `matching`, `sessions` |
+| Mentor dashboard | `/dashboard/mentor/**` | `dashboard/mentor/**` | `views/dashboard/mentor/` | `server/mentor-dashboard-data.ts`, `shared/mentor-dashboard-utils.ts` | `mentors/profile`, `reviews/*`, `payouts` |
+| Find a mentor and booking | `/find-mentor`, `/mentor/[username]`, `/mentor/[username]/book` | `find-mentor/`, `mentor/[username]/` | `views/mentor/` | `server/public-data.ts`, `server/sessions.ts`, `server/razorpay.ts` | `mentors/*`, `payment/*`, `webhooks/razorpay` |
+| Session room | `/session/[sessionId]` | `session/[sessionId]/page.tsx` | `views/session/SessionRoomPageClient.tsx` | `server/sessions.ts`, `server/daily.ts` | `sessions/[sessionId]/*`, `webhooks/daily` |
+| Admin panel | `/admin/**` | `admin/**` (`layout.tsx` checks admin access) | `views/admin/`, `views/auth/admin-signin-view.tsx` | `server/admin.ts` | `admin/*` |
+| Profile, community, legal | `/profile`, `/community`, `/privacy`, `/terms` | `profile/`, `community/`, `privacy/`, `terms/` (inline pages) | `components/brand/`, `views/profile/` | — | — |
+| Emails | — | — | — | `/emails`, `server/resend.ts` | `email-preview/[template]` |
+| Shared UI kit | — | — | `components/ui/` (buttons, cards, dialogs, …), `lib/utils.ts` (`cn()`), `styles/globals.css` | — | — |
+
 ## Admin Panel
 
 Sign in with a seeded admin account at `/admin/signin`, then open `/admin`. Every admin page checks the session in [src/app/admin/layout.tsx](src/app/admin/layout.tsx), and every admin data loader in [src/Backend/server/admin.ts](src/Backend/server/admin.ts) calls `requireAdminViewer()`.

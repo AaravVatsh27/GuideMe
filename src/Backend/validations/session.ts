@@ -3,7 +3,7 @@ import {
   MAX_PRICE,
   MIN_PRICE,
   SESSION_DURATIONS,
-} from "@/Backend/server/constants";
+} from "@/shared/constants";
 import { z } from "zod";
 
 const paidDurationSchema = z.union([

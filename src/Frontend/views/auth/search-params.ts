@@ -1,4 +1,4 @@
-import { AUTH_DEFAULT_REDIRECT, getSafeRedirectTo } from "@/Backend/server/auth-flow";
+import { AUTH_DEFAULT_REDIRECT, getSafeRedirectTo } from "@/shared/auth-flow";
 
 export type AuthPageSearchParams = Record<string, string | string[] | undefined>;
 

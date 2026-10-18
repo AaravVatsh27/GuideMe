@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-import { MentraLogo } from "@/components/brand/MentraLogo";
+import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
 
 type AdminAuthShellProps = {
   children: ReactNode;

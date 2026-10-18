@@ -1,4 +1,4 @@
-import { DEFAULT_CURRENCY } from "@/Backend/server/constants";
+import { DEFAULT_CURRENCY } from "@/shared/constants";
 import { z } from "zod";
 
 const orderNotesSchema = z.record(z.string(), z.union([z.string(), z.number()]));

@@ -21,16 +21,15 @@ import {
   Sparkles,
   Star,
   Stethoscope,
-  TrendingUp,
   X,
 } from "lucide-react";
 
 import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
 import { getPublicMentorDirectory } from "@/Backend/server/public-data";
 import type { PublicMentorCard } from "@/Backend/server/public-data";
-import { cn } from "@/Backend/server/utils";
-import { HomepageHeader } from "@/components/brand/HomepageHeader";
-import { HomepageFooter } from "@/components/brand/HomepageFooter";
+import { cn } from "@/Frontend/lib/utils";
+import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
+import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
 
 export const revalidate = 300;
 

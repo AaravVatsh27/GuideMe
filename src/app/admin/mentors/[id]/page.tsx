@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getAdminMentorDetailData, getMentorAdminStatus } from "@/Backend/server/admin";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 import { AdminStatusBadge } from "@/Frontend/views/admin/admin-status-badge";
 import {

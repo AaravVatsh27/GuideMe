@@ -8,8 +8,8 @@ import {
   ShieldAlert,
 } from "lucide-react";
 
-import { HomepageHeader } from "@/components/brand/HomepageHeader";
-import { HomepageFooter } from "@/components/brand/HomepageFooter";
+import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
+import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Mentra",

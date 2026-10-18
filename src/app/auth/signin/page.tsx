@@ -11,7 +11,7 @@ import { isEmailAuthEnabled, isGoogleAuthEnabled } from "@/Backend/server/auth";
 import {
   AUTH_DEFAULT_REDIRECT,
   getOnboardingPath,
-} from "@/Backend/server/auth-flow";
+} from "@/shared/auth-flow";
 
 type SignInPageProps = {
   searchParams?: AuthPageSearchParams;

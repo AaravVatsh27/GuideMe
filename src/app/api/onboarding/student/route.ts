@@ -13,7 +13,7 @@ import {
   type ConfusionTypeValue,
   type StreamValue,
   type StudentClassValue,
-} from "@/Backend/server/student-onboarding";
+} from "@/shared/student-onboarding";
 import {
   studentBoardStepSchema,
   studentClassStepSchema,

@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/Frontend/components/ui/card";
 
-import { getMentorDashboardData } from "@/Frontend/views/dashboard/mentor/mentor-dashboard-data";
+import { getMentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
 import { MentorProfilePageClient } from "@/Frontend/views/dashboard/mentor/mentor-profile-page-client";
 
 export default async function MentorProfilePage() {

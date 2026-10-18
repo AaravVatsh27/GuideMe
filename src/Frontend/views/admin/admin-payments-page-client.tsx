@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Input } from "@/Frontend/components/ui/input";
 
 import type { getAdminPaymentsData } from "@/Backend/server/admin";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
 import { AdminDataTable, type AdminTableColumn } from "./admin-data-table";
 import { AdminStatusBadge } from "./admin-status-badge";

@@ -17,12 +17,12 @@ import {
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
-import { MentraLogo } from "@/components/brand/MentraLogo";
+import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
 import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/Frontend/components/ui/dropdown-menu";
-import { cn } from "@/Backend/server/utils";
+import { cn } from "@/Frontend/lib/utils";
 
-import { getInitials, getMentorDisplayName } from "./mentor-dashboard-utils";
+import { getInitials, getMentorDisplayName } from "@/shared/mentor-dashboard-utils";
 
 const navItems = [
   { href: "/dashboard/mentor", label: "Overview", icon: LayoutGrid },

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
   ArrowRight,
   BarChart2,
@@ -21,9 +20,9 @@ import {
   Users,
 } from "lucide-react";
 
-import { cn } from "@/Backend/server/utils";
-import { HomepageHeader } from "@/components/brand/HomepageHeader";
-import { HomepageFooter } from "@/components/brand/HomepageFooter";
+import { cn } from "@/Frontend/lib/utils";
+import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
+import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
 
 export const metadata: Metadata = {
   title: "Student Community | Mentra",

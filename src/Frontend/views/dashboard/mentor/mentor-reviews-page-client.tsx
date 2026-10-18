@@ -11,8 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/
 import { Tabs, TabsList, TabsTrigger } from "@/Frontend/components/ui/tabs";
 import { Textarea } from "@/Frontend/components/ui/textarea";
 
-import type { MentorDashboardData } from "./mentor-dashboard-data";
-import { formatDateOnly, getInitials } from "./mentor-dashboard-utils";
+import type { MentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
+import { formatDateOnly, getInitials } from "@/shared/mentor-dashboard-utils";
 
 type Props = {
   mentorId: string;

@@ -12,15 +12,15 @@ import {
 
 import { Badge } from "@/Frontend/components/ui/badge";
 import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
-import { isSafeHttpsUrl } from "@/Backend/validations/url";
+import { isSafeHttpsUrl } from "@/shared/validations/url";
 import { db } from "@/Backend/server/db";
-import { getClassOption } from "@/Backend/server/student-onboarding";
+import { getClassOption } from "@/shared/student-onboarding";
 import {
   getDegreeLabel,
   getExamLabel,
   getHelpTopicLabel,
   getYearOfStudyLabel,
-} from "@/Backend/server/mentor-onboarding";
+} from "@/shared/mentor-onboarding";
 
 import { PublicMentorBookingCard } from "@/Frontend/views/mentor/public-mentor-booking-card";
 

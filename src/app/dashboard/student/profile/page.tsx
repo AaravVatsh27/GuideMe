@@ -23,8 +23,8 @@ import { Input } from "@/Frontend/components/ui/input";
 import { Label } from "@/Frontend/components/ui/label";
 import { Switch } from "@/Frontend/components/ui/switch";
 import { queryKeys } from "@/Frontend/lib/react-query";
-import { getConfusionOption } from "@/Backend/server/student-onboarding";
-import { uploadFiles } from "@/Backend/server/uploadthing";
+import { getConfusionOption } from "@/shared/student-onboarding";
+import { uploadFiles } from "@/Frontend/lib/uploadthing";
 
 const SUPPORT_NEED_VALUES = new Set(["SCHOOL_COACHING_BALANCE", "STUDY_STRATEGY", "TIME_MANAGEMENT"]);
 

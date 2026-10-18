@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
-import { DEFAULT_TIMEZONE, PLATFORM_CUT } from "@/Backend/server/constants";
+import { DEFAULT_TIMEZONE, PLATFORM_CUT } from "@/shared/constants";
 
 /**
  * Retires a mentor's current availability before new slots are written.

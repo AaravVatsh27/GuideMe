@@ -6,7 +6,7 @@ import { auth } from "@/Backend/auth";
 import { applyRateLimit, getRateLimitId, withApiErrorHandling } from "@/Backend/lib/api-helpers";
 import { cacheDel, cacheKeys } from "@/Backend/lib/cache";
 import { paymentLimiter } from "@/Backend/lib/ratelimit";
-import { DEFAULT_CURRENCY, PLATFORM_CUT } from "@/Backend/server/constants";
+import { DEFAULT_CURRENCY, PLATFORM_CUT } from "@/shared/constants";
 import { db } from "@/Backend/server/db";
 import { createOrder } from "@/Backend/server/razorpay";
 import { expireUnpaidBooking, isBookingHoldExpired } from "@/Backend/server/sessions";

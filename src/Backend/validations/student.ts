@@ -3,20 +3,16 @@ import { z } from "zod";
 
 import {
   BOARD_VALUES,
-  COACHING_MODE_VALUES,
   CONFUSION_TYPE_VALUES,
-  DECISION_STAGE_VALUES,
   getAllowedStreamValues,
   getConfusionOptions,
   INDIAN_STATE_VALUES,
   isUGClass,
   LANGUAGE_VALUES,
-  MENTORSHIP_NEED_VALUES,
   requiresBoard,
-  SCHOOLING_MODE_VALUES,
   STREAM_VALUES,
   STUDENT_CLASS_VALUES,
-} from "@/Backend/server/student-onboarding";
+} from "@/shared/student-onboarding";
 
 const classSchema = z.enum(STUDENT_CLASS_VALUES);
 const boardSchema = z.enum(BOARD_VALUES);
