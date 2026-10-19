@@ -2,7 +2,7 @@
 
 import { PaymentStatus, SessionStatus, SessionType } from "@prisma/client";
 import { addMinutes } from "date-fns";
-import { NO_SHOW_REPORT_GRACE_MINUTES, NO_SHOW_REPORT_WINDOW_HOURS, PLATFORM_CUT, SESSION_JOIN_EARLY_WINDOW_MINUTES, UNPAID_BOOKING_HOLD_MINUTES } from "@/shared/constants";
+import { FULL_REFUND_NOTICE_HOURS, HALF_REFUND_NOTICE_HOURS, NO_SHOW_REPORT_GRACE_MINUTES, NO_SHOW_REPORT_WINDOW_HOURS, PLATFORM_CUT, SESSION_JOIN_EARLY_WINDOW_MINUTES, UNPAID_BOOKING_HOLD_MINUTES } from "@/shared/constants";
 import { getAppUrl } from "@/Backend/lib/env";
 
 import { AvailabilityRecord, CancellationOutcome, SessionApiError } from "./shared";
@@ -246,7 +246,7 @@ export function calculateCancellationOutcome(
   const millisecondsUntilSession = session.scheduledAt.getTime() - Date.now();
   const hoursUntilSession = millisecondsUntilSession / (60 * 60 * 1000);
 
-  if (hoursUntilSession > 24) {
+  if (hoursUntilSession > FULL_REFUND_NOTICE_HOURS) {
     return {
       refundPercent: 100,
       refundAmountPaise: session.pricePaise,
@@ -254,7 +254,7 @@ export function calculateCancellationOutcome(
     };
   }
 
-  if (hoursUntilSession >= 12) {
+  if (hoursUntilSession >= HALF_REFUND_NOTICE_HOURS) {
     return {
       refundPercent: 50,
       refundAmountPaise: Math.round(session.pricePaise * 0.5),

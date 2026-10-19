@@ -6,6 +6,7 @@ import { type PublicPlatformSnapshot } from "@/Backend/server/public-data";
 import { formatPaise } from "@/shared/format";
 
 import { getMentorIncomeEstimate } from "@/Frontend/views/home/home-helpers";
+import { PLATFORM_CUT } from "@/shared/constants";
 
 export function MentorIncomeSection({
   snapshot,
@@ -118,8 +119,8 @@ export function MentorIncomeSection({
                   </div>
 
                   <p className="mt-4 max-w-lg text-sm leading-6 text-slate-500">
-                    Estimate based on the current platform booking value and an
-                    80% mentor share.
+                    Estimate based on the current platform booking value and a{" "}
+                    {Math.round((1 - PLATFORM_CUT) * 100)}% mentor share.
                   </p>
 
                   <div className="mt-7 rounded-2xl bg-violet-50/80 p-4">

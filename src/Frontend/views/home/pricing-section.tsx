@@ -6,7 +6,7 @@ import { ArrowRight, Check, ChevronDown, GraduationCap, Lock, ShieldCheck, Spark
 import { type PublicPlatformSnapshot } from "@/Backend/server/public-data";
 
 import { getPriceRange, getTypicalPrice } from "@/Frontend/views/home/home-helpers";
-import { FREE_INTRO_DURATION } from "@/shared/constants";
+import { FREE_INTRO_DURATION, FULL_REFUND_NOTICE_HOURS, HALF_REFUND_NOTICE_HOURS, NO_SHOW_REPORT_GRACE_MINUTES, SESSION_DURATIONS } from "@/shared/constants";
 
 export function PricingSection({
   snapshot,
@@ -15,6 +15,8 @@ export function PricingSection({
 }) {
   const typicalPrice = getTypicalPrice(snapshot);
   const priceRange = getPriceRange(snapshot);
+  const sessionLengths = SESSION_DURATIONS.join(" or ");
+  const refundPolicy = `If your mentor doesn't join within ${NO_SHOW_REPORT_GRACE_MINUTES} minutes, report it from the session page for a full refund. If you cancel more than ${FULL_REFUND_NOTICE_HOURS} hours ahead you get a full refund, ${HALF_REFUND_NOTICE_HOURS}–${FULL_REFUND_NOTICE_HOURS} hours ahead half, and less than ${HALF_REFUND_NOTICE_HOURS} hours ahead none.`;
   const introMinutes = snapshot.introMinutes || FREE_INTRO_DURATION;
 
   const pricingTiers = [
@@ -49,17 +51,17 @@ export function PricingSection({
       badge: "Most Popular",
       badgeColor: "bg-[#7C3AED] text-white border-transparent",
       price: typicalPrice,
-      period: "/ session (45–60 mins)",
+      period: `/ session (${sessionLengths} mins)`,
       subPriceNote: `Fair mentor rates · ${priceRange}`,
       description:
         "An intensive, focused 1:1 session completely tailored to your study schedule, mock score analysis, or college selection dilemma.",
       features: [
-        "45–60 min deep-dive private video call",
+        `${sessionLengths}-minute private video call`,
         "Custom study schedule & milestone audit",
         "Unfiltered college & branch reality check",
         "Curated notes, mock tests & resource tips",
         "Live doubt resolution & score triage",
-        "100% Money-Back Satisfaction Guarantee",
+        "Full refund if your mentor doesn't show up",
       ],
       ctaText: "Find Your Senior Mentor",
       ctaHref: "/find-mentor",
@@ -97,9 +99,8 @@ export function PricingSection({
   const trustGuarantees = [
     {
       icon: ShieldCheck,
-      title: "100% Money-Back Guarantee",
-      description:
-        "If your mentor misses a session or technical issues disrupt the call, receive an immediate full refund or free reschedule.",
+      title: "Full refund on mentor no-shows",
+      description: refundPolicy,
     },
     {
       icon: Zap,
@@ -128,11 +129,11 @@ export function PricingSection({
     },
     {
       q: "How do mentors set their prices?",
-      a: "Mentors set their own fees transparently based on their year, degree, and preparation expertise. Most sessions range between ₹199 and ₹599 for a full 45–60 minute session. There are never any hidden platform surcharges.",
+      a: `Mentors set their own fees based on their year, degree and preparation experience. Sessions are ${sessionLengths} minutes, and prices on Mentra are currently ${priceRange}. There are no hidden platform surcharges.`,
     },
     {
       q: "What happens if my mentor doesn't show up or I need to reschedule?",
-      a: "Our 100% Money-Back Guarantee protects you. If a mentor fails to join or severe technical disruption occurs, we immediately issue a full refund to your original payment method or reschedule you with priority.",
+      a: `${refundPolicy} Refunds go back to your original payment method. To move a session, cancel it and book a new slot.`,
     },
     {
       q: "How does Mentra compare to expensive coaching institute counselling?",
@@ -364,7 +365,7 @@ export function PricingSection({
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="font-bold text-emerald-600">✓</span>
-                  <span>100% Money-Back Satisfaction Guarantee on every call</span>
+                  <span>Full refund if your mentor doesn&apos;t show up</span>
                 </li>
               </ul>
             </div>
