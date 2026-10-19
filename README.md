@@ -117,3 +117,15 @@ How the admin panel is put together:
 ## Deploy on Vercel
 
 Deploy with the [Vercel Platform](https://vercel.com/new). Set the same environment variables as `.env.local` in the Vercel project, and run `npx prisma migrate deploy` against the production database before the first release.
+
+## Scheduled Jobs
+
+[vercel.json](vercel.json) runs three jobs through [src/app/api/cron/[job]/route.ts](src/app/api/cron/[job]/route.ts); the job code is in [src/Backend/server/jobs.ts](src/Backend/server/jobs.ts).
+
+| Job | Schedule | What it does |
+| --- | --- | --- |
+| `session-reminders` | every 15 minutes | Emails and notifies both participants about an hour before a confirmed session. Each session is reminded once. |
+| `expire-holds` | every 15 minutes | Cancels paid bookings that weren't paid within 15 minutes, freeing the slot. |
+| `cleanup` | daily, 03:00 IST | Deletes expired sign-in tokens and read notifications older than 180 days. Audit logs are kept. |
+
+Set `CRON_SECRET` in the Vercel project; Vercel sends it as `Authorization: Bearer <secret>` and the route rejects anything else. Running jobs more often than once a day needs a Vercel Pro plan; on Hobby, call the same URLs from an external scheduler with that header.
