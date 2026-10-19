@@ -1,5 +1,4 @@
 import type { Payout, Session, User } from "@prisma/client";
-import { format } from "date-fns";
 import { Resend, type CreateEmailResponse } from "resend";
 
 import {
@@ -9,6 +8,7 @@ import {
   WelcomeMentor,
   renderEmailTemplate,
 } from "@emails";
+import { formatIstDateTime } from "@emails/utils";
 import { DEFAULT_CURRENCY, PLATFORM_NAME } from "@/shared/constants";
 import { getAppUrl } from "@/Backend/lib/env";
 
@@ -220,10 +220,7 @@ export async function sendSessionReminder(
       preview: "Your session starts soon.",
       title: "Session reminder",
       body: [
-        `${recipient.name}, your session starts on ${format(
-          session.scheduledAt,
-          "EEE, d MMM yyyy 'at' h:mm a",
-        )}.`,
+        `${recipient.name}, your session starts on ${formatIstDateTime(session.scheduledAt)}.`,
         "Keep 5 minutes free beforehand so you can join without rushing.",
       ],
       cta: session.meetingLink
@@ -319,10 +316,7 @@ export async function sendSessionCancellationEmails(
       preview: "A mentoring session has been cancelled.",
       title: details.isNoShow ? "Mentor no-show recorded" : "Session cancelled",
       body: [
-        `${details.cancelledByName} cancelled the session scheduled for ${format(
-          session.scheduledAt,
-          "EEE, d MMM yyyy 'at' h:mm a",
-        )}.`,
+        `${details.cancelledByName} cancelled the session scheduled for ${formatIstDateTime(session.scheduledAt)}.`,
         `Reason: ${details.reason}`,
         refundLine,
       ],
