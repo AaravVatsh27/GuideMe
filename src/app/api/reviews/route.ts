@@ -9,6 +9,7 @@ import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
 import { db } from "@/Backend/server/db";
 import { createReviewSchema } from "@/Backend/validations/review";
 import { defineRoute } from "@/Backend/lib/define-route";
+import { recalculateMentorStats } from "@/Backend/server/mentor-state";
 
 type ReviewCreateResponse = {
   review: {
@@ -117,30 +118,7 @@ export const POST = defineRoute(
       },
     });
 
-    const aggregates = await tx.review.aggregate({
-      where: {
-        mentorId: sessionRecord.mentorId,
-      },
-      _avg: {
-        rating: true,
-      },
-      _count: {
-        _all: true,
-      },
-    });
-
-    const avgRating = Number((aggregates._avg.rating ?? 0).toFixed(2));
-    const totalReviews = aggregates._count._all;
-
-    await tx.mentorProfile.update({
-      where: {
-        userId: sessionRecord.mentorId,
-      },
-      data: {
-        avgRating,
-        totalReviews,
-      },
-    });
+    const { avgRating, totalReviews } = await recalculateMentorStats(tx, sessionRecord.mentorId);
 
     await tx.notification.create({
       data: {

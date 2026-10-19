@@ -9,6 +9,7 @@ import { sendReviewRequestEmail, sendSessionCancellationEmails, sendSessionCompl
 import { createCancellationNotifications, createCompletionNotifications } from "./notifications";
 import { buildAbsoluteUrl, calculateCancellationOutcome, ensureMentorControlsSession, ensureNoShowCanBeReported, resolveSessionEndAt, resolveSessionStartAt } from "./rules";
 import { CancelSessionInput, CompleteSessionInput, SessionApiError, StartSessionInput, asEmailParticipant, findSessionDetailsOrThrow, invalidateSessionCaches, isParticipant, safelySend } from "./shared";
+import { recalculateMentorStats } from "@/Backend/server/mentor-state";
 
 export async function cancelSessionById({
   sessionId,
@@ -296,16 +297,7 @@ export async function completeSessionById({
       });
     }
 
-    await tx.mentorProfile.updateMany({
-      where: {
-        userId: session.mentorId,
-      },
-      data: {
-        totalSessions: {
-          increment: 1,
-        },
-      },
-    });
+    await recalculateMentorStats(tx, session.mentorId);
     await createCompletionNotifications(tx, sessionId, session.studentId, session.mentorId);
 
     await tx.auditLog.create({

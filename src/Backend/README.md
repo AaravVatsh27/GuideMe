@@ -19,6 +19,7 @@ Everything here runs on the server: database access, authentication, payments, e
 | `admin.ts` | Every admin-panel data loader. Each one calls `requireAdminViewer()` first. |
 | `mentor-dashboard-data.ts` | `getMentorDashboardData()`: loads everything the mentor dashboard tabs show. |
 | `public-data.ts` | Data for public pages: platform stats, mentor directory, review highlights, auth-screen content. |
+| `mentor-state.ts` | The one place that changes a mentor's verification state (keeps `MentorVerification.status` and `MentorProfile.isVerified` in step) and recalculates their rating and session counts. |
 | `sessions/` | Booking and session logic, split by concern: `booking.ts` (new bookings), `lifecycle.ts` (cancel, start, complete), `payment-recovery.ts` (expired holds, late payments), `slots.ts` (conflicts and the booking lock), `rules.ts` (pure time, price and refund rules), `views.ts` (per-viewer shaping), `notifications.ts`, `shared.ts`. Import from `@/Backend/server/sessions`. |
 | `matching.ts` | Student → mentor matching scores, with cache invalidation. |
 | `daily.ts` | Daily.co video rooms and meeting tokens for the session room. |

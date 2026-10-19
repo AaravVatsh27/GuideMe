@@ -1,4 +1,3 @@
-import { VerificationStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -15,6 +14,7 @@ import {
 } from "@/Backend/server/resend";
 import { getAppUrl } from "@/Backend/lib/env";
 import { defineRoute } from "@/Backend/lib/define-route";
+import { setMentorVerification } from "@/Backend/server/mentor-state";
 
 const verificationActionSchema = z.discriminatedUnion("decision", [
   z.object({
@@ -65,43 +65,15 @@ export const POST = defineRoute(
   }
 
   const tier = autoAssignMentorTier(mentor.mentorProfile?.college);
-  const now = new Date();
   const ipAddress = extractRequestIp(request);
   const appUrl = getAppUrl();
 
   await db.$transaction(async (tx) => {
     if (parsed.data.decision === "approve") {
-      await tx.mentorProfile.update({
-        where: { userId: mentor.id },
-        data: {
-          isVerified: true,
-          isActive: true,
-          tier,
-        },
-      });
-
-      await tx.user.update({
-        where: { id: mentor.id },
-        data: {
-          isActive: true,
-        },
-      });
-
-      await tx.mentorVerification.upsert({
-        where: { mentorId: mentor.id },
-        create: {
-          mentorId: mentor.id,
-          status: VerificationStatus.APPROVED,
-          reviewedBy: session.user.id,
-          reviewedAt: now,
-          submittedAt: now,
-        },
-        update: {
-          status: VerificationStatus.APPROVED,
-          reviewedBy: session.user.id,
-          reviewedAt: now,
-          rejectionReason: null,
-        },
+      await setMentorVerification(tx, mentor.id, {
+        status: "APPROVED",
+        reviewerId: session.user.id,
+        tier,
       });
 
       await tx.auditLog.create({
@@ -117,30 +89,10 @@ export const POST = defineRoute(
         },
       });
     } else {
-      await tx.mentorProfile.update({
-        where: { userId: mentor.id },
-        data: {
-          isVerified: false,
-          isActive: false,
-        },
-      });
-
-      await tx.mentorVerification.upsert({
-        where: { mentorId: mentor.id },
-        create: {
-          mentorId: mentor.id,
-          status: VerificationStatus.REJECTED,
-          reviewedBy: session.user.id,
-          reviewedAt: now,
-          rejectionReason: parsed.data.reason,
-          submittedAt: now,
-        },
-        update: {
-          status: VerificationStatus.REJECTED,
-          reviewedBy: session.user.id,
-          reviewedAt: now,
-          rejectionReason: parsed.data.reason,
-        },
+      await setMentorVerification(tx, mentor.id, {
+        status: "REJECTED",
+        reviewerId: session.user.id,
+        reason: parsed.data.reason,
       });
 
       await tx.auditLog.create({

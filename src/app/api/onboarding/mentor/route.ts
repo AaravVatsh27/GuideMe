@@ -10,6 +10,7 @@ import { mentorAvailabilityStepSchema, mentorCourseStepSchema, mentorExamsStepSc
 import { defineRoute } from "@/Backend/lib/define-route";
 
 import { MENTOR_DASHBOARD_PATH, buildExamYears, buildExistingDraft, buildUsername, getValidatedStepData, mergeDraft, patchRequestSchema } from "@/Backend/server/mentor-onboarding-draft";
+import { setMentorVerification } from "@/Backend/server/mentor-state";
 
 export const PATCH = defineRoute(
   { roles: ["MENTOR"], forbiddenMessage: "Only mentors can use this onboarding flow" },
@@ -561,27 +562,7 @@ export const PATCH = defineRoute(
             },
           });
 
-          await tx.mentorVerification.upsert({
-            where: {
-              mentorId: session.user.id,
-            },
-
-            create: {
-              mentorId: session.user.id,
-              collegeIdUrl: null,
-              status: "PENDING",
-              submittedAt: new Date(),
-            },
-
-            update: {
-              collegeIdUrl: null,
-              status: "PENDING",
-              reviewedBy: null,
-              reviewedAt: null,
-              rejectionReason: null,
-              submittedAt: new Date(),
-            },
-          });
+          await setMentorVerification(tx, session.user.id, { status: "PENDING" });
         }
 
         return profile;
