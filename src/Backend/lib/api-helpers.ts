@@ -139,6 +139,21 @@ function isApiStatusError(
   );
 }
 
+function getPostgresErrorCode(error: unknown): string | null {
+  const text = error instanceof Error ? `${error.message} ${JSON.stringify((error as { meta?: unknown }).meta ?? {})}` : "";
+  const match = text.match(/\b(23P01|23514)\b/) ?? text.match(/(exclusion|check) constraint/i);
+
+  if (!match) {
+    return null;
+  }
+
+  if (match[1] === "23P01" || /exclusion/i.test(match[0])) {
+    return "23P01";
+  }
+
+  return "23514";
+}
+
 function buildErrorResponse(error: unknown): BuiltApiErrorResponse {
   if (error instanceof ZodError) {
     return {
@@ -178,6 +193,28 @@ function buildErrorResponse(error: unknown): BuiltApiErrorResponse {
         details: undefined,
       };
     }
+  }
+
+  // Postgres constraint violations (exclusion = overlapping sessions, check = invalid values),
+  // which the driver adapter reports with the SQLSTATE code in the error.
+  const postgresCode = getPostgresErrorCode(error);
+
+  if (postgresCode === "23P01") {
+    return {
+      capture: false,
+      message: "That time slot was just booked. Please pick another time.",
+      status: 409,
+      details: undefined,
+    };
+  }
+
+  if (postgresCode === "23514") {
+    return {
+      capture: true,
+      message: "The request contained values the database does not allow",
+      status: 400,
+      details: undefined,
+    };
   }
 
   if (isApiStatusError(error)) {

@@ -12,7 +12,7 @@ import { sendBookingConfirmation } from "@/Backend/server/resend";
 import { createBookingNotifications } from "./notifications";
 import { buildSessionReceipt, calculateSessionAmounts, getBookingHoldCutoff } from "./rules";
 import { CreateSessionBookingInput, SessionApiError, asEmailParticipant, findSessionDetailsOrThrow, invalidateSessionCaches, safelySend } from "./shared";
-import { ensureNoConflict, findMatchingAvailability, lockBookingParticipants } from "./slots";
+import { ensureNoConflict, findMatchingAvailability, lockBookingParticipants, releaseExpiredOverlappingHolds } from "./slots";
 
 export async function createSessionBooking({
   studentId,
@@ -166,6 +166,7 @@ export async function createSessionBooking({
 
   await db.$transaction(async (tx) => {
     await lockBookingParticipants(tx, mentor.id, studentId);
+    await releaseExpiredOverlappingHolds(tx, mentor.id, studentId, requestedSlot);
     await ensureNoConflict(tx, "studentId", studentId, requestedSlot, "Student");
     await ensureNoConflict(tx, "mentorId", mentor.id, requestedSlot, "Mentor");
 

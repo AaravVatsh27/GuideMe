@@ -197,8 +197,11 @@ export function GuideMeAuthAdapter(): Adapter {
       return toAdapterUser(updatedUser);
     },
     async deleteUser(userId) {
-      const deletedUser = await db.user.delete({
+      // Users are soft-deleted: their sessions, payments and reviews must stay on record
+      // (the database refuses to delete a user who has them).
+      const deletedUser = await db.user.update({
         where: { id: userId },
+        data: { deletedAt: new Date(), isActive: false },
         select: userSelect,
       });
 
@@ -211,12 +214,14 @@ export function GuideMeAuthAdapter(): Adapter {
           type: account.type,
           provider: account.provider,
           providerAccountId: account.providerAccountId,
-          refresh_token: account.refresh_token ?? null,
-          access_token: account.access_token ?? null,
-          expires_at: account.expires_at ?? null,
-          token_type: account.token_type ?? null,
+          // Sign-in uses JWT sessions and never calls the provider's API, so provider
+          // tokens are not stored.
+          refresh_token: null,
+          access_token: null,
+          expires_at: null,
+          token_type: null,
           scope: account.scope ?? null,
-          id_token: account.id_token ?? null,
+          id_token: null,
           session_state:
             typeof account.session_state === "string" ? account.session_state : null,
         },

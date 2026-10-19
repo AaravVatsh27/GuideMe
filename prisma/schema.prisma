@@ -17,10 +17,10 @@ model User {
   emailVerified          Boolean                 @default(false)
   phoneVerified          Boolean                 @default(false)
   isActive               Boolean                 @default(true)
-  deletedAt              DateTime?
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  lastActiveAt           DateTime?
+  deletedAt              DateTime?               @db.Timestamptz(3)
+  createdAt              DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime                @updatedAt @db.Timestamptz(3)
+  lastActiveAt           DateTime?               @db.Timestamptz(3)
   onboardingComplete     Boolean                 @default(false)
   onboardingStep         Int                     @default(0)
   accounts               Account[]
@@ -75,34 +75,34 @@ model Account {
 model VerificationToken {
   identifier String
   token      String   @unique
-  expires    DateTime
+  expires    DateTime @db.Timestamptz(3)
 
   @@unique([identifier, token])
 }
 
 model StudentProfile {
-  userId             String           @id @db.Uuid
-  class              Class
-  board              Board?
-  stream             Stream
+  userId String @id @db.Uuid
+  class  Class
+  board  Board?
+  stream Stream
 
-  targetExam         TargetExam?
-  targetExams        TargetExam[]     @default([])
+  targetExam  TargetExam?
+  targetExams TargetExam[] @default([])
 
-  confusionType      ConfusionType?
-  confusionTypes     ConfusionType[]  @default([])
+  confusionType  ConfusionType?
+  confusionTypes ConfusionType[] @default([])
 
-  schoolingMode      SchoolingMode?
-  coachingMode       CoachingMode?
-  mentorshipNeeds    MentorshipNeed[] @default([])
-  decisionStage      DecisionStage?
-  currentConfusion   String?
+  schoolingMode    SchoolingMode?
+  coachingMode     CoachingMode?
+  mentorshipNeeds  MentorshipNeed[] @default([])
+  decisionStage    DecisionStage?
+  currentConfusion String?
 
   city               String?
   state              String?
   languagePreference String?
   parentalPressure   ParentalPressure?
-  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([class, board, stream])
   @@index([targetExam, confusionType])
@@ -121,7 +121,7 @@ model MentorProfile {
   branch                 String?
   yearOfStudy            Int?
   expectedGraduationYear Int?
-  verifiedCollegeEmail   String?
+  verifiedCollegeEmail   String?      @unique
   tier                   MentorTier   @default(RISING)
   bio                    String?
   headline               String?
@@ -141,7 +141,7 @@ model MentorProfile {
   introVideoUrl          String?
   onboardingStep         Int          @default(0)
   profileViews           Int          @default(0)
-  lastProfileUpdate      DateTime     @default(now())
+  lastProfileUpdate      DateTime     @default(now()) @db.Timestamptz(3)
   institution            Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
   user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -159,9 +159,9 @@ model Session {
   mentorId           String        @db.Uuid
   type               SessionType
   status             SessionStatus @default(SCHEDULED)
-  scheduledAt        DateTime
-  startedAt          DateTime?
-  endedAt            DateTime?
+  scheduledAt        DateTime      @db.Timestamptz(3)
+  startedAt          DateTime?     @db.Timestamptz(3)
+  endedAt            DateTime?     @db.Timestamptz(3)
   durationMinutes    Int
   price              Int
   platformCut        Int
@@ -170,26 +170,24 @@ model Session {
   meetingRoomId      String?
   cancelledBy        String?       @db.Uuid
   cancellationReason String?
-  cancelledAt        DateTime?
+  cancelledAt        DateTime?     @db.Timestamptz(3)
   studentJoined      Boolean       @default(false)
   mentorJoined       Boolean       @default(false)
-  studentJoinedAt    DateTime?
-  mentorJoinedAt     DateTime?
+  studentJoinedAt    DateTime?     @db.Timestamptz(3)
+  mentorJoinedAt     DateTime?     @db.Timestamptz(3)
   aiSummary          String?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  createdAt          DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime      @updatedAt @db.Timestamptz(3)
   booking            Booking?
   messages           Message[]
   payment            Payment?
   payout             Payout?
   review             Review?
   cancelledByUser    User?         @relation("CancelledBy", fields: [cancelledBy], references: [id])
-  mentor             User          @relation("MentorSessions", fields: [mentorId], references: [id], onDelete: Cascade)
-  student            User          @relation("StudentSessions", fields: [studentId], references: [id], onDelete: Cascade)
+  mentor             User          @relation("MentorSessions", fields: [mentorId], references: [id], onDelete: Restrict)
+  student            User          @relation("StudentSessions", fields: [studentId], references: [id], onDelete: Restrict)
   notes              SessionNote[]
 
-  @@index([studentId])
-  @@index([mentorId])
   @@index([cancelledBy])
   @@index([status, scheduledAt])
   @@index([type, scheduledAt])
@@ -208,13 +206,12 @@ model Review {
   tags        String[] @default([])
   wouldRebook Boolean
   isPublic    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  mentor      User     @relation("ReviewMentor", fields: [mentorId], references: [id], onDelete: Cascade)
-  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  student     User     @relation("ReviewStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  mentor      User     @relation("ReviewMentor", fields: [mentorId], references: [id], onDelete: Restrict)
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  student     User     @relation("ReviewStudent", fields: [studentId], references: [id], onDelete: Restrict)
 
   @@index([studentId])
-  @@index([mentorId])
   @@index([mentorId, rating])
   @@index([isPublic, createdAt])
   @@index([createdAt])
@@ -232,12 +229,12 @@ model Payment {
   refundId          String?
   refundAmount      Int?
   refundStatus      PaymentStatus?
-  paidAt            DateTime?
-  refundedAt        DateTime?
+  paidAt            DateTime?      @db.Timestamptz(3)
+  refundedAt        DateTime?      @db.Timestamptz(3)
   metadata          Json?
-  createdAt         DateTime       @default(now())
-  session           Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
+  session           Session        @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  user              User           @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@index([userId])
   @@index([status, createdAt])
@@ -254,11 +251,11 @@ model Payout {
   upiId         String?
   transactionId String?
   failureReason String?
-  scheduledAt   DateTime?
-  processedAt   DateTime?
-  createdAt     DateTime     @default(now())
-  mentor        User         @relation("MentorPayouts", fields: [mentorId], references: [id], onDelete: Cascade)
-  session       Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  scheduledAt   DateTime?    @db.Timestamptz(3)
+  processedAt   DateTime?    @db.Timestamptz(3)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(3)
+  mentor        User         @relation("MentorPayouts", fields: [mentorId], references: [id], onDelete: Restrict)
+  session       Session      @relation(fields: [sessionId], references: [id], onDelete: Restrict)
 
   @@index([mentorId])
   @@index([status, scheduledAt])
@@ -279,7 +276,6 @@ model Availability {
   mentor       User      @relation("MentorAvailabilities", fields: [mentorId], references: [id], onDelete: Cascade)
   bookings     Booking[]
 
-  @@index([mentorId])
   @@index([mentorId, dayOfWeek, isActive])
   @@index([mentorId, specificDate])
   @@index([specificDate])
@@ -289,8 +285,8 @@ model Booking {
   id             String       @id @default(uuid()) @db.Uuid
   availabilityId String       @db.Uuid
   sessionId      String       @unique @db.Uuid
-  bookedAt       DateTime     @default(now())
-  expiresAt      DateTime?
+  bookedAt       DateTime     @default(now()) @db.Timestamptz(3)
+  expiresAt      DateTime?    @db.Timestamptz(3)
   availability   Availability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
   session        Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
@@ -306,13 +302,12 @@ model Notification {
   title     String
   body      String
   isRead    Boolean          @default(false)
-  readAt    DateTime?
+  readAt    DateTime?        @db.Timestamptz(3)
   link      String?
   metadata  Json?
-  createdAt DateTime         @default(now())
+  createdAt DateTime         @default(now()) @db.Timestamptz(3)
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
   @@index([userId, isRead, createdAt])
   @@index([type, createdAt])
 }
@@ -326,15 +321,13 @@ model Message {
   messageType MessageType @default(TEXT)
   fileUrl     String?
   isRead      Boolean     @default(false)
-  readAt      DateTime?
-  createdAt   DateTime    @default(now())
+  readAt      DateTime?   @db.Timestamptz(3)
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
   receiver    User        @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
   sender      User        @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   session     Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
-  @@index([sessionId])
   @@index([senderId])
-  @@index([receiverId])
   @@index([receiverId, isRead, createdAt])
   @@index([sessionId, createdAt])
 }
@@ -343,12 +336,11 @@ model SavedMentor {
   id        String   @id @default(uuid()) @db.Uuid
   studentId String   @db.Uuid
   mentorId  String   @db.Uuid
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
   mentor    User     @relation("SavedMentorTarget", fields: [mentorId], references: [id], onDelete: Cascade)
   student   User     @relation("SavedByStudent", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, mentorId])
-  @@index([studentId])
   @@index([mentorId])
   @@index([createdAt])
 }
@@ -358,8 +350,8 @@ model SessionNote {
   sessionId String   @db.Uuid
   authorId  String   @db.Uuid
   content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
@@ -382,8 +374,8 @@ model Institution {
   officialId                String?
   officialSource            String?
   isActive                  Boolean                   @default(true)
-  createdAt                 DateTime                  @default(now())
-  updatedAt                 DateTime                  @updatedAt
+  createdAt                 DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime                  @updatedAt @db.Timestamptz(3)
   domains                   CollegeDomain[]
   mentors                   MentorProfile[]
   verificationEvidence      VerificationEvidence[]
@@ -409,15 +401,13 @@ model CollegeDomain {
   website       String?
   institutionId String?      @db.Uuid
   isApproved    Boolean      @default(true)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(3)
   institution   Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
 
   @@index([collegeName])
   @@index([tier])
-  @@index([type])
   @@index([institutionId])
-  @@index([isApproved])
 }
 
 model VerificationEvidence {
@@ -429,16 +419,13 @@ model VerificationEvidence {
   status        VerificationStatus       @default(PENDING)
   confidence    Int?
   metadata      Json?
-  verifiedAt    DateTime?
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
+  verifiedAt    DateTime?                @db.Timestamptz(3)
+  createdAt     DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime                 @updatedAt @db.Timestamptz(3)
   institution   Institution?             @relation(fields: [institutionId], references: [id], onDelete: SetNull)
   mentor        User                     @relation("MentorVerificationEvidence", fields: [mentorId], references: [id], onDelete: Cascade)
 
-  @@index([mentorId])
   @@index([institutionId])
-  @@index([type])
-  @@index([provider])
   @@index([status])
   @@index([mentorId, type])
 }
@@ -451,10 +438,10 @@ model InstitutionSuggestion {
   normalizedName        String
   status                InstitutionSuggestionStatus @default(PENDING)
   reviewedBy            String?                     @db.Uuid
-  reviewedAt            DateTime?
+  reviewedAt            DateTime?                   @db.Timestamptz(3)
   rejectionReason       String?
-  createdAt             DateTime                    @default(now())
-  updatedAt             DateTime                    @updatedAt
+  createdAt             DateTime                    @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime                    @updatedAt @db.Timestamptz(3)
   approvedInstitution   Institution?                @relation(fields: [approvedInstitutionId], references: [id], onDelete: SetNull)
   mentor                User                        @relation("MentorInstitutionSuggestions", fields: [mentorId], references: [id], onDelete: Cascade)
 
@@ -470,9 +457,9 @@ model MentorVerification {
   collegeIdUrl    String?
   status          VerificationStatus @default(PENDING)
   reviewedBy      String?            @db.Uuid
-  reviewedAt      DateTime?
+  reviewedAt      DateTime?          @db.Timestamptz(3)
   rejectionReason String?
-  submittedAt     DateTime           @default(now())
+  submittedAt     DateTime           @default(now()) @db.Timestamptz(3)
   mentor          User               @relation("MentorVerificationTarget", fields: [mentorId], references: [id], onDelete: Cascade)
   reviewer        User?              @relation("VerificationReviewedBy", fields: [reviewedBy], references: [id])
 
@@ -489,7 +476,7 @@ model AuditLog {
   entityId   String
   metadata   Json?
   ipAddress  String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
   user       User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
