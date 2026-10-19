@@ -26,6 +26,7 @@ import {
   fetchAvailability,
   formatDateLabel,
   formatIstDateKey,
+  formatPaise,
   formatTimeLabel,
   getDateFromIstKey,
 } from "./mentor-booking-shared";
@@ -42,8 +43,9 @@ function toRoute(path: string) {
   return path as Route;
 }
 
-function formatRupees(value: number | null) {
-  return typeof value === "number" ? `₹${value.toLocaleString("en-IN")}` : "₹249";
+/** Formats a price in paise; mentors without a price show the default ₹249. */
+function formatPrice(paise: number | null) {
+  return typeof paise === "number" ? formatPaise(paise) : "₹249";
 }
 
 export function PublicMentorBookingCard({
@@ -133,7 +135,7 @@ export function PublicMentorBookingCard({
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-teal-50">Paid session</p>
-              <p className="mt-1 text-xs text-teal-100/80">30 min · {formatRupees(priceMinPaise)}</p>
+              <p className="mt-1 text-xs text-teal-100/80">30 min · {formatPrice(priceMinPaise)}</p>
             </div>
             <Button
               asChild={hasSelection}
