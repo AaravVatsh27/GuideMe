@@ -65,147 +65,6 @@ type QuickFilter = {
   active: boolean;
 };
 
-// Curated verified senior profiles to guarantee the directory is rich,
-const DEFAULT_AVATARS = [
-  "/avatars/mentor-5.jpg",
-  "/avatars/mentor-3.jpg",
-  "/avatars/mentor-2.jpg",
-  "/avatars/mentor-1.jpg",
-  "/avatars/mentor-4.jpg",
-  "/avatars/mentor-6.jpg",
-];
-
-// Curated verified senior profiles to guarantee the directory is rich,
-// credible, and representative during development or when DB has pending verifications.
-const CURATED_FEATURED_MENTORS: PublicMentorCard[] = [
-  {
-    id: "curated-1",
-    name: "Aryan Sharma",
-    firstName: "Aryan",
-    username: "aryan-sharma-iitb",
-    image: "/avatars/mentor-5.jpg",
-    headline: "IIT Bombay CSE '25 · AIR 142 JEE Advanced. I help juniors navigate prep strategy, branch selection, and IIT life.",
-    college: "IIT Bombay",
-    degree: "B.Tech Computer Science",
-    yearOfStudy: 4,
-    yearLabel: "IIT Bombay · 4th Year",
-    tier: "ELITE",
-    priceMinPaise: 29900,
-    priceMaxPaise: 49900,
-    avgRating: 4.95,
-    totalReviews: 38,
-    totalSessions: 46,
-    availableThisWeek: true,
-    examLabels: ["JEE Advanced", "JEE Mains"],
-    topicLabels: ["JEE Prep", "College Selection", "Branch Choice"],
-  },
-  {
-    id: "curated-2",
-    name: "Dr. Ananya Sen",
-    firstName: "Ananya",
-    username: "ananya-sen-aiims",
-    image: "/avatars/mentor-3.jpg",
-    headline: "AIIMS New Delhi MBBS '26 · NEET Score 695/720. Mentoring on Biology retention, test anxiety, and AIIMS vs state colleges.",
-    college: "AIIMS New Delhi",
-    degree: "MBBS",
-    yearOfStudy: 3,
-    yearLabel: "AIIMS New Delhi · 3rd Year",
-    tier: "ELITE",
-    priceMinPaise: 24900,
-    priceMaxPaise: 39900,
-    avgRating: 5.0,
-    totalReviews: 29,
-    totalSessions: 35,
-    availableThisWeek: true,
-    examLabels: ["NEET", "NEET UG"],
-    topicLabels: ["NEET Prep", "Medical Colleges", "Study Strategy"],
-  },
-  {
-    id: "curated-3",
-    name: "Rohan Verma",
-    firstName: "Rohan",
-    username: "rohan-verma-bits",
-    image: "/avatars/mentor-2.jpg",
-    headline: "BITS Pilani EEE '24 → Amazon SDE. BITSAT 342. Helping students choose between dual degree, electrical vs CSE, and placement prep.",
-    college: "BITS Pilani",
-    degree: "B.E. Electrical & Electronics",
-    yearOfStudy: 4,
-    yearLabel: "BITS Pilani · Final Year",
-    tier: "VERIFIED",
-    priceMinPaise: 19900,
-    priceMaxPaise: 34900,
-    avgRating: 4.9,
-    totalReviews: 24,
-    totalSessions: 31,
-    availableThisWeek: false,
-    examLabels: ["BITSAT", "JEE Mains"],
-    topicLabels: ["Stream Selection", "Branch Choice", "Career Clarity"],
-  },
-  {
-    id: "curated-4",
-    name: "Sneha Patel",
-    firstName: "Sneha",
-    username: "sneha-patel-srcc",
-    image: "/avatars/mentor-1.jpg",
-    headline: "SRCC '23 → IIM Bangalore '25 · CA Intermediate All-India Top 50. Guiding Commerce students through CA vs MBA decisions.",
-    college: "IIM Bangalore",
-    degree: "MBA / PGP",
-    yearOfStudy: 2,
-    yearLabel: "IIM Bangalore · 2nd Year",
-    tier: "ELITE",
-    priceMinPaise: 34900,
-    priceMaxPaise: 59900,
-    avgRating: 4.98,
-    totalReviews: 42,
-    totalSessions: 52,
-    availableThisWeek: true,
-    examLabels: ["CAT", "CA Inter"],
-    topicLabels: ["CA Path", "College Selection", "Career Clarity"],
-  },
-  {
-    id: "curated-5",
-    name: "Kabir Mehta",
-    firstName: "Kabir",
-    username: "kabir-mehta-nlud",
-    image: "/avatars/mentor-4.jpg",
-    headline: "NLU Delhi B.A. LL.B '25 · CLAT AIR 84. Helping aspirants with critical reasoning, legal aptitude, and choosing between top NLUs.",
-    college: "NLU Delhi",
-    degree: "B.A. LL.B (Hons)",
-    yearOfStudy: 3,
-    yearLabel: "NLU Delhi · 3rd Year",
-    tier: "VERIFIED",
-    priceMinPaise: 24900,
-    priceMaxPaise: 39900,
-    avgRating: 4.88,
-    totalReviews: 19,
-    totalSessions: 26,
-    availableThisWeek: true,
-    examLabels: ["CLAT", "AILET"],
-    topicLabels: ["CLAT", "College Selection", "Stream Choice"],
-  },
-  {
-    id: "curated-6",
-    name: "Tanvi Deshmukh",
-    firstName: "Tanvi",
-    username: "tanvi-deshmukh-nitt",
-    image: "/avatars/mentor-6.jpg",
-    headline: "NIT Trichy Mechanical '25 · GATE AIR 215. Guiding students through core engineering, college culture, and GATE preparation.",
-    college: "NIT Trichy",
-    degree: "B.Tech Mechanical",
-    yearOfStudy: 4,
-    yearLabel: "NIT Trichy · Final Year",
-    tier: "VERIFIED",
-    priceMinPaise: 19900,
-    priceMaxPaise: 34900,
-    avgRating: 4.92,
-    totalReviews: 16,
-    totalSessions: 22,
-    availableThisWeek: true,
-    examLabels: ["GATE", "JEE Mains"],
-    topicLabels: ["GATE", "Branch Choice", "Study Strategy"],
-  },
-];
-
 function p(v: string | string[] | undefined): string {
   return Array.isArray(v) ? (v[0] ?? "") : (v ?? "");
 }
@@ -218,9 +77,9 @@ function removeEmpty(query: FilterQuery): Record<string, string> {
   );
 }
 
-/** Formats a price in paise; mentors without a price show the default ₹249. */
+/** Formats a price in paise; mentors who haven't set one say so instead of showing a guess. */
 function formatPrice(paise: number | null | undefined): string {
-  if (!paise || paise <= 0) return "₹249";
+  if (!paise || paise <= 0) return "Price not set";
   return formatPaise(paise);
 }
 
@@ -237,56 +96,10 @@ function getTopicIcon(topic: string) {
   return Sparkles;
 }
 
-function filterCuratedMentors(
-  mentors: PublicMentorCard[],
-  filters: {
-    query?: string;
-    stream?: string;
-    exam?: string;
-    tier?: string;
-    available?: boolean;
-    forClass?: string;
-  }
-) {
-  return mentors.filter((m) => {
-    if (filters.query) {
-      const q = filters.query.toLowerCase();
-      const match =
-        m.name.toLowerCase().includes(q) ||
-        (m.college && m.college.toLowerCase().includes(q)) ||
-        (m.degree && m.degree.toLowerCase().includes(q)) ||
-        (m.headline && m.headline.toLowerCase().includes(q)) ||
-        m.examLabels.some((e) => e.toLowerCase().includes(q)) ||
-        m.topicLabels.some((t) => t.toLowerCase().includes(q));
-      if (!match) return false;
-    }
-    if (filters.stream) {
-      const s = filters.stream.toLowerCase();
-      const matchesTopicOrDegree =
-        (m.degree && m.degree.toLowerCase().includes(s)) ||
-        m.topicLabels.some((t) => t.toLowerCase().includes(s)) ||
-        m.examLabels.some((e) => e.toLowerCase().includes(s));
-      if (!matchesTopicOrDegree) return false;
-    }
-    if (filters.exam && !m.examLabels.some((e) => e.toLowerCase().includes(filters.exam!.toLowerCase()))) {
-      return false;
-    }
-    if (filters.tier && m.tier !== filters.tier) {
-      return false;
-    }
-    if (filters.available && !m.availableThisWeek) {
-      return false;
-    }
-    return true;
-  });
-}
-
 function MentorCard({
   mentor,
-  index = 0,
 }: {
   mentor: PublicMentorCard;
-  index?: number;
 }) {
   const profileHref = (mentor.username
     ? `/mentor/${encodeURIComponent(mentor.username)}`
@@ -305,7 +118,8 @@ function MentorCard({
       : ["Stream Guidance", "College Selection", "Career Clarity"];
 
   const isElite = mentor.tier === "ELITE";
-  const avatarSrc = mentor.image || DEFAULT_AVATARS[index % DEFAULT_AVATARS.length];
+  // Real photo or initials; never a stock face.
+  const avatarSrc = mentor.image;
 
   return (
     <article className="mentra-clay-card group relative flex flex-col justify-between rounded-3xl border bg-white p-6 transition-all duration-300 hover:-translate-y-2 hover:border-violet-200 hover:shadow-[0_24px_48px_-20px_rgba(124,58,237,0.22)]">
@@ -461,22 +275,8 @@ export default async function FindMentorPage({ searchParams }: PageProps) {
     limit: 12,
   });
 
-  // Blend live DB mentors with curated mentors if DB count is small or empty during development/seeding
-  const liveMentors = directory.mentors;
-  const activeCurated = filterCuratedMentors(CURATED_FEATURED_MENTORS, {
-    query,
-    stream,
-    exam,
-    tier,
-    available,
-    forClass,
-  });
-
-  const displayMentors =
-    liveMentors.length > 0 ? liveMentors : activeCurated;
-
-  const totalMentorsCount =
-    directory.total > 0 ? directory.total : displayMentors.length;
+  const displayMentors = directory.mentors;
+  const totalMentorsCount = directory.total;
 
   const activeFilterCount = [
     query,
@@ -890,8 +690,8 @@ export default async function FindMentorPage({ searchParams }: PageProps) {
           {/* Cards Grid */}
           {displayMentors.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {displayMentors.map((mentor, index) => (
-                <MentorCard key={mentor.id} mentor={mentor} index={index} />
+              {displayMentors.map((mentor) => (
+                <MentorCard key={mentor.id} mentor={mentor} />
               ))}
             </div>
           ) : (

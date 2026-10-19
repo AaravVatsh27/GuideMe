@@ -43,9 +43,9 @@ function toRoute(path: string) {
   return path as Route;
 }
 
-/** Formats a price in paise; mentors without a price show the default ₹249. */
+/** Formats a price in paise; mentors who haven't set one say so instead of showing a guess. */
 function formatPrice(paise: number | null) {
-  return typeof paise === "number" ? formatPaise(paise) : "₹249";
+  return typeof paise === "number" && paise > 0 ? formatPaise(paise) : "price not set";
 }
 
 export function PublicMentorBookingCard({
