@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
-import { getPublicMentorDirectory } from "@/Backend/server/public-data";
+import { getPublicMentorDirectory, getPublicReviewStats } from "@/Backend/server/public-data";
 import type { PublicMentorCard } from "@/Backend/server/public-data";
 import { cn } from "@/Frontend/lib/utils";
 import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
@@ -449,6 +449,7 @@ export default async function FindMentorPage({ searchParams }: PageProps) {
   const available = p(searchParams?.available) === "true";
   const forClass = p(searchParams?.forClass) as "school" | "ug" | "";
 
+  const reviewStats = await getPublicReviewStats();
   const directory = await getPublicMentorDirectory({
     query: query || undefined,
     stream: stream || undefined,
@@ -674,14 +675,19 @@ export default async function FindMentorPage({ searchParams }: PageProps) {
 
               {/* Key Trust Signals */}
               <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-slate-500">
-                <span className="flex items-center gap-1 text-[#7C3AED] font-semibold">
-                  <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                  4.95/5 Average Rating
-                </span>
-                <span aria-hidden="true" className="text-slate-300">·</span>
+                {reviewStats.totalPublicReviews > 0 ? (
+                  <>
+                    <span className="flex items-center gap-1 text-[#7C3AED] font-semibold">
+                      <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                      {reviewStats.averageRating.toFixed(1)}/5 from {reviewStats.totalPublicReviews}{" "}
+                      {reviewStats.totalPublicReviews === 1 ? "review" : "reviews"}
+                    </span>
+                    <span aria-hidden="true" className="text-slate-300">·</span>
+                  </>
+                ) : null}
                 <span className="flex items-center gap-1">
                   <ShieldCheck className="size-3.5 text-emerald-600" />
-                  100% ID & College Verified
+                  Every mentor approved by our team
                 </span>
                 <span aria-hidden="true" className="text-slate-300">·</span>
                 <span className="flex items-center gap-1">

@@ -2,7 +2,6 @@ import { db } from "@/Backend/server/db";
 import { Prisma, type MentorTier } from "@prisma/client";
 import { addDays, startOfDay } from "date-fns";
 import { rupeesToPaise } from "@/shared/money";
-import { formatPaise } from "@/shared/format";
 import { FREE_INTRO_DURATION } from "@/shared/constants";
 
 export type PublicMentorCard = {
@@ -45,6 +44,11 @@ export type PlatformSnapshot = {
   reviewSpotlights: PublicReviewSpotlight[];
   introMinutes: number; // Also needed for homepage
   averagePaidSessionPricePaise: number;
+  /** Average of public review ratings; 0 when there are none. */
+  averageRating: number;
+  totalPublicReviews: number;
+  /** Distinct colleges of verified mentors, most common first. */
+  mentorColleges: string[];
 };
 
 export type MentorFilters = {
@@ -105,6 +109,53 @@ function checkAvailableThisWeek(
   );
 }
 
+// ── Real platform stats ────────────────────────────────────────────────
+
+/** Average rating and count of public reviews, for trust badges. */
+export async function getPublicReviewStats() {
+  try {
+    const result = await db.review.aggregate({
+      where: { isPublic: true },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+
+    return {
+      averageRating: Number((result._avg.rating ?? 0).toFixed(1)),
+      totalPublicReviews: result._count._all,
+    };
+  } catch {
+    return { averageRating: 0, totalPublicReviews: 0 };
+  }
+}
+
+/** Students who finished onboarding, for "students joined" badges. */
+export async function getPublicStudentCount() {
+  try {
+    return await db.studentProfile.count({
+      where: { user: { onboardingComplete: true, deletedAt: null, isActive: true } },
+    });
+  } catch {
+    return 0;
+  }
+}
+
+async function getVerifiedMentorColleges(limit = 8) {
+  try {
+    const rows = await db.mentorProfile.groupBy({
+      by: ["college"],
+      where: { isVerified: true, isActive: true, college: { not: null } },
+      _count: { _all: true },
+      orderBy: { _count: { college: "desc" } },
+      take: limit,
+    });
+
+    return rows.map((row) => row.college).filter((college): college is string => Boolean(college));
+  } catch {
+    return [];
+  }
+}
+
 // ── Platform snapshot ──────────────────────────────────────────────────
 
 const EMPTY_PLATFORM_SNAPSHOT: PlatformSnapshot = {
@@ -118,6 +169,9 @@ const EMPTY_PLATFORM_SNAPSHOT: PlatformSnapshot = {
   reviewSpotlights: [],
   averagePaidSessionPricePaise: 0,
   introMinutes: FREE_INTRO_DURATION,
+  averageRating: 0,
+  totalPublicReviews: 0,
+  mentorColleges: [],
 };
 
 export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
@@ -199,6 +253,10 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
       }),
     ]);
 
+    const [reviewStats, mentorColleges] = await Promise.all([
+      getPublicReviewStats(),
+      getVerifiedMentorColleges(),
+    ]);
     const totalMentors = countResult.status === "fulfilled" ? countResult.value : 0;
     const priceBounds =
       priceResult.status === "fulfilled"
@@ -266,6 +324,9 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
       reviewSpotlights: publicReviewSpotlights,
       averagePaidSessionPricePaise: Math.round(averagePayment._avg.amountPaise ?? 0),
       introMinutes: FREE_INTRO_DURATION,
+      averageRating: reviewStats.averageRating,
+      totalPublicReviews: reviewStats.totalPublicReviews,
+      mentorColleges,
     };
   } catch {
     return EMPTY_PLATFORM_SNAPSHOT;
@@ -463,152 +524,4 @@ export async function getPublicReviewSpotlights(
   } catch {
     return [];
   }
-}
-
-export async function getAuthShellContent() {
-  type AuthShellSnapshot = {
-    totalMentors: number;
-    minPricePaise: number;
-    totalStudents: number;
-    completedSessions: number;
-    totalPublicReviews: number;
-    spotlight: {
-      reviewText: string | null;
-      studentFirstName: string;
-      mentorName: string;
-    } | null;
-  };
-
-  const fallbackSnapshot: AuthShellSnapshot = {
-    totalMentors: 0,
-    minPricePaise: 0,
-    totalStudents: 0,
-    completedSessions: 0,
-    totalPublicReviews: 0,
-    spotlight: null,
-  };
-
-  const snapshotPromise = (async (): Promise<AuthShellSnapshot> => {
-    const [
-      mentorCountResult,
-      minPriceResult,
-      studentCountResult,
-      completedSessionsResult,
-      publicReviewCountResult,
-      spotlightResult,
-    ] = await Promise.allSettled([
-      db.mentorProfile.count({
-        where: { isVerified: true, isActive: true },
-      }),
-      db.mentorProfile.aggregate({
-        where: { isVerified: true, isActive: true },
-        _min: { priceMinPaise: true },
-      }),
-      db.studentProfile.count({
-        where: {
-          user: {
-            onboardingComplete: true,
-            deletedAt: null,
-            isActive: true,
-          },
-        },
-      }),
-      db.session.count({
-        where: { status: "COMPLETED" },
-      }),
-      db.review.count({
-        where: { isPublic: true },
-      }),
-      db.review.findFirst({
-        where: {
-          isPublic: true,
-          reviewText: { not: null },
-          rating: { gte: 4 },
-        },
-        include: {
-          student: {
-            select: { name: true },
-          },
-          mentor: {
-            select: { name: true },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
-    ]);
-
-    const spotlightReview =
-      spotlightResult.status === "fulfilled" ? spotlightResult.value : null;
-    const studentName = spotlightReview?.student?.name ?? "Student";
-
-    return {
-      totalMentors:
-        mentorCountResult.status === "fulfilled" ? mentorCountResult.value : 0,
-      minPricePaise:
-        minPriceResult.status === "fulfilled"
-          ? minPriceResult.value._min.priceMinPaise ?? 0
-          : 0,
-      totalStudents:
-        studentCountResult.status === "fulfilled" ? studentCountResult.value : 0,
-      completedSessions:
-        completedSessionsResult.status === "fulfilled"
-          ? completedSessionsResult.value
-          : 0,
-      totalPublicReviews:
-        publicReviewCountResult.status === "fulfilled"
-          ? publicReviewCountResult.value
-          : 0,
-      spotlight: spotlightReview
-        ? {
-            reviewText: spotlightReview.reviewText ?? null,
-            studentFirstName: studentName.split(" ")[0] ?? studentName,
-            mentorName: spotlightReview.mentor?.name ?? "Mentor",
-          }
-        : null,
-    };
-  })();
-
-  const snapshot = await Promise.race<AuthShellSnapshot>([
-    snapshotPromise,
-    new Promise<AuthShellSnapshot>((resolve) => {
-      setTimeout(() => resolve(fallbackSnapshot), 1800);
-    }),
-  ]);
-
-  return {
-    stats: [
-      {
-        label: "Verified mentors",
-        value: snapshot.totalMentors.toLocaleString("en-IN"),
-      },
-      {
-        label: "Starting price",
-        value: snapshot.minPricePaise > 0 ? formatPaise(snapshot.minPricePaise) : "Not listed",
-      },
-      {
-        label: "Public reviews",
-        value: snapshot.totalPublicReviews.toLocaleString("en-IN"),
-      },
-    ],
-    summaryCards: [
-      {
-        label: "Sessions delivered",
-        value: snapshot.completedSessions.toLocaleString("en-IN"),
-        copy: "Total one-on-one sessions completed via GuideMe.",
-      },
-      {
-        label: "Active students",
-        value: snapshot.totalStudents.toLocaleString("en-IN"),
-        copy: "Students currently navigating their career journey.",
-      },
-    ],
-    spotlight: {
-      quote:
-        snapshot.spotlight?.reviewText ??
-        "Recent public reviews will appear here once students choose to publish them.",
-      attribution: snapshot.spotlight
-        ? `${snapshot.spotlight.studentFirstName} mentored by ${snapshot.spotlight.mentorName}`
-        : "GuideMe public reviews",
-    },
-  };
 }

@@ -12,6 +12,7 @@ import {
   AUTH_DEFAULT_REDIRECT,
   getOnboardingPath,
 } from "@/shared/auth-flow";
+import { getPublicStudentCount } from "@/Backend/server/public-data";
 
 type SignInPageProps = {
   searchParams?: AuthPageSearchParams;
@@ -26,7 +27,7 @@ export default async function SignInPage({
   const errorCode =
     getFirstSearchParam(searchParams?.error);
 
-  const session = await auth();
+  const [session, studentCount] = await Promise.all([auth(), getPublicStudentCount()]);
 
   const continueHref =
     session?.user
@@ -37,7 +38,7 @@ export default async function SignInPage({
 
   if (session?.user) {
     return (
-      <AuthShell>
+      <AuthShell studentCount={studentCount}>
         <AlreadyAuthenticatedView
           continueHref={continueHref}
           callbackUrl={callbackUrl}
@@ -52,7 +53,7 @@ export default async function SignInPage({
   }
 
   return (
-    <AuthShell>
+    <AuthShell studentCount={studentCount}>
       <SignInView
         callbackUrl={callbackUrl}
         errorCode={errorCode}

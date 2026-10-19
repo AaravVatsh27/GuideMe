@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/Frontend/components/ui/card";
 import { getAuthErrorCopy } from "@/shared/auth-flow";
-import { getAuthShellContent } from "@/Backend/server/public-data";
+import { getPublicStudentCount } from "@/Backend/server/public-data";
 
 type AuthErrorPageProps = {
   searchParams?: AuthPageSearchParams;
@@ -26,7 +26,7 @@ export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps
   const callbackUrl = getAuthCallbackUrl(searchParams);
   const errorCode = getFirstSearchParam(searchParams?.error);
   const errorCopy = getAuthErrorCopy(errorCode) ?? getAuthErrorCopy("Default");
-  const shellContent = await getAuthShellContent();
+  const studentCount = await getPublicStudentCount();
   const signInHref = {
     pathname: "/auth/signin",
     query: { callbackUrl },
@@ -41,7 +41,7 @@ export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps
   }
 
   return (
-    <AuthShell {...shellContent}>
+    <AuthShell studentCount={studentCount}>
       <Card className="overflow-hidden rounded-[2rem] border border-violet-200/80 bg-white/95 py-0 shadow-[0_20px_50px_-20px_rgba(124,58,237,0.12)] backdrop-blur-xl">
         <CardHeader className="gap-4 border-b border-violet-100/80 px-6 py-7 sm:px-8">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 ring-8 ring-rose-50/60 shadow-xs">

@@ -15,16 +15,7 @@ export function HeroSection({
   const previewMentors = snapshot.featuredMentors.slice(0, 3);
   const startingPrice = getStartingPrice(snapshot);
 
-  const colleges = [
-    "IIT Bombay",
-    "IIT Madras",
-    "IIT Delhi",
-    "AIIMS",
-    "NIT Trichy",
-    "BITS Pilani",
-    "IIM Bangalore",
-    "NLU Delhi",
-  ];
+  const colleges = snapshot.mentorColleges;
 
   return (
     <section
@@ -102,67 +93,45 @@ export function HeroSection({
               </span>
             </div>
 
-            {/* Community Social Proof Avatar Strip */}
-            <div className="mt-8 flex items-center gap-2.5 pt-1 sm:gap-3.5">
-              <div className="flex shrink-0 -space-x-2 overflow-hidden sm:-space-x-2.5">
-                <div className="relative size-9 overflow-hidden rounded-full ring-2 ring-white shadow-xs sm:size-10">
-                  <Image
-                    src="/avatars/mentor-1.jpg"
-                    alt="Mentra senior mentor Ananya"
-                    fill
-                    sizes="40px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="relative size-9 overflow-hidden rounded-full ring-2 ring-white shadow-xs sm:size-10">
-                  <Image
-                    src="/avatars/mentor-2.jpg"
-                    alt="Mentra senior mentor Rohan"
-                    fill
-                    sizes="40px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="relative size-9 overflow-hidden rounded-full ring-2 ring-white shadow-xs sm:size-10">
-                  <Image
-                    src="/avatars/mentor-3.jpg"
-                    alt="Mentra senior mentor Pooja"
-                    fill
-                    sizes="40px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="relative size-9 overflow-hidden rounded-full ring-2 ring-white shadow-xs sm:size-10">
-                  <Image
-                    src="/avatars/mentor-4.jpg"
-                    alt="Mentra senior mentor Kabir"
-                    fill
-                    sizes="40px"
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-
-              <div className="text-left">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-bold text-[#1E1B4B]">
-                  <div className="flex items-center gap-0.5" aria-label="5 stars rating">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="size-3.5 fill-amber-400 text-amber-400"
-                        aria-hidden="true"
-                      />
+            {/* Social proof from real data; hidden until there is something real to show */}
+            {snapshot.totalPublicReviews > 0 || snapshot.totalStudents > 0 ? (
+              <div className="mt-8 flex items-center gap-2.5 pt-1 sm:gap-3.5">
+                {previewMentors.length > 0 ? (
+                  <div className="flex shrink-0 -space-x-2 sm:-space-x-2.5" aria-hidden="true">
+                    {previewMentors.map((mentor) => (
+                      <span
+                        key={mentor.id}
+                        className="flex size-9 items-center justify-center rounded-full bg-[#EEF2FF] text-xs font-bold text-[#4F46E5] ring-2 ring-white sm:size-10"
+                      >
+                        {getMentorInitials(mentor.name)}
+                      </span>
                     ))}
                   </div>
-                  <span className="font-extrabold text-[#1E1B4B]">4.95/5</span>
-                  <span className="size-1 rounded-full bg-slate-300" aria-hidden="true" />
-                  <span className="font-bold text-[#7C3AED]">10,000+ Students Guided</span>
+                ) : null}
+
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-left text-xs font-bold text-[#1E1B4B]">
+                  {snapshot.totalPublicReviews > 0 ? (
+                    <>
+                      <Star className="size-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+                      <span className="font-extrabold">{snapshot.averageRating.toFixed(1)}/5</span>
+                      <span className="font-medium text-slate-500">
+                        from {formatNumber(snapshot.totalPublicReviews)}{" "}
+                        {snapshot.totalPublicReviews === 1 ? "review" : "reviews"}
+                      </span>
+                    </>
+                  ) : null}
+                  {snapshot.totalPublicReviews > 0 && snapshot.totalStudents > 0 ? (
+                    <span className="size-1 rounded-full bg-slate-300" aria-hidden="true" />
+                  ) : null}
+                  {snapshot.totalStudents > 0 ? (
+                    <span className="font-bold text-[#7C3AED]">
+                      {formatNumber(snapshot.totalStudents)}{" "}
+                      {snapshot.totalStudents === 1 ? "student has" : "students have"} joined
+                    </span>
+                  ) : null}
                 </div>
-                <p className="mt-0.5 text-[11px] leading-snug font-medium text-slate-500 sm:mt-1 sm:text-xs">
-                  Active peer circles in IIT, AIIMS, BITS &amp; top colleges
-                </p>
               </div>
-            </div>
+            ) : null}
           </div>
 
           {/* Mentor preview */}
@@ -294,7 +263,8 @@ export function HeroSection({
           </div>
         </div>
 
-        {/* Crawling college marquee */}
+        {/* College marquee: real colleges of verified mentors, hidden when there are none */}
+        {colleges.length > 0 ? (
         <div className="relative mt-14 overflow-hidden rounded-[1.75rem] border border-violet-100/80 bg-white/60 py-5 shadow-[0_12px_40px_-30px_rgba(30,27,75,0.25)] backdrop-blur-xl sm:mt-16">
           <div className="flex items-center gap-5 px-5 sm:px-6">
             <div className="z-10 shrink-0 border-r border-violet-100 pr-5 sm:pr-7">
@@ -329,6 +299,7 @@ export function HeroSection({
             </div>
           </div>
         </div>
+        ) : null}
       </div>
     </section>
   );

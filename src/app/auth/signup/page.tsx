@@ -10,7 +10,7 @@ import {
 } from "@/Frontend/views/auth/search-params";
 import { AUTH_DEFAULT_REDIRECT, getOnboardingPath } from "@/shared/auth-flow";
 import { isGoogleAuthEnabled } from "@/Backend/server/auth";
-import { getAuthShellContent } from "@/Backend/server/public-data";
+import { getPublicStudentCount } from "@/Backend/server/public-data";
 
 type SignUpPageProps = {
   searchParams?: AuthPageSearchParams;
@@ -31,10 +31,10 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
       : AUTH_DEFAULT_REDIRECT;
 
   if (session?.user && !isCompletingOAuth && !isForcingRole) {
-    const shellContent = await getAuthShellContent();
+    const studentCount = await getPublicStudentCount();
 
     return (
-      <AuthShell {...shellContent}>
+      <AuthShell studentCount={studentCount}>
         <AlreadyAuthenticatedView
           continueHref={continueHref}
           callbackUrl={callbackUrl}
@@ -46,10 +46,10 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
     );
   }
 
-  const shellContent = await getAuthShellContent();
+  const studentCount = await getPublicStudentCount();
 
   return (
-    <AuthShell {...shellContent}>
+    <AuthShell studentCount={studentCount}>
       <SignupView
         callbackUrl={callbackUrl}
         errorCode={errorCode}

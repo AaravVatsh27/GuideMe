@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/Frontend/components/ui/card";
-import { getAuthShellContent } from "@/Backend/server/public-data";
+import { getPublicStudentCount } from "@/Backend/server/public-data";
 import { cn } from "@/Frontend/lib/utils";
 
 type VerifyPageProps = {
@@ -26,14 +26,14 @@ type VerifyPageProps = {
 export default async function VerifyPage({ searchParams }: VerifyPageProps) {
   const callbackUrl = getAuthCallbackUrl(searchParams);
   const email = getFirstSearchParam(searchParams?.email);
-  const shellContent = await getAuthShellContent();
+  const studentCount = await getPublicStudentCount();
   const signInHref = {
     pathname: "/auth/signin",
     query: { callbackUrl },
   } as const;
 
   return (
-    <AuthShell {...shellContent}>
+    <AuthShell studentCount={studentCount}>
       <Card className="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/92 py-0 shadow-card backdrop-blur">
         <CardHeader className="gap-4 border-b border-slate-200/80 px-6 py-7 sm:px-7">
           <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">

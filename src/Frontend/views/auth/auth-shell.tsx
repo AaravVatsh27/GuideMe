@@ -10,9 +10,11 @@ import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
 type AuthShellProps = {
   children: ReactNode;
   variant?: "default" | "admin";
+  /** Real number of students who joined; the badge is hidden when it is 0. */
+  studentCount?: number;
 };
 
-export function AuthShell({ children, variant = "default" }: AuthShellProps) {
+export function AuthShell({ children, variant = "default", studentCount = 0 }: AuthShellProps) {
   const pathname = usePathname();
   const isSignupPage = pathname === "/auth/signup";
   const isAdmin = variant === "admin";
@@ -129,25 +131,10 @@ export function AuthShell({ children, variant = "default" }: AuthShellProps) {
                   </div>
                 ))}
 
-                {!isAdmin ? (
+                {!isAdmin && studentCount > 0 ? (
                   <div className="flex items-center gap-3 pt-5 text-xs font-medium text-slate-600">
-                    <div className="flex -space-x-2" aria-hidden="true">
-                      {["A", "R", "S"].map((initial, index) => (
-                        <span
-                          key={initial}
-                          className={`flex size-8 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${
-                            index === 0
-                              ? "bg-[#4F46E5]"
-                              : index === 1
-                                ? "bg-[#0EA5E9]"
-                                : "bg-[#F97316]"
-                          }`}
-                        >
-                          {initial}
-                        </span>
-                      ))}
-                    </div>
-                    Trusted by 500+ students
+                    Joined by {studentCount.toLocaleString("en-IN")}{" "}
+                    {studentCount === 1 ? "student" : "students"}
                   </div>
                 ) : null}
               </div>
