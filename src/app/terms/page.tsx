@@ -11,6 +11,7 @@ import {
 import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
 import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
 import { FREE_INTRO_DURATION } from "@/shared/constants";
+import { SUPPORT_EMAIL } from "@/shared/site-config";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Mentra",
@@ -340,8 +341,8 @@ export default function TermsOfServicePage() {
                       legal@mentra.in
                     </a>{" "}
                     /{" "}
-                    <a href="mailto:support@mentra.in" className="text-[#7C3AED] hover:underline">
-                      support@mentra.in
+                    <a href={`mailto:${SUPPORT_EMAIL}`} className="text-[#7C3AED] hover:underline">
+                      {SUPPORT_EMAIL}
                     </a>
                   </p>
                   <p>

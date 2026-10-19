@@ -12,8 +12,6 @@ function loadBundleAnalyzer() {
   }
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://guideme.app";
-
 /**
  * Content-Security-Policy tailored to GuideMe's actual third-party services.
  * Adjust the nonce/hash approach when inline scripts are needed by specific pages.
@@ -130,9 +128,6 @@ const nextConfig = {
     ];
   },
 };
-
-// Suppress unused variable warning — APP_URL reserved for future dynamic CSP
-void APP_URL;
 
 const bundledConfig = loadBundleAnalyzer()(nextConfig);
 

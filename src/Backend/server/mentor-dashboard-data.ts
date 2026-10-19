@@ -16,6 +16,7 @@ import { db } from "@/Backend/server/db";
 import { AVAILABILITY_DAYS, getDegreeLabel, getExamLabel, getHelpTopicLabel, getYearOfStudyLabel } from "@/shared/mentor-onboarding";
 
 import { formatEnumLabel, getFirstName, normalizeResponseRate } from "@/shared/mentor-dashboard-utils";
+import { getAppUrl } from "@/Backend/lib/env";
 
 type DayHour = {
   dayOfWeek: number;
@@ -415,8 +416,8 @@ export async function getMentorDashboardData() {
     durationMinutes: item.session.durationMinutes,
   }));
   const seoTitle = `${mentor.name} | ${mentor.mentorProfile.headline ?? "Mentor"} | GuideMe`;
-  const seoUrlBase = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "https://guideme.app";
-  const seoUrl = `${seoUrlBase}/mentors/${mentor.mentorProfile.username}`;
+  // Public profiles live at /mentor/<username>.
+  const seoUrl = `${getAppUrl()}/mentor/${mentor.mentorProfile.username}`;
 
   return {
     mentor: {

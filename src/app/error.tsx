@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/nextjs";
 import { AlertCircle, Home, Mail, RotateCcw } from "lucide-react";
 
 import { MentraLogo } from "@/Frontend/components/brand/MentraLogo";
+import { SUPPORT_EMAIL, supportMailto } from "@/shared/site-config";
 
 export default function Error({
   error,
@@ -86,11 +87,11 @@ export default function Error({
         <p className="mt-7 text-xs text-slate-500">
           Need immediate help?{" "}
           <Link
-            href={`mailto:support@mentra.in?subject=Mentra%20Error%20Report&body=Event%20ID:%20${eventId ?? "unknown"}`}
+            href={supportMailto("Mentra error report", `Event ID: ${eventId ?? "unknown"}`)}
             className="inline-flex items-center gap-1 font-semibold text-[#7C3AED] hover:underline"
           >
             <Mail className="size-3" />
-            support@mentra.in
+            {SUPPORT_EMAIL}
           </Link>
         </p>
       </div>

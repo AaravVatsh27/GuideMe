@@ -5,6 +5,9 @@ import { PostSessionSummary, type PostSessionSummaryProps } from "./PostSessionS
 import { SessionReminder, type SessionReminderProps } from "./SessionReminder";
 import { WelcomeMentor, type WelcomeMentorProps } from "./WelcomeMentor";
 import { WelcomeStudent, type WelcomeStudentProps } from "./WelcomeStudent";
+import { getAppUrl } from "../src/Backend/lib/env";
+
+const PREVIEW_APP_URL = getAppUrl();
 
 const sampleDate = new Date("2026-05-08T13:30:00+05:30");
 
@@ -84,7 +87,7 @@ export const emailPreviewRegistry = {
           "Review the mentor's stream comparison notes with your parents this weekend.",
         ]}
         meetingNotes="Aarav responds well to examples tied to actual college outcomes. Family input is important, but the next conversation should stay anchored on aptitude and long-term fit."
-        rebookLink="https://guideme.app/dashboard/student/find-mentor?mentorId=demo"
+        rebookLink={`${PREVIEW_APP_URL}/dashboard/student/find-mentor?mentorId=demo`}
       />
     ),
   },
@@ -109,7 +112,7 @@ export const emailPreviewRegistry = {
         mentorName="Riya"
         college="IIT Bombay"
         tier="VERIFIED"
-        profileUrl="https://guideme.app/dashboard/mentor/profile"
+        profileUrl={`${PREVIEW_APP_URL}/dashboard/mentor/profile`}
       />
     ),
   },
@@ -121,7 +124,7 @@ export const emailPreviewRegistry = {
         class="CLASS_11"
         topMentorName="Riya Mehta"
         topMentorCollege="IIT Bombay"
-        findMentorUrl="https://guideme.app/dashboard/student/find-mentor"
+        findMentorUrl={`${PREVIEW_APP_URL}/dashboard/student/find-mentor`}
       />
     ),
   },

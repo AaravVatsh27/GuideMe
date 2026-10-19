@@ -1,15 +1,13 @@
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-  process.env.AUTH_URL?.trim() ||
-  "http://localhost:3000";
+import { getAppUrl } from "../src/Backend/lib/env";
+import { COMMUNITY_JOIN_URL, SUPPORT_EMAIL } from "../src/shared/site-config";
+
+const APP_URL = getAppUrl();
 
 export const GUIDE_ME_BRAND = {
   appName: "GuideMe",
-  supportEmail: process.env.EMAIL_REPLY_TO?.trim() || process.env.EMAIL_FROM?.trim() || "support@guideme.app",
+  supportEmail: process.env.EMAIL_REPLY_TO?.trim() || SUPPORT_EMAIL,
   unsubscribeUrl: `${APP_URL.replace(/\/$/, "")}/unsubscribe`,
-  whatsappUrl:
-    process.env.GUIDEME_COMMUNITY_WHATSAPP_URL?.trim() ||
-    "https://wa.me/?text=Hi%20GuideMe%20community",
+  whatsappUrl: COMMUNITY_JOIN_URL,
 } as const;
 
 export { formatPaise } from "../src/shared/format";
@@ -121,7 +119,7 @@ export function buildAppleCalendarUrl(input: {
     "VERSION:2.0",
     "PRODID:-//GuideMe//Transactional Email//EN",
     "BEGIN:VEVENT",
-    `UID:guideme-${start.getTime()}@guideme.app`,
+    `UID:guideme-${start.getTime()}@${new URL(APP_URL).hostname}`,
     `DTSTAMP:${toUtcCalendarStamp(new Date())}`,
     `DTSTART:${toUtcCalendarStamp(start)}`,
     `DTEND:${toUtcCalendarStamp(end)}`,

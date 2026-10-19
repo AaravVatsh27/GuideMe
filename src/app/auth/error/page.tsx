@@ -17,6 +17,7 @@ import {
 } from "@/Frontend/components/ui/card";
 import { getAuthErrorCopy } from "@/shared/auth-flow";
 import { getPublicStudentCount } from "@/Backend/server/public-data";
+import { SUPPORT_EMAIL, supportMailto } from "@/shared/site-config";
 
 type AuthErrorPageProps = {
   searchParams?: AuthPageSearchParams;
@@ -86,10 +87,10 @@ export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps
           <p className="mt-2 text-center text-xs text-slate-500">
             Having trouble?{" "}
             <a
-              href="mailto:support@mentra.in?subject=Authentication%20Help"
+              href={supportMailto("Authentication help")}
               className="font-semibold text-[#7C3AED] hover:underline"
             >
-              Contact support@mentra.in
+              Contact {SUPPORT_EMAIL}
             </a>
           </p>
         </CardFooter>
