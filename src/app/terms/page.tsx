@@ -10,6 +10,7 @@ import {
 
 import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
 import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
+import { FREE_INTRO_DURATION } from "@/shared/constants";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Mentra",
@@ -162,7 +163,7 @@ export default function TermsOfServicePage() {
                   streams (Engineering, Medicine, Commerce, Law, Arts, Management).
                 </li>
                 <li>
-                  Direct scheduling of free 15-minute introductory alignment calls
+                  Direct scheduling of free {FREE_INTRO_DURATION}-minute introductory alignment calls
                   and in-depth paid 1:1 guidance sessions.
                 </li>
                 <li>
@@ -249,10 +250,10 @@ export default function TermsOfServicePage() {
               <div className="space-y-4 pl-1 text-sm sm:text-base">
                 <div className="rounded-xl border border-violet-100 bg-white/70 p-4">
                   <h3 className="font-semibold text-[#1E1B4B]">
-                    A. Free 15-Minute Intro Sessions:
+                    A. Free {FREE_INTRO_DURATION}-Minute Intro Sessions:
                   </h3>
                   <p className="mt-1.5 text-slate-600">
-                    Students may book one free 15-minute intro session per mentor
+                    Students may book one free {FREE_INTRO_DURATION}-minute intro session per mentor
                     to confirm fit and chemistry with zero financial commitment.
                   </p>
                 </div>

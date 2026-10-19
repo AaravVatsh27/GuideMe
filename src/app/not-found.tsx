@@ -15,6 +15,7 @@ import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
 import { log } from "@/Backend/lib/logger";
 import { db } from "@/Backend/server/db";
 import { getPublicPlatformSnapshot } from "@/Backend/server/public-data";
+import { FREE_INTRO_DURATION } from "@/shared/constants";
 
 type RecommendedMentor = {
   name: string;
@@ -231,7 +232,7 @@ export default async function NotFound() {
                   Popular Senior Mentors You Can Talk To
                 </h2>
                 <p className="text-xs text-slate-500 sm:text-sm">
-                  Top-rated seniors currently holding open 15-minute intro slots.
+                  Top-rated seniors currently holding open {FREE_INTRO_DURATION}-minute intro slots.
                 </p>
               </div>
               <Link
@@ -283,7 +284,7 @@ export default async function NotFound() {
 
                   <div className="mt-4 flex items-center justify-between border-t border-violet-100/70 pt-3 text-xs text-slate-500">
                     <span className="font-medium text-emerald-600">
-                      Free 15-min intro
+                      Free {FREE_INTRO_DURATION}-min intro
                     </span>
                     <span className="flex items-center gap-1 font-semibold text-[#7C3AED] group-hover:translate-x-0.5 transition-transform">
                       View Profile

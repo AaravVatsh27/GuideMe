@@ -6,6 +6,7 @@ import { ArrowRight, Check, ChevronDown, GraduationCap, Lock, ShieldCheck, Spark
 import { type PublicPlatformSnapshot } from "@/Backend/server/public-data";
 
 import { getPriceRange, getTypicalPrice } from "@/Frontend/views/home/home-helpers";
+import { FREE_INTRO_DURATION } from "@/shared/constants";
 
 export function PricingSection({
   snapshot,
@@ -14,7 +15,7 @@ export function PricingSection({
 }) {
   const typicalPrice = getTypicalPrice(snapshot);
   const priceRange = getPriceRange(snapshot);
-  const introMinutes = snapshot.introMinutes || 15;
+  const introMinutes = snapshot.introMinutes || FREE_INTRO_DURATION;
 
   const pricingTiers = [
     {
@@ -122,7 +123,7 @@ export function PricingSection({
 
   const faqs = [
     {
-      q: "Is the 15-minute intro session really 100% free?",
+      q: `Is the ${introMinutes}-minute intro session really free?`,
       a: "Yes, completely free. You don't need to provide a credit card or payment details. It is an obligation-free opportunity to speak with a senior mentor, share your goals, and ensure their background aligns with your needs.",
     },
     {

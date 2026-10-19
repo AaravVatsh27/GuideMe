@@ -31,6 +31,7 @@ import { cn } from "@/Frontend/lib/utils";
 import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
 import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
 import { formatPaise } from "@/shared/format";
+import { FREE_INTRO_DURATION } from "@/shared/constants";
 
 export const revalidate = 300;
 
@@ -423,7 +424,7 @@ function MentorCard({
             <span className="text-xs text-slate-400">/ session</span>
           </div>
           <span className="inline-block text-[11px] font-medium text-emerald-700">
-            Free 15-min intro
+            Free {FREE_INTRO_DURATION}-min intro
           </span>
         </div>
 
@@ -685,7 +686,7 @@ export default async function FindMentorPage({ searchParams }: PageProps) {
                 <span aria-hidden="true" className="text-slate-300">·</span>
                 <span className="flex items-center gap-1">
                   <HeartHandshake className="size-3.5 text-pink-500" />
-                  Free 15-Minute Intro
+                  Free {FREE_INTRO_DURATION}-Minute Intro
                 </span>
               </div>
             </div>

@@ -3,6 +3,7 @@ import { Prisma, type MentorTier } from "@prisma/client";
 import { addDays, startOfDay } from "date-fns";
 import { rupeesToPaise } from "@/shared/money";
 import { formatPaise } from "@/shared/format";
+import { FREE_INTRO_DURATION } from "@/shared/constants";
 
 export type PublicMentorCard = {
   id: string;
@@ -116,7 +117,7 @@ const EMPTY_PLATFORM_SNAPSHOT: PlatformSnapshot = {
   featuredMentors: [],
   reviewSpotlights: [],
   averagePaidSessionPricePaise: 0,
-  introMinutes: 15,
+  introMinutes: FREE_INTRO_DURATION,
 };
 
 export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
@@ -264,7 +265,7 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
       featuredMentors,
       reviewSpotlights: publicReviewSpotlights,
       averagePaidSessionPricePaise: Math.round(averagePayment._avg.amountPaise ?? 0),
-      introMinutes: 15, // Restored
+      introMinutes: FREE_INTRO_DURATION,
     };
   } catch {
     return EMPTY_PLATFORM_SNAPSHOT;

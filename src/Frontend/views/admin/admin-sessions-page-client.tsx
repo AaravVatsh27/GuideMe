@@ -32,6 +32,7 @@ import {
 } from "./admin-ui";
 import { formatPaise, formatDateTime, isDateInRange } from "./admin-utils";
 import { paiseToRupees } from "@/shared/money";
+import { NO_SHOW_REPORT_GRACE_MINUTES } from "@/shared/constants";
 
 type Props = {
   sessions: Awaited<ReturnType<typeof getAdminSessionsData>>;
@@ -321,7 +322,7 @@ export function AdminSessionsPageClient({ sessions }: Props) {
                   rows={2}
                   value={actionReason}
                   onChange={(event) => setActionReason(event.target.value)}
-                  placeholder="Required for refund and no-show actions. Example: Mentor did not join within 15 minutes."
+                  placeholder={`Required for refund and no-show actions. Example: Mentor did not join within ${NO_SHOW_REPORT_GRACE_MINUTES} minutes.`}
                   className="mt-2 min-h-0 rounded-[12px] border-[#CBD5E1] bg-white text-[#0F172A] placeholder:text-[#94A3B8] focus-visible:border-[#4F46E5] focus-visible:ring-2 focus-visible:ring-[#4F46E5]/20"
                 />
 
