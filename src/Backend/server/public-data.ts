@@ -140,6 +140,15 @@ export async function getPublicStudentCount() {
   }
 }
 
+/** Verified, active mentors. */
+export async function getVerifiedMentorCount() {
+  try {
+    return await db.mentorProfile.count({ where: { isVerified: true, isActive: true } });
+  } catch {
+    return 0;
+  }
+}
+
 async function getVerifiedMentorColleges(limit = 8) {
   try {
     const rows = await db.mentorProfile.groupBy({

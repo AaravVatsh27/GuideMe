@@ -23,6 +23,8 @@ import {
 import { cn } from "@/Frontend/lib/utils";
 import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
 import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
+import { getPublicStudentCount, getVerifiedMentorCount } from "@/Backend/server/public-data";
+import { COMMUNITY_JOIN_URL, COMMUNITY_WHATSAPP_URL } from "@/shared/site-config";
 
 export const metadata: Metadata = {
   title: "Student Community | Mentra",
@@ -30,99 +32,64 @@ export const metadata: Metadata = {
     "Join Mentra's WhatsApp community for Indian students choosing streams, exams, colleges, and mentors.",
 };
 
-const whatsappCommunityUrl =
-  process.env.NEXT_PUBLIC_WHATSAPP_COMMUNITY_URL ||
-  "https://wa.me/?text=I%20want%20to%20join%20the%20GuideMe%20student%20community";
+// The real invite link, or an email to support asking for one (see shared/site-config.ts).
+const whatsappCommunityUrl = COMMUNITY_JOIN_URL;
+const hasWhatsAppInvite = COMMUNITY_WHATSAPP_URL !== null;
+const INVITE_REQUEST_LABEL = "Request an invite";
 
 const cityGroups = [
-  { city: "Mumbai", count: "1,850" },
-  { city: "Delhi", count: "1,620" },
-  { city: "Bengaluru", count: "1,340" },
-  { city: "Chennai", count: "980" },
-  { city: "Hyderabad", count: "1,120" },
-  { city: "Pune", count: "870" },
-  { city: "Kolkata", count: "760" },
-  { city: "Ahmedabad", count: "640" },
-  { city: "Your city", count: "Coming soon", comingSoon: true },
+  { city: "Mumbai" },
+  { city: "Delhi" },
+  { city: "Bengaluru" },
+  { city: "Chennai" },
+  { city: "Hyderabad" },
+  { city: "Pune" },
+  { city: "Kolkata" },
+  { city: "Ahmedabad" },
+  { city: "Your city", comingSoon: true },
 ];
 
 const streamGroups = [
   {
     name: "PCM Students",
-    count: "2,400",
     note: "JEE, boards, branches & prep",
     icon: BookOpen,
   },
   {
     name: "PCB Students",
-    count: "1,900",
     note: "NEET, bio paths, backup plans",
     icon: Stethoscope,
   },
   {
     name: "Commerce Students",
-    count: "1,350",
     note: "CA, CUET, finance & consulting",
     icon: Briefcase,
   },
   {
     name: "Arts & Humanities",
-    count: "980",
     note: "Design, psychology, policy & civil services",
     icon: Palette,
   },
   {
     name: "Engineering UG",
-    count: "1,180",
     note: "GATE, internships, placements & tech careers",
     icon: Cpu,
   },
   {
     name: "Medical UG",
-    count: "740",
     note: "Campus life, clinical postings & PG prep",
     icon: HeartHandshake,
   },
   {
     name: "Law UG",
-    count: "520",
     note: "CLAT, top NLUs, mooting & law internships",
     icon: Scale,
   },
   {
     name: "Management UG",
-    count: "610",
     note: "BBA, IPMAT, internships & CAT early prep",
     icon: BarChart2,
   },
-];
-
-const events = [
-  {
-    title: "Stream Selection Live Q&A",
-    audience: "Class 10 students",
-    date: "Aug 17",
-    mentor: "Hosted by Aanya, IIT Bombay",
-  },
-  {
-    title: "JEE vs Other Options",
-    audience: "Open panel with seniors",
-    date: "Aug 24",
-    mentor: "Panel: IIT, BITS, Ashoka seniors",
-  },
-  {
-    title: "Life at IIT",
-    audience: "Mentor-hosted session",
-    date: "Sep 02",
-    mentor: "Hosted by Arjun, IIT Madras",
-  },
-];
-
-const stats = [
-  { value: "10,000+", label: "Active Students", sublabel: "Across India" },
-  { value: "50+", label: "College Cities", sublabel: "Local chapters" },
-  { value: "8", label: "Stream Groups", sublabel: "Dedicated circles" },
-  { value: "Weekly", label: "Live Events", sublabel: "Mentor Q&As" },
 ];
 
 function WhatsAppButton({
@@ -143,13 +110,28 @@ function WhatsAppButton({
       )}
     >
       <MessageCircle className="size-4 shrink-0 transition-transform group-hover:scale-110" />
-      <span>{children}</span>
+      <span>{hasWhatsAppInvite ? children : INVITE_REQUEST_LABEL}</span>
       <ArrowRight className="size-3.5 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
     </a>
   );
 }
 
-export default function CommunityPage() {
+export default async function CommunityPage() {
+  const [studentCount, mentorCount] = await Promise.all([
+    getPublicStudentCount(),
+    getVerifiedMentorCount(),
+  ]);
+  const stats = [
+    { value: studentCount.toLocaleString("en-IN"), label: "Students joined", sublabel: "On Mentra" },
+    { value: mentorCount.toLocaleString("en-IN"), label: "Verified mentors", sublabel: "Approved by our team" },
+    { value: String(streamGroups.length), label: "Stream Groups", sublabel: "Dedicated circles" },
+    {
+      value: String(cityGroups.filter((group) => !group.comingSoon).length),
+      label: "City Groups",
+      sublabel: "Local chapters",
+    },
+  ];
+
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#FAF5FF] text-[#1E1B4B]">
       {/* Branded Header */}
@@ -241,9 +223,11 @@ export default function CommunityPage() {
                         <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
                         <span className="font-semibold text-white drop-shadow-sm">Campus Chapters Live</span>
                       </div>
-                      <span className="rounded-full bg-white/25 px-2.5 py-0.5 text-[10.5px] font-semibold backdrop-blur-md">
-                        10,000+ Active Students
-                      </span>
+                      {studentCount > 0 ? (
+                        <span className="rounded-full bg-white/25 px-2.5 py-0.5 text-[10.5px] font-semibold backdrop-blur-md">
+                          {studentCount.toLocaleString("en-IN")} {studentCount === 1 ? "student" : "students"} joined
+                        </span>
+                      ) : null}
                     </div>
                   </div>
 
@@ -307,7 +291,7 @@ export default function CommunityPage() {
                       className="flex w-full items-center justify-center gap-2 rounded-full border border-violet-200 bg-white py-2.5 text-xs sm:text-sm font-semibold text-[#7C3AED] shadow-xs transition hover:bg-violet-50"
                     >
                       <Sparkles className="size-3.5" />
-                      <span>Explore all 20+ community channels</span>
+                      <span>{hasWhatsAppInvite ? "Explore the community channels" : INVITE_REQUEST_LABEL}</span>
                     </a>
                   </div>
                 </div>
@@ -479,7 +463,7 @@ export default function CommunityPage() {
                       {group.city}
                     </h3>
                     <p className="mt-1 text-xs sm:text-sm font-medium text-slate-500">
-                      {group.comingSoon ? group.count : `${group.count} active members`}
+                      {group.comingSoon ? "Coming soon" : "City group"}
                     </p>
                   </div>
                   <div className="flex size-10 items-center justify-center rounded-2xl border border-violet-100 bg-violet-50 text-[#7C3AED]">
@@ -530,9 +514,6 @@ export default function CommunityPage() {
                       <h3 className="mt-4 text-lg font-bold tracking-tight text-[#1E1B4B] transition-colors group-hover:text-[#7C3AED]">
                         {group.name}
                       </h3>
-                      <p className="mt-1 text-xs font-semibold text-[#7C3AED]">
-                        {group.count} members
-                      </p>
                       <p className="mt-2 text-xs leading-5 text-slate-500">
                         {group.note}
                       </p>
@@ -557,7 +538,7 @@ export default function CommunityPage() {
                 Mentra Sessions & Events
               </span>
               <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#1E1B4B] sm:text-4xl">
-                Monthly online events and local meetups.
+                Online Q&As and local meetups.
               </h2>
               <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600">
                 Come for the Q&A, stay for the students who are asking the same
@@ -570,42 +551,13 @@ export default function CommunityPage() {
             </WhatsAppButton>
           </div>
 
-          <div className="mt-9 grid gap-6 lg:grid-cols-3">
-            {events.map((event) => (
-              <article
-                key={event.title}
-                className="group flex flex-col justify-between rounded-3xl border border-violet-100/90 bg-white p-6 shadow-[0_4px_20px_-4px_rgba(30,27,75,0.06)] transition-all duration-200 hover:-translate-y-1 hover:border-violet-300 hover:shadow-[0_16px_36px_-12px_rgba(124,58,237,0.18)]"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-900">
-                      <CalendarDays className="size-3.5 text-amber-600" />
-                      <span>{event.date}</span>
-                    </span>
-                    <span className="rounded-full border border-violet-100 bg-violet-50/70 px-2.5 py-0.5 text-[11px] font-semibold text-[#7C3AED]">
-                      {event.audience}
-                    </span>
-                  </div>
-
-                  <h3 className="mt-4 text-xl font-bold tracking-tight text-[#1E1B4B] transition-colors group-hover:text-[#7C3AED]">
-                    {event.title}
-                  </h3>
-                  <p className="mt-2 min-h-10 text-xs sm:text-sm leading-6 text-slate-600">
-                    {event.mentor}
-                  </p>
-                </div>
-
-                <a
-                  href={whatsappCommunityUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full border border-violet-200 bg-white py-2.5 text-xs sm:text-sm font-semibold text-[#7C3AED] shadow-xs transition hover:border-[#7C3AED] hover:bg-violet-50"
-                >
-                  <span>Register on WhatsApp</span>
-                  <ArrowRight className="size-3.5" />
-                </a>
-              </article>
-            ))}
+          {/* No events are scheduled yet; the previous list was placeholder content. */}
+          <div className="mt-9 rounded-3xl border border-dashed border-violet-200 bg-white/80 p-8 text-center">
+            <CalendarDays className="mx-auto size-6 text-[#7C3AED]" />
+            <p className="mt-3 text-sm font-semibold text-[#1E1B4B]">No events are scheduled right now.</p>
+            <p className="mt-1 text-sm text-slate-600">
+              New Q&As and meetups are announced in the community first.
+            </p>
           </div>
         </section>
 
