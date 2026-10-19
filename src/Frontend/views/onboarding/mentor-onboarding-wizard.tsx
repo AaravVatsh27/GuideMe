@@ -13,11 +13,13 @@ import { Button } from "@/Frontend/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/Frontend/components/ui/card";
 import { Input } from "@/Frontend/components/ui/input";
 import { DEFAULT_TIMEZONE, PLATFORM_CUT } from "@/shared/constants";
-import { AVAILABILITY_DAYS, AVAILABILITY_SLOTS, BRANCH_SUGGESTIONS, buildGraduationYearOptions, calculateEstimatedMonthlyEarnings, calculateFortyFiveMinutePrice, createAvailabilityKey, DEGREE_OPTIONS, EXAM_OPTIONS, formatAvailabilityLabel, getExamLabel, HELP_TOPIC_OPTIONS, PRICING_POINTS, YEAR_OF_STUDY_OPTIONS, type DegreeValue, type MentorExamValue, type MentorHelpTopicValue, type MentorTierValue, type MentorOnboardingStep, type YearOfStudyValue } from "@/shared/mentor-onboarding";
+import { AVAILABILITY_DAYS, AVAILABILITY_SLOTS, BRANCH_SUGGESTIONS, buildGraduationYearOptions, calculateEstimatedMonthlyEarningsPaise, calculateFortyFiveMinutePricePaise, createAvailabilityKey, DEGREE_OPTIONS, EXAM_OPTIONS, formatAvailabilityLabel, getExamLabel, HELP_TOPIC_OPTIONS, PRICING_POINTS_PAISE, YEAR_OF_STUDY_OPTIONS, type DegreeValue, type MentorExamValue, type MentorHelpTopicValue, type MentorTierValue, type MentorOnboardingStep, type YearOfStudyValue } from "@/shared/mentor-onboarding";
 import { uploadFiles } from "@/Frontend/lib/uploadthing";
 import { cn } from "@/Frontend/lib/utils";
 
 import { EXAM_YEAR_OPTIONS, InstitutionSearchResult, MAX_HELP_TOPICS, MENTOR_FIELD_CLASS_NAME, MENTOR_SELECT_CLASS_NAME, MENTOR_TEXTAREA_CLASS_NAME, MentorOnboardingDraftWithInstitution, SaveState, StepPersistResponse, TOTAL_STEPS, getInitialStep, getInstitutionTierBadgeClasses, getProgressPercent, getStepDescription, getStepPayload, getStepTitle, getUserInitials, isStepValid, readFileAsDataUrl } from "@/Frontend/views/onboarding/mentor-onboarding-helpers";
+import { formatPaise } from "@/shared/format";
+import { paiseToRupees } from "@/shared/money";
 
 type MentorOnboardingWizardProps = {
   userName: string;
@@ -60,9 +62,9 @@ export function MentorOnboardingWizard({
   );
   const pricingIndex = Math.max(
     0,
-    PRICING_POINTS.findIndex((value) => value === draft.priceMin),
+    PRICING_POINTS_PAISE.findIndex((value) => value === draft.priceMinPaise),
   );
-  const monthlyEarnings = calculateEstimatedMonthlyEarnings(draft.priceMin);
+  const monthlyEarnings = calculateEstimatedMonthlyEarningsPaise(draft.priceMinPaise);
   const canContinue = isStepValid(currentStep, draft) && !isUploadingAvatar && !isSubmitting;
   const trimmedHeadline = draft.headline?.trim() ?? "";
   const trimmedBio = draft.bio?.trim() ?? "";
@@ -285,12 +287,12 @@ export function MentorOnboardingWizard({
   }
 
   function handlePricingChange(index: number) {
-    const price30 = PRICING_POINTS[index] ?? PRICING_POINTS[0];
+    const price30 = PRICING_POINTS_PAISE[index] ?? PRICING_POINTS_PAISE[0];
 
     setDraft((current) => ({
       ...current,
-      priceMin: price30,
-      priceMax: calculateFortyFiveMinutePrice(price30),
+      priceMinPaise: price30,
+      priceMaxPaise: calculateFortyFiveMinutePricePaise(price30),
     }));
   }
 
@@ -625,10 +627,10 @@ export function MentorOnboardingWizard({
                       Pricing
                     </div>
                     <div className="mt-2 text-base font-semibold text-white">
-                      {`Rs. ${draft.priceMin} / 30 min`}
+                      {`${formatPaise(draft.priceMinPaise)} / 30 min`}
                     </div>
                     <div className="mt-1 text-sm text-slate-300">
-                      {`Rs. ${draft.priceMax} / 45 min`}
+                      {`${formatPaise(draft.priceMaxPaise)} / 45 min`}
                     </div>
                   </div>
 
@@ -1179,7 +1181,7 @@ export function MentorOnboardingWizard({
                                 </div>
                                 <div className="mt-2 flex items-center gap-1 font-display text-4xl font-bold text-slate-950">
                                   <IndianRupee className="size-7" />
-                                  {draft.priceMin}
+                                  {paiseToRupees(draft.priceMinPaise)}
                                 </div>
                               </div>
                               <div className="text-right">
@@ -1188,7 +1190,7 @@ export function MentorOnboardingWizard({
                                 </div>
                                 <div className="mt-2 flex items-center justify-end gap-1 text-2xl font-semibold text-slate-900">
                                   <IndianRupee className="size-5" />
-                                  {draft.priceMax}
+                                  {paiseToRupees(draft.priceMaxPaise)}
                                 </div>
                               </div>
                             </div>
@@ -1196,7 +1198,7 @@ export function MentorOnboardingWizard({
                             <input
                               type="range"
                               min={0}
-                              max={PRICING_POINTS.length - 1}
+                              max={PRICING_POINTS_PAISE.length - 1}
                               step={1}
                               value={pricingIndex}
                               onChange={(event) => handlePricingChange(Number(event.target.value))}
@@ -1204,8 +1206,8 @@ export function MentorOnboardingWizard({
                             />
 
                             <div className="grid grid-cols-9 gap-2 text-center text-[11px] font-medium text-slate-500">
-                              {PRICING_POINTS.map((price) => (
-                                <span key={price}>{price}</span>
+                              {PRICING_POINTS_PAISE.map((pricePaise) => (
+                                <span key={pricePaise}>{paiseToRupees(pricePaise)}</span>
                               ))}
                             </div>
                           </div>
@@ -1216,7 +1218,7 @@ export function MentorOnboardingWizard({
                             </div>
                             <div className="mt-2 flex items-center gap-1 font-display text-3xl font-bold text-slate-950">
                               <IndianRupee className="size-6" />
-                              {monthlyEarnings}
+                              {Math.round(paiseToRupees(monthlyEarnings)).toLocaleString("en-IN")}
                             </div>
                             <p className="mt-2 text-sm leading-6 text-slate-600">
                               Based on 3 paid 30-minute sessions per week after the {Math.round(PLATFORM_CUT * 100)}% platform cut.

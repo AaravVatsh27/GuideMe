@@ -73,10 +73,10 @@ export const POST = defineRoute(
         select: {
           id: true,
           status: true,
-          price: true,
+          pricePaise: true,
           studentId: true,
           mentorId: true,
-          payout: { select: { id: true, status: true, amount: true } },
+          payout: { select: { id: true, status: true, amountPaise: true } },
         },
       },
       user: { select: { id: true, name: true, email: true } },
@@ -105,7 +105,7 @@ export const POST = defineRoute(
   const existingPayout = payment.session.payout;
   const payoutAlreadyPaid = existingPayout?.status === PayoutStatus.PAID;
 
-  const refund = await createRefund(payment.razorpayPaymentId, payment.amount);
+  const refund = await createRefund(payment.razorpayPaymentId, payment.amountPaise);
   const now = new Date();
 
   await db.$transaction(async (tx) => {
@@ -113,7 +113,7 @@ export const POST = defineRoute(
       where: { sessionId },
       data: {
         refundId: refund.id,
-        refundAmount: payment.amount,
+        refundAmountPaise: payment.amountPaise,
         refundedAt: now,
         refundStatus: PaymentStatus.REFUNDED,
         status: PaymentStatus.REFUNDED,
@@ -145,10 +145,10 @@ export const POST = defineRoute(
         ipAddress,
         metadata: {
           refundId: refund.id,
-          amount: payment.amount,
+          amountPaise: payment.amountPaise,
           reason,
           payoutAlreadyPaid: payoutAlreadyPaid
-            ? { payoutId: existingPayout?.id, amount: existingPayout?.amount }
+            ? { payoutId: existingPayout?.id, amountPaise: existingPayout?.amountPaise }
             : null,
         },
       },
@@ -158,7 +158,7 @@ export const POST = defineRoute(
   sendRefundConfirmationEmail({
     student: payment.user,
     sessionId,
-    refundAmount: payment.amount,
+    refundAmountPaise: payment.amountPaise,
     reason,
   }).catch((err) =>
     log.error("Refund confirmation email failed", err, {
@@ -176,7 +176,7 @@ export const POST = defineRoute(
   return NextResponse.json({
     success: true,
     refundId: refund.id,
-    amount: payment.amount,
+    amountPaise: payment.amountPaise,
     payoutAlreadyPaid,
   });
 }, "/api/payment/refund");

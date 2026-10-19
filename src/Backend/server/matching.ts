@@ -39,8 +39,8 @@ type MentorCandidate = {
     examsCleared: string[];
     examYears: Prisma.JsonValue | null;
     specialisations: string[];
-    priceMin: number | null;
-    priceMax: number | null;
+    priceMinPaise: number | null;
+    priceMaxPaise: number | null;
     avgRating: number;
     totalReviews: number;
     totalSessions: number;
@@ -83,8 +83,8 @@ type MentorMatch = {
     bio: string | null;
     examsCleared: string[];
     specialisations: string[];
-    priceMin: number | null;
-    priceMax: number | null;
+    priceMinPaise: number | null;
+    priceMaxPaise: number | null;
     avgRating: number;
     totalReviews: number;
     totalSessions: number;
@@ -643,8 +643,8 @@ async function fetchMentorCandidates() {
           examsCleared: true,
           examYears: true,
           specialisations: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
           avgRating: true,
           totalReviews: true,
           totalSessions: true,
@@ -741,8 +741,8 @@ function scoreMentorMatch(
       bio: mentor.mentorProfile.bio,
       examsCleared: mentor.mentorProfile.examsCleared,
       specialisations: mentor.mentorProfile.specialisations,
-      priceMin: mentor.mentorProfile.priceMin,
-      priceMax: mentor.mentorProfile.priceMax,
+      priceMinPaise: mentor.mentorProfile.priceMinPaise,
+      priceMaxPaise: mentor.mentorProfile.priceMaxPaise,
       avgRating: mentor.mentorProfile.avgRating,
       totalReviews: mentor.mentorProfile.totalReviews,
       totalSessions: mentor.mentorProfile.totalSessions,

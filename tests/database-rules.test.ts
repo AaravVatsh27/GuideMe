@@ -14,17 +14,18 @@ const MIGRATIONS = join(process.cwd(), "prisma", "migrations");
 const MENTOR = "00000000-0000-0000-0000-000000000001";
 const STUDENT_A = "00000000-0000-0000-0000-000000000002";
 const STUDENT_B = "00000000-0000-0000-0000-000000000003";
+const LEGACY_SESSION = "10000000-0000-0000-0000-999999999999";
 
 let db: PGlite;
 let sessionCounter = 0;
 
-function insertSession(student: string, start: string, status = "SCHEDULED", price = 199) {
+function insertSession(student: string, start: string, status = "SCHEDULED", pricePaise = 19900) {
   sessionCounter += 1;
   const id = `10000000-0000-0000-0000-${String(sessionCounter).padStart(12, "0")}`;
   return {
     id,
-    sql: `INSERT INTO "Session"(id, "studentId", "mentorId", type, status, "scheduledAt", "durationMinutes", price, "platformCut", "mentorEarning", "updatedAt")
-          VALUES ('${id}', '${student}', '${MENTOR}', 'PAID', '${status}', '${start}', 30, ${price}, 0, 0, now());`,
+    sql: `INSERT INTO "Session"(id, "studentId", "mentorId", type, status, "scheduledAt", "durationMinutes", "pricePaise", "platformCutPaise", "mentorEarningPaise", "updatedAt")
+          VALUES ('${id}', '${student}', '${MENTOR}', 'PAID', '${status}', '${start}', 30, ${pricePaise}, 0, 0, now());`,
   };
 }
 
@@ -35,16 +36,26 @@ beforeAll(async () => {
     .map((entry) => entry.name)
     .sort();
 
+  const paiseMigration = names.find((name) => name.endsWith("_money_in_paise"));
+
   for (const name of names) {
+    if (name === paiseMigration) {
+      // Seed a row with rupee amounts so the paise conversion can be checked.
+      await db.exec(`
+        INSERT INTO "User"(id, email, name, role, "updatedAt") VALUES
+          ('${MENTOR}', 'm@x.test', 'Mentor', 'MENTOR', now()),
+          ('${STUDENT_A}', 'a@x.test', 'Student A', 'STUDENT', now()),
+          ('${STUDENT_B}', 'b@x.test', 'Student B', 'STUDENT', now());
+        INSERT INTO "Session"(id, "studentId", "mentorId", type, status, "scheduledAt", "durationMinutes", price, "platformCut", "mentorEarning", "updatedAt")
+          VALUES ('${LEGACY_SESSION}', '${STUDENT_A}', '${MENTOR}', 'PAID', 'COMPLETED', '2029-01-01T10:00:00Z', 30, 199, 40, 159, now());
+        INSERT INTO "Payment"(id, "sessionId", "userId", "razorpayOrderId", amount, "refundAmount", metadata)
+          VALUES ('30000000-0000-0000-0000-000000000009', '${LEGACY_SESSION}', '${STUDENT_A}', 'order_legacy', 199, 100,
+                  '{"platformCut": 40, "mentorEarning": 159, "razorpayAmountSubunits": 19900}');
+      `);
+    }
+
     await db.exec(readFileSync(join(MIGRATIONS, name, "migration.sql"), "utf8"));
   }
-
-  await db.exec(`
-    INSERT INTO "User"(id, email, name, role, "updatedAt") VALUES
-      ('${MENTOR}', 'm@x.test', 'Mentor', 'MENTOR', now()),
-      ('${STUDENT_A}', 'a@x.test', 'Student A', 'STUDENT', now()),
-      ('${STUDENT_B}', 'b@x.test', 'Student B', 'STUDENT', now());
-  `);
 });
 
 afterAll(async () => {
@@ -79,8 +90,8 @@ describe("database integrity rules", () => {
     const { id, sql } = insertSession(STUDENT_A, "2030-04-01T10:00:00Z");
     await db.exec(sql);
     await expect(
-      db.exec(`INSERT INTO "Payment"(id, "sessionId", "userId", "razorpayOrderId", amount, "refundAmount")
-               VALUES ('30000000-0000-0000-0000-000000000001', '${id}', '${STUDENT_A}', 'order_test', 199, 500);`),
+      db.exec(`INSERT INTO "Payment"(id, "sessionId", "userId", "razorpayOrderId", "amountPaise", "refundAmountPaise")
+               VALUES ('30000000-0000-0000-0000-000000000001', '${id}', '${STUDENT_A}', 'order_test', 19900, 50000);`),
     ).rejects.toThrow(/Payment_refund_within_amount/);
   });
 
@@ -93,6 +104,19 @@ describe("database integrity rules", () => {
 
   it("refuses to delete a user who has sessions", async () => {
     await expect(db.exec(`DELETE FROM "User" WHERE id = '${STUDENT_A}';`)).rejects.toThrow(/foreign key/);
+  });
+
+  it("converts existing rupee amounts to paise", async () => {
+    const session = await db.query<{ pricePaise: number; platformCutPaise: number; mentorEarningPaise: number }>(
+      `SELECT "pricePaise", "platformCutPaise", "mentorEarningPaise" FROM "Session" WHERE id = '${LEGACY_SESSION}'`,
+    );
+    expect(session.rows[0]).toEqual({ pricePaise: 19900, platformCutPaise: 4000, mentorEarningPaise: 15900 });
+
+    const payment = await db.query<{ amountPaise: number; refundAmountPaise: number; metadata: Record<string, unknown> }>(
+      `SELECT "amountPaise", "refundAmountPaise", metadata FROM "Payment" WHERE "sessionId" = '${LEGACY_SESSION}'`,
+    );
+    expect(payment.rows[0]).toMatchObject({ amountPaise: 19900, refundAmountPaise: 10000 });
+    expect(payment.rows[0]?.metadata).toEqual({ razorpayAmountSubunits: 19900 });
   });
 
   it("stores timestamps with their time zone", async () => {

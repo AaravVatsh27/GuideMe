@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   buildHeroSubtitle,
   formatAcademicContext,
-  formatCurrency,
+  formatPaise,
   formatMentorshipNeeds,
   getInitials,
 } from "@/Frontend/views/dashboard/student/student-dashboard-utils";
@@ -31,8 +31,8 @@ type Mentor = {
   headline?: string | null;
   tier?: string | null;
   avgRating?: number | null;
-  priceMin?: number | null;
-  priceMax?: number | null;
+  priceMinPaise?: number | null;
+  priceMaxPaise?: number | null;
   availableThisWeek: boolean;
 };
 
@@ -241,7 +241,7 @@ export default function FindMentorPage() {
 
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-slate-700">
               <span>★ {mentor.avgRating?.toFixed(1) ?? "0.0"}</span>
-              <span>{formatCurrency(mentor.priceMin)} / 30 min</span>
+              <span>{formatPaise(mentor.priceMinPaise)} / 30 min</span>
             </div>
             <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
               <span className={cn("size-2 rounded-full", mentor.availableThisWeek ? "bg-emerald-500" : "bg-slate-300")} />

@@ -12,7 +12,7 @@ import {
   buildHeroSubtitle,
   formatAcademicContext,
   formatActivityLabel,
-  formatCurrency,
+  formatPaise,
   formatDateTime,
   formatDecisionStage,
   formatEnumLabel,
@@ -45,7 +45,7 @@ type DashboardResponse = {
       } | null;
     };
     payment?: {
-      amount?: number | null;
+      amountPaise?: number | null;
       status?: string | null;
     } | null;
   } | null;
@@ -72,7 +72,7 @@ type MentorMatch = {
     headline?: string | null;
     avgRating: number;
     totalReviews: number;
-    priceMin?: number | null;
+    priceMinPaise?: number | null;
     availableThisWeek: boolean;
   };
   matchScore: number;
@@ -97,7 +97,7 @@ type SavedMentor = {
       college?: string | null;
       tier?: string | null;
       avgRating?: number | null;
-      priceMin?: number | null;
+      priceMinPaise?: number | null;
     } | null;
   };
 };
@@ -574,7 +574,7 @@ export default function StudentDashboardPage() {
                     <div className="rounded-lg border border-violet-100 bg-white p-2">
                       <p className="text-[10px] text-slate-500">Starting price</p>
                       <p className="mt-0.5 font-bold text-slate-950">
-                        {formatCurrency(item.mentor.mentorProfile?.priceMin)}
+                        {formatPaise(item.mentor.mentorProfile?.priceMinPaise)}
                       </p>
                     </div>
                   </div>
@@ -737,7 +737,7 @@ export default function StudentDashboardPage() {
                     )}
 
                     <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                      <span>From {formatCurrency(entry.mentor.priceMin)}</span>
+                      <span>From {formatPaise(entry.mentor.priceMinPaise)}</span>
                       <span>·</span>
                       <span>★ {entry.mentor.avgRating.toFixed(1)}</span>
                     </div>

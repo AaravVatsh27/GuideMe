@@ -49,7 +49,7 @@ export const GET = defineRoute(
             type: true,
             scheduledAt: true,
             durationMinutes: true,
-            price: true,
+            pricePaise: true,
             student: { select: { id: true, name: true } },
           },
         },

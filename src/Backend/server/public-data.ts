@@ -1,6 +1,8 @@
 import { db } from "@/Backend/server/db";
 import { Prisma, type MentorTier } from "@prisma/client";
 import { addDays, startOfDay } from "date-fns";
+import { rupeesToPaise } from "@/shared/money";
+import { formatPaise } from "@/shared/format";
 
 export type PublicMentorCard = {
   id: string;
@@ -14,8 +16,8 @@ export type PublicMentorCard = {
   tier: string | null;
   yearOfStudy: number | null;
   yearLabel: string;
-  priceMin: number | null;
-  priceMax: number | null;
+  priceMinPaise: number | null;
+  priceMaxPaise: number | null;
   avgRating: number;
   totalReviews: number;
   totalSessions: number;
@@ -32,8 +34,8 @@ export type MentorDirectoryResult = {
 
 export type PlatformSnapshot = {
   totalMentors: number;
-  minPrice: number;
-  maxPrice: number;
+  minPricePaise: number;
+  maxPricePaise: number;
   searchLinks: { label: string; query: string }[];
   // Add these back
   totalStudents: number;
@@ -41,7 +43,7 @@ export type PlatformSnapshot = {
   featuredMentors: PublicMentorCard[];
   reviewSpotlights: PublicReviewSpotlight[];
   introMinutes: number; // Also needed for homepage
-  averagePaidSessionPrice: number;
+  averagePaidSessionPricePaise: number;
 };
 
 export type MentorFilters = {
@@ -49,6 +51,7 @@ export type MentorFilters = {
   stream?: string;
   exam?: string;
   tier?: string;
+  /** Whole rupees, as typed in the find-mentor filters. */
   priceMax?: number;
   available?: boolean;
   forClass?: "school" | "ug";
@@ -105,14 +108,14 @@ function checkAvailableThisWeek(
 
 const EMPTY_PLATFORM_SNAPSHOT: PlatformSnapshot = {
   totalMentors: 0,
-  minPrice: 0,
-  maxPrice: 0,
+  minPricePaise: 0,
+  maxPricePaise: 0,
   searchLinks: [],
   totalStudents: 0,
   completedSessions: 0,
   featuredMentors: [],
   reviewSpotlights: [],
-  averagePaidSessionPrice: 0,
+  averagePaidSessionPricePaise: 0,
   introMinutes: 15,
 };
 
@@ -131,11 +134,11 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
       // existing: total verified mentors
       db.mentorProfile.count({ where: { isVerified: true, isActive: true } }),
 
-      // existing: price range
+      // existing: pricePaise range
       db.mentorProfile.aggregate({
         where: { isVerified: true, isActive: true },
-        _min: { priceMin: true },
-        _max: { priceMax: true },
+        _min: { priceMinPaise: true },
+        _max: { priceMaxPaise: true },
       }),
 
       // existing: exams for search links
@@ -191,7 +194,7 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
       // Restored: for pricing bands
       db.payment.aggregate({
         where: { status: "CAPTURED" },
-        _avg: { amount: true },
+        _avg: { amountPaise: true },
       }),
     ]);
 
@@ -199,7 +202,7 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
     const priceBounds =
       priceResult.status === "fulfilled"
         ? priceResult.value
-        : { _min: { priceMin: null }, _max: { priceMax: null } };
+        : { _min: { priceMinPaise: null }, _max: { priceMaxPaise: null } };
     const flattenedExams = allExams.status === "fulfilled" ? allExams.value : [];
     const totalStudentsCount =
       totalStudents.status === "fulfilled" ? totalStudents.value : 0;
@@ -212,7 +215,7 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
     const averagePayment =
       paymentAggregate.status === "fulfilled"
         ? paymentAggregate.value
-        : { _avg: { amount: null } };
+        : { _avg: { amountPaise: null } };
 
     // existing: build search links from exam frequency
     const freq: Record<string, number> = {};
@@ -240,8 +243,8 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
         tier: m.tier,
         yearOfStudy: m.yearOfStudy,
         yearLabel: buildYearLabel(m.college, m.yearOfStudy),
-        priceMin: m.priceMin,
-        priceMax: m.priceMax,
+        priceMinPaise: m.priceMinPaise,
+        priceMaxPaise: m.priceMaxPaise,
         avgRating: m.avgRating ?? 0,
         totalReviews: m.totalReviews ?? 0,
         totalSessions: m.totalSessions ?? 0,
@@ -253,14 +256,14 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
 
     return {
       totalMentors,
-      minPrice: priceBounds._min.priceMin ?? 0,
-      maxPrice: priceBounds._max.priceMax ?? 0,
+      minPricePaise: priceBounds._min.priceMinPaise ?? 0,
+      maxPricePaise: priceBounds._max.priceMaxPaise ?? 0,
       searchLinks,
       totalStudents: totalStudentsCount,
       completedSessions: completedSessionCount,
       featuredMentors,
       reviewSpotlights: publicReviewSpotlights,
-      averagePaidSessionPrice: Math.round(averagePayment._avg.amount ?? 0),
+      averagePaidSessionPricePaise: Math.round(averagePayment._avg.amountPaise ?? 0),
       introMinutes: 15, // Restored
     };
   } catch {
@@ -306,7 +309,7 @@ export async function getPublicMentorDirectory(
 
     if (exam) baseWhere.examsCleared = { has: exam };
     if (tier) baseWhere.tier = tier as MentorTier;
-    if (priceMax) baseWhere.priceMin = { lte: priceMax };
+    if (priceMax) baseWhere.priceMinPaise = { lte: rupeesToPaise(priceMax) };
     if (forClass === "school") baseWhere.yearOfStudy = { in: [1, 2] };
     if (forClass === "ug") baseWhere.yearOfStudy = { in: [5, 6] };
 
@@ -380,8 +383,8 @@ export async function getPublicMentorDirectory(
         tier: m.tier,
         yearOfStudy: m.yearOfStudy,
         yearLabel: buildYearLabel(m.college, m.yearOfStudy),
-        priceMin: m.priceMin,
-        priceMax: m.priceMax,
+        priceMinPaise: m.priceMinPaise,
+        priceMaxPaise: m.priceMaxPaise,
         avgRating: m.avgRating ?? 0,
         totalReviews: m.totalReviews ?? 0,
         totalSessions: m.totalSessions ?? 0,
@@ -464,7 +467,7 @@ export async function getPublicReviewSpotlights(
 export async function getAuthShellContent() {
   type AuthShellSnapshot = {
     totalMentors: number;
-    minPrice: number;
+    minPricePaise: number;
     totalStudents: number;
     completedSessions: number;
     totalPublicReviews: number;
@@ -477,7 +480,7 @@ export async function getAuthShellContent() {
 
   const fallbackSnapshot: AuthShellSnapshot = {
     totalMentors: 0,
-    minPrice: 0,
+    minPricePaise: 0,
     totalStudents: 0,
     completedSessions: 0,
     totalPublicReviews: 0,
@@ -498,7 +501,7 @@ export async function getAuthShellContent() {
       }),
       db.mentorProfile.aggregate({
         where: { isVerified: true, isActive: true },
-        _min: { priceMin: true },
+        _min: { priceMinPaise: true },
       }),
       db.studentProfile.count({
         where: {
@@ -540,9 +543,9 @@ export async function getAuthShellContent() {
     return {
       totalMentors:
         mentorCountResult.status === "fulfilled" ? mentorCountResult.value : 0,
-      minPrice:
+      minPricePaise:
         minPriceResult.status === "fulfilled"
-          ? minPriceResult.value._min.priceMin ?? 0
+          ? minPriceResult.value._min.priceMinPaise ?? 0
           : 0,
       totalStudents:
         studentCountResult.status === "fulfilled" ? studentCountResult.value : 0,
@@ -579,7 +582,7 @@ export async function getAuthShellContent() {
       },
       {
         label: "Starting price",
-        value: snapshot.minPrice > 0 ? `₹${snapshot.minPrice}` : "Not listed",
+        value: snapshot.minPricePaise > 0 ? formatPaise(snapshot.minPricePaise) : "Not listed",
       },
       {
         label: "Public reviews",

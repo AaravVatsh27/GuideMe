@@ -27,8 +27,8 @@ type MentorProfileResponse = {
     examsCleared: string[];
     examYears: unknown;
     specialisations: string[];
-    priceMin: number | null;
-    priceMax: number | null;
+    priceMinPaise: number | null;
+    priceMaxPaise: number | null;
     avgRating: number;
     totalReviews: number;
     totalSessions: number;
@@ -158,8 +158,8 @@ export const GET = defineRoute(
           examsCleared: true,
           examYears: true,
           specialisations: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
           avgRating: true,
           totalReviews: true,
           totalSessions: true,

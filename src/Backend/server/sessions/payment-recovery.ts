@@ -71,7 +71,7 @@ export async function releaseBookingIfSlotLost(input: {
       createdAt: true,
       scheduledAt: true,
       durationMinutes: true,
-      price: true,
+      pricePaise: true,
       mentorId: true,
       studentId: true,
       payment: { select: { status: true } },
@@ -114,7 +114,7 @@ export async function refundPaymentForClosedSession(input: {
     select: {
       id: true,
       status: true,
-      price: true,
+      pricePaise: true,
       mentorId: true,
       studentId: true,
     },
@@ -142,7 +142,7 @@ export async function refundPaymentForClosedSession(input: {
  * concurrent webhook and verify call refund only once.
  */
 async function refundUnrecordedBookingPayment(input: {
-  session: { id: string; price: number; studentId: string; mentorId: string };
+  session: { id: string; pricePaise: number; studentId: string; mentorId: string };
   razorpayPaymentId: string;
   reason: string;
   auditAction: string;
@@ -163,7 +163,7 @@ async function refundUnrecordedBookingPayment(input: {
     return true;
   }
 
-  const refund = await createRefund(razorpayPaymentId, session.price);
+  const refund = await createRefund(razorpayPaymentId, session.pricePaise);
   const now = new Date();
 
   await db.$transaction(async (tx) => {
@@ -173,7 +173,7 @@ async function refundUnrecordedBookingPayment(input: {
         status: PaymentStatus.REFUNDED,
         refundStatus: PaymentStatus.REFUNDED,
         refundId: refund.id,
-        refundAmount: session.price,
+        refundAmountPaise: session.pricePaise,
         refundedAt: now,
         paidAt: now,
       },
@@ -207,7 +207,7 @@ async function refundUnrecordedBookingPayment(input: {
         action: auditAction,
         entityType: "Session",
         entityId: session.id,
-        metadata: { refundId: refund.id, amount: session.price },
+        metadata: { refundId: refund.id, amountPaise: session.pricePaise },
       },
     });
   });

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Check, GraduationCap } from "lucide-react";
 import { type PublicPlatformSnapshot } from "@/Backend/server/public-data";
-import { formatCurrency } from "@/shared/format";
+import { formatPaise } from "@/shared/format";
 
 import { getMentorIncomeEstimate } from "@/Frontend/views/home/home-helpers";
 
@@ -109,7 +109,7 @@ export function MentorIncomeSection({
 
                   <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                     <p className="text-4xl font-bold tracking-[-0.04em] text-[#1E1B4B] sm:text-5xl">
-                      {formatCurrency(estimate)}
+                      {formatPaise(estimate)}
                     </p>
 
                     <span className="text-sm font-medium text-slate-400">

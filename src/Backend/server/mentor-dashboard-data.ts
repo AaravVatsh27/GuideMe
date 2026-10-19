@@ -159,8 +159,8 @@ export async function getMentorDashboardData() {
           examsCleared: true,
           examYears: true,
           specialisations: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
           isAvailable: true,
           isVerified: true,
           totalSessions: true,
@@ -214,8 +214,8 @@ export async function getMentorDashboardData() {
         scheduledAt: true,
         endedAt: true,
         durationMinutes: true,
-        price: true,
-        mentorEarning: true,
+        pricePaise: true,
+        mentorEarningPaise: true,
         meetingLink: true,
         aiSummary: true,
         cancelledAt: true,
@@ -224,7 +224,7 @@ export async function getMentorDashboardData() {
         payout: {
           select: {
             id: true,
-            amount: true,
+            amountPaise: true,
             status: true,
             upiId: true,
             transactionId: true,
@@ -235,10 +235,10 @@ export async function getMentorDashboardData() {
         },
         payment: {
           select: {
-            amount: true,
+            amountPaise: true,
             status: true,
             paidAt: true,
-            refundAmount: true,
+            refundAmountPaise: true,
             refundStatus: true,
           },
         },
@@ -335,21 +335,21 @@ export async function getMentorDashboardData() {
 
   const thisMonthEarnings = completedSessions
     .filter((item) => inRange(sessionDate(item), startThisMonth, now))
-    .reduce((sum, item) => sum + item.mentorEarning, 0);
+    .reduce((sum, item) => sum + item.mentorEarningPaise, 0);
   const lastMonthEarnings = completedSessions
     .filter((item) => inRange(sessionDate(item), startLastMonth, endLastMonth))
-    .reduce((sum, item) => sum + item.mentorEarning, 0);
+    .reduce((sum, item) => sum + item.mentorEarningPaise, 0);
   const thisWeekEarnings = completedSessions
     .filter((item) => inRange(sessionDate(item), startThisWeek, endThisWeek))
-    .reduce((sum, item) => sum + item.mentorEarning, 0);
-  const totalEarned = completedSessions.reduce((sum, item) => sum + item.mentorEarning, 0);
+    .reduce((sum, item) => sum + item.mentorEarningPaise, 0);
+  const totalEarned = completedSessions.reduce((sum, item) => sum + item.mentorEarningPaise, 0);
   const pendingPayout = sessions.reduce((sum, item) => {
     if (!item.payout) {
       return sum;
     }
 
     return item.payout.status === "PENDING" || item.payout.status === "PROCESSING"
-      ? sum + item.payout.amount
+      ? sum + item.payout.amountPaise
       : sum;
   }, 0);
 
@@ -367,14 +367,14 @@ export async function getMentorDashboardData() {
   const weeklyEarnings = Array.from({ length: 8 }, (_, index) => {
     const weekStart = addWeeks(eightWeeksAgo, index);
     const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-    const amount = completedSessions
+    const amountPaise = completedSessions
       .filter((item) => inRange(sessionDate(item), weekStart, weekEnd))
-      .reduce((sum, item) => sum + item.mentorEarning, 0);
+      .reduce((sum, item) => sum + item.mentorEarningPaise, 0);
 
     return {
       label: `W${index + 1}`,
       weekOf: weekStart,
-      amount,
+      amountPaise,
     };
   });
 
@@ -472,8 +472,8 @@ export async function getMentorDashboardData() {
         type: item.type,
         scheduledAt: item.scheduledAt,
         durationMinutes: item.durationMinutes,
-        price: item.price,
-        mentorEarning: item.mentorEarning,
+        pricePaise: item.pricePaise,
+        mentorEarningPaise: item.mentorEarningPaise,
         meetingLink: item.meetingLink,
         aiSummary: item.aiSummary,
         cancelledAt: item.cancelledAt,
@@ -500,8 +500,8 @@ export async function getMentorDashboardData() {
         type: item.type,
         scheduledAt: item.scheduledAt,
         durationMinutes: item.durationMinutes,
-        price: item.price,
-        mentorEarning: item.mentorEarning,
+        pricePaise: item.pricePaise,
+        mentorEarningPaise: item.mentorEarningPaise,
         meetingLink: item.meetingLink,
         aiSummary: item.aiSummary,
         payout: item.payout,
@@ -523,8 +523,8 @@ export async function getMentorDashboardData() {
         type: item.type,
         scheduledAt: item.scheduledAt,
         durationMinutes: item.durationMinutes,
-        price: item.price,
-        mentorEarning: item.mentorEarning,
+        pricePaise: item.pricePaise,
+        mentorEarningPaise: item.mentorEarningPaise,
         cancelledAt: item.cancelledAt,
         cancellationReason: item.cancellationReason,
         payout: item.payout,
@@ -551,7 +551,7 @@ export async function getMentorDashboardData() {
       pendingPayout,
       nextPayout: nextPayout
         ? {
-            amount: nextPayout.amount,
+            amountPaise: nextPayout.amountPaise,
             status: nextPayout.status,
             date: nextPayout.scheduledAt ?? nextPayout.createdAt,
             transactionId: nextPayout.transactionId,
@@ -565,7 +565,7 @@ export async function getMentorDashboardData() {
                 id: item.payout.id,
                 sessionId: item.id,
                 date: item.payout.processedAt ?? item.payout.scheduledAt ?? item.payout.createdAt,
-                amount: item.payout.amount,
+                amountPaise: item.payout.amountPaise,
                 status: item.payout.status,
                 transactionId: item.payout.transactionId,
                 upiId: item.payout.upiId,
@@ -584,8 +584,8 @@ export async function getMentorDashboardData() {
           completedAt: sessionDate(item),
           sessionType: item.type,
           durationMinutes: item.durationMinutes,
-          grossAmount: item.price,
-          mentorEarning: item.mentorEarning,
+          grossAmount: item.pricePaise,
+          mentorEarningPaise: item.mentorEarningPaise,
           payoutStatus: item.payout?.status ?? "PENDING",
           transactionId: item.payout?.transactionId ?? null,
         }))

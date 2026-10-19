@@ -12,13 +12,7 @@ export const GUIDE_ME_BRAND = {
     "https://wa.me/?text=Hi%20GuideMe%20community",
 } as const;
 
-export function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+export { formatPaise } from "../src/shared/format";
 
 export function humanizeLabel(value: string | null | undefined) {
   if (!value) {

@@ -35,7 +35,7 @@ export async function sendUpcomingSessionReminders() {
       type: true,
       scheduledAt: true,
       durationMinutes: true,
-      price: true,
+      pricePaise: true,
       studentId: true,
       mentorId: true,
       student: { select: { name: true, email: true } },

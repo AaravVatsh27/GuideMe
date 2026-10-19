@@ -8,7 +8,7 @@ import {
 } from "@/shared/student-onboarding";
 import { getInitials as getSharedInitials } from "@/shared/format";
 
-export { formatCurrency } from "@/shared/format";
+export { formatPaise } from "@/shared/format";
 
 const ACRONYM_LABELS: Record<string, string> = {
   AI: "AI",

@@ -31,23 +31,28 @@ const paidSession = (scheduledAt: Date) => ({
   mentorId: MENTOR,
   scheduledAt,
   type: SessionType.PAID,
-  price: 200,
+  pricePaise: 20000,
 });
 
 describe("calculateCancellationOutcome", () => {
   it("refunds in full more than 24 hours ahead", () => {
     const outcome = calculateCancellationOutcome(paidSession(addHours(NOW, 30)), STUDENT);
-    expect(outcome).toMatchObject({ refundPercent: 100, refundAmount: 200, status: SessionStatus.CANCELLED });
+    expect(outcome).toMatchObject({ refundPercent: 100, refundAmountPaise: 20000, status: SessionStatus.CANCELLED });
+  });
+
+  it("refunds exactly half of an odd price, to the paisa", () => {
+    const outcome = calculateCancellationOutcome({ ...paidSession(addHours(NOW, 13)), pricePaise: 19900 }, STUDENT);
+    expect(outcome.refundAmountPaise).toBe(9950);
   });
 
   it("refunds half between 12 and 24 hours ahead", () => {
     const outcome = calculateCancellationOutcome(paidSession(addHours(NOW, 13)), STUDENT);
-    expect(outcome).toMatchObject({ refundPercent: 50, refundAmount: 100 });
+    expect(outcome).toMatchObject({ refundPercent: 50, refundAmountPaise: 10000 });
   });
 
   it("refunds nothing within 12 hours", () => {
     const outcome = calculateCancellationOutcome(paidSession(addHours(NOW, 2)), STUDENT);
-    expect(outcome).toMatchObject({ refundPercent: 0, refundAmount: 0 });
+    expect(outcome).toMatchObject({ refundPercent: 0, refundAmountPaise: 0 });
   });
 
   it("always refunds in full when the mentor cancels", () => {
@@ -62,10 +67,10 @@ describe("calculateCancellationOutcome", () => {
 
   it("never refunds intro sessions", () => {
     const outcome = calculateCancellationOutcome(
-      { ...paidSession(addHours(NOW, 30)), type: SessionType.INTRO, price: 0 },
+      { ...paidSession(addHours(NOW, 30)), type: SessionType.INTRO, pricePaise: 0 },
       STUDENT,
     );
-    expect(outcome.refundAmount).toBe(0);
+    expect(outcome.refundAmountPaise).toBe(0);
   });
 });
 
@@ -158,10 +163,10 @@ describe("slot rules", () => {
 
 describe("calculateSessionAmounts", () => {
   it("takes the platform cut from paid sessions", () => {
-    expect(calculateSessionAmounts(SessionType.PAID, 200)).toEqual({ platformCut: 40, mentorEarning: 160 });
+    expect(calculateSessionAmounts(SessionType.PAID, 20000)).toEqual({ platformCutPaise: 4000, mentorEarningPaise: 16000 });
   });
 
   it("charges nothing for intro sessions", () => {
-    expect(calculateSessionAmounts(SessionType.INTRO, 0)).toEqual({ platformCut: 0, mentorEarning: 0 });
+    expect(calculateSessionAmounts(SessionType.INTRO, 0)).toEqual({ platformCutPaise: 0, mentorEarningPaise: 0 });
   });
 });

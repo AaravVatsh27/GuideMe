@@ -5,7 +5,7 @@ import { updateSession } from "@/Backend/auth";
 import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { db } from "@/Backend/server/db";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
-import { calculateFortyFiveMinutePrice, retireMentorAvailability } from "@/shared/mentor-onboarding";
+import { calculateFortyFiveMinutePricePaise, retireMentorAvailability } from "@/shared/mentor-onboarding";
 import { mentorAvailabilityStepSchema, mentorCourseStepSchema, mentorExamsStepSchema, mentorHelpStepSchema, mentorInstitutionStepSchema, mentorOnboardingSchema, mentorPricingStepSchema, mentorProfileStepSchema } from "@/Backend/validations/mentor";
 import { defineRoute } from "@/Backend/lib/define-route";
 
@@ -54,8 +54,8 @@ export const PATCH = defineRoute(
             examsCleared: true,
             examYears: true,
             specialisations: true,
-            priceMin: true,
-            priceMax: true,
+            priceMinPaise: true,
+            priceMaxPaise: true,
             linkedinUrl: true,
             onboardingStep: true,
           },
@@ -297,20 +297,20 @@ export const PATCH = defineRoute(
             typeof mentorPricingStepSchema
           >;
 
-        createStepData.priceMin =
-          stepData.priceMin;
+        createStepData.priceMinPaise =
+          stepData.priceMinPaise;
 
-        createStepData.priceMax =
-          calculateFortyFiveMinutePrice(
-            stepData.priceMin,
+        createStepData.priceMaxPaise =
+          calculateFortyFiveMinutePricePaise(
+            stepData.priceMinPaise,
           );
 
-        updateStepData.priceMin =
-          stepData.priceMin;
+        updateStepData.priceMinPaise =
+          stepData.priceMinPaise;
 
-        updateStepData.priceMax =
-          calculateFortyFiveMinutePrice(
-            stepData.priceMin,
+        updateStepData.priceMaxPaise =
+          calculateFortyFiveMinutePricePaise(
+            stepData.priceMinPaise,
           );
 
         break;
@@ -518,11 +518,11 @@ export const PATCH = defineRoute(
                 finalValidation.data
                   .specialisations,
 
-              priceMin:
-                finalValidation.data.priceMin,
+              priceMinPaise:
+                finalValidation.data.priceMinPaise,
 
-              priceMax:
-                finalValidation.data.priceMax,
+              priceMaxPaise:
+                finalValidation.data.priceMaxPaise,
 
               headline:
                 finalValidation.data.headline,

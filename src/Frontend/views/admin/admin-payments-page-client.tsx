@@ -19,7 +19,8 @@ import {
   AdminPageHeader,
   adminSearchInputClass,
 } from "./admin-ui";
-import { formatCurrency, formatDateTime } from "./admin-utils";
+import { formatPaise, formatDateTime } from "./admin-utils";
+import { paiseToRupees } from "@/shared/money";
 
 type Props = {
   data: Awaited<ReturnType<typeof getAdminPaymentsData>>;
@@ -45,11 +46,12 @@ export function AdminPaymentsPageClient({ data }: Props) {
 
   const columns: Array<AdminTableColumn<PaymentRow>> = [
     {
-      id: "amount",
+      id: "amountPaise",
       header: "Amount",
-      accessor: (row) => row.amount,
+      accessor: (row) => row.amountPaise,
+      csvValue: (row) => paiseToRupees(row.amountPaise),
       sortable: true,
-      cell: (row) => formatCurrency(row.amount),
+      cell: (row) => formatPaise(row.amountPaise),
     },
     {
       id: "student",
@@ -134,21 +136,21 @@ export function AdminPaymentsPageClient({ data }: Props) {
         {[
           {
             label: "Total collected",
-            value: formatCurrency(data.analytics.totalCollected),
+            value: formatPaise(data.analytics.totalCollected),
             caption: "Gross amount received",
             icon: IndianRupee,
             tone: "bg-[#EEF2FF] text-[#4F46E5]",
           },
           {
             label: "Total paid out",
-            value: formatCurrency(data.analytics.totalPaidOut),
+            value: formatPaise(data.analytics.totalPaidOut),
             caption: "Paid to mentors",
             icon: Wallet,
             tone: "bg-[#DCFCE7] text-[#166534]",
           },
           {
             label: "Platform retained",
-            value: formatCurrency(data.analytics.platformRetained),
+            value: formatPaise(data.analytics.platformRetained),
             caption: "Kept by Mentra",
             icon: PiggyBank,
             tone: "bg-[#FEF3C7] text-[#92400E]",
@@ -239,7 +241,7 @@ export function AdminPaymentsPageClient({ data }: Props) {
                         </td>
                         <td className="px-4 py-3 font-medium text-[#0F172A]">{payout.mentor.name}</td>
                         <td className="px-4 py-3 text-[#334155]">{payout.session.student.name}</td>
-                        <td className="px-4 py-3 text-[#334155]">{formatCurrency(payout.amount)}</td>
+                        <td className="px-4 py-3 text-[#334155]">{formatPaise(payout.amountPaise)}</td>
                         <td className="px-4 py-3 text-[#334155]">{formatDateTime(payout.scheduledAt ?? payout.createdAt)}</td>
                       </tr>
                     );

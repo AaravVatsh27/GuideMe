@@ -16,8 +16,9 @@ import {
   DEGREE_OPTIONS,
   EXAM_OPTIONS,
   HELP_TOPIC_OPTIONS,
-  PRICING_POINTS,
+  PRICING_POINTS_PAISE,
   YEAR_OF_STUDY_OPTIONS,
+  calculateFortyFiveMinutePricePaise,
   getDegreeLabel,
   getExamLabel,
   getHelpTopicLabel,
@@ -25,7 +26,7 @@ import {
 import { cn } from "@/Frontend/lib/utils";
 
 import type { MentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
-import { formatCurrency, getInitials } from "@/shared/mentor-dashboard-utils";
+import { formatPaise, getInitials } from "@/shared/mentor-dashboard-utils";
 
 type Props = {
   mentor: MentorDashboardData["mentor"];
@@ -46,7 +47,7 @@ type FormState = {
   expectedGraduationYear: string;
   headline: string;
   bio: string;
-  priceMin: string;
+  priceMinPaise: string;
   linkedinUrl: string;
   exams: string[];
   specialisations: string[];
@@ -64,7 +65,7 @@ export function MentorProfilePageClient({ mentor }: Props) {
     expectedGraduationYear: mentor.profile.expectedGraduationYear ? String(mentor.profile.expectedGraduationYear) : "",
     headline: mentor.profile.headline ?? "",
     bio: mentor.profile.bio ?? "",
-    priceMin: mentor.profile.priceMin ? String(mentor.profile.priceMin) : "199",
+    priceMinPaise: mentor.profile.priceMinPaise ? String(mentor.profile.priceMinPaise) : "19900",
     linkedinUrl: mentor.profile.linkedinUrl ?? "",
     exams: mentor.profile.examsCleared,
     specialisations: mentor.profile.specialisations,
@@ -73,8 +74,8 @@ export function MentorProfilePageClient({ mentor }: Props) {
   const [savedFormState, setSavedFormState] = useState<FormState>(initialFormState);
   const [isEditing, setIsEditing] = useState(false);
 
-  const priceMin = Number.parseInt(formState.priceMin || "0", 10) || 0;
-  const priceMax = Math.round(priceMin * 1.4);
+  const priceMinPaise = Number.parseInt(formState.priceMinPaise || "0", 10) || 0;
+  const priceMaxPaise = calculateFortyFiveMinutePricePaise(priceMinPaise);
   const previewHeadline =
     formState.headline.trim().length >= 12
       ? formState.headline.trim()
@@ -139,7 +140,7 @@ export function MentorProfilePageClient({ mentor }: Props) {
           expectedGraduationYear: formState.expectedGraduationYear
             ? Number.parseInt(formState.expectedGraduationYear, 10)
             : undefined,
-          priceMin,
+          priceMinPaise,
           headline: formState.headline,
           bio: formState.bio,
           linkedinUrl: formState.linkedinUrl,
@@ -375,19 +376,19 @@ export function MentorProfilePageClient({ mentor }: Props) {
                 </Label>
                 <select
                   id="mentor-price"
-                  value={formState.priceMin}
-                  onChange={(event) => setFormState((current) => ({ ...current, priceMin: event.target.value }))}
+                  value={formState.priceMinPaise}
+                  onChange={(event) => setFormState((current) => ({ ...current, priceMinPaise: event.target.value }))}
                   style={{ colorScheme: "light" }}
                   className="!h-11 !w-full !rounded-xl !border !border-slate-200 !bg-white !px-3.5 !text-sm !font-medium !text-[#1E1B4B] !shadow-none !outline-none focus:!border-violet-400 focus:!ring-2 focus:!ring-violet-500/20"
                 >
-                  {PRICING_POINTS.map((point) => (
+                  {PRICING_POINTS_PAISE.map((point) => (
                     <option key={point} value={point}>
-                      {formatCurrency(point)}
+                      {formatPaise(point)}
                     </option>
                   ))}
                 </select>
                 <p className="text-xs leading-5 text-slate-600">
-                  45-minute price auto-previews at {formatCurrency(priceMax)}.
+                  45-minute price auto-previews at {formatPaise(priceMaxPaise)}.
                 </p>
               </div>
               <div className="space-y-2">
@@ -483,7 +484,7 @@ export function MentorProfilePageClient({ mentor }: Props) {
                 </div>
                 <div className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-sm font-medium text-slate-900">30-minute price</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-700">{formatCurrency(priceMin)}</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-700">{formatPaise(priceMinPaise)}</p>
                 </div>
                 <div className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-sm font-medium text-slate-900">LinkedIn URL</p>
@@ -563,8 +564,8 @@ export function MentorProfilePageClient({ mentor }: Props) {
                   </div>
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Pricing</p>
-                    <p className="mt-2 break-words text-sm font-medium text-slate-900">{formatCurrency(priceMin)} / 30 min</p>
-                    <p className="mt-1 text-sm text-slate-600">{formatCurrency(priceMax)} / 45 min</p>
+                    <p className="mt-2 break-words text-sm font-medium text-slate-900">{formatPaise(priceMinPaise)} / 30 min</p>
+                    <p className="mt-1 text-sm text-slate-600">{formatPaise(priceMaxPaise)} / 45 min</p>
                   </div>
                 </div>
 

@@ -7,11 +7,11 @@ import {
   SectionHeading,
   emailStyles,
 } from "./_components/GuideMeEmailLayout";
-import { formatCurrency, formatIstDate } from "./utils";
+import { formatPaise, formatIstDate } from "./utils";
 
 export type PayoutConfirmationProps = {
   mentorName: string;
-  amount: number;
+  amountPaise: number;
   sessionCount: number;
   upiId: string;
   transactionId: string;
@@ -21,7 +21,7 @@ export type PayoutConfirmationProps = {
 
 export function PayoutConfirmation({
   mentorName,
-  amount,
+  amountPaise,
   sessionCount,
   upiId,
   transactionId,
@@ -30,7 +30,7 @@ export function PayoutConfirmation({
 }: PayoutConfirmationProps) {
   return (
     <GuideMeEmailLayout
-      preview={`Your GuideMe payout of ${formatCurrency(amount)} has been processed.`}
+      preview={`Your GuideMe payout of ${formatPaise(amountPaise)} has been processed.`}
       title="Your payout is on the way"
       subtitle={`Nice work, ${mentorName}. A new payout has been processed for your recent sessions.`}
     >
@@ -41,7 +41,7 @@ export function PayoutConfirmation({
       <InfoCard title="Earnings breakdown">
         <DetailItem label="Payout period" value={`${formatIstDate(periodStart)} to ${formatIstDate(periodEnd)}`} />
         <DetailItem label="Sessions covered" value={sessionCount.toString()} />
-        <DetailItem label="Total payout" value={formatCurrency(amount)} />
+        <DetailItem label="Total payout" value={formatPaise(amountPaise)} />
         <DetailItem label="UPI ID" value={upiId} />
         <DetailItem label="Transaction ID" value={transactionId} />
       </InfoCard>
@@ -57,7 +57,7 @@ export function PayoutConfirmation({
         >
           <tbody>
             {[
-              ["Total earnings", formatCurrency(amount)],
+              ["Total earnings", formatPaise(amountPaise)],
               ["Session count", sessionCount.toString()],
               ["Transfer method", `UPI • ${upiId}`],
               ["Reference", transactionId],

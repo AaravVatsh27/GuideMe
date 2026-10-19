@@ -55,7 +55,7 @@ export function invalidateSessionCaches(sessionId: string, mentorId?: string) {
 
 export type CancellationOutcome = {
   refundPercent: number;
-  refundAmount: number;
+  refundAmountPaise: number;
   status: SessionStatus;
 };
 
@@ -72,8 +72,8 @@ const sessionParticipantSelect = Prisma.validator<Prisma.UserSelect>()({
       headline: true,
       college: true,
       tier: true,
-      priceMin: true,
-      priceMax: true,
+      priceMinPaise: true,
+      priceMaxPaise: true,
     },
   },
   studentProfile: {
@@ -96,11 +96,11 @@ export const sessionListInclude = Prisma.validator<Prisma.SessionInclude>()({
   payment: {
     select: {
       id: true,
-      amount: true,
+      amountPaise: true,
       currency: true,
       status: true,
       paidAt: true,
-      refundAmount: true,
+      refundAmountPaise: true,
       refundStatus: true,
     },
   },

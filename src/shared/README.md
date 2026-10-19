@@ -9,7 +9,8 @@ Pure constants and helper functions with no database access, no secrets and no R
 | `mentor-onboarding.ts` | Mentor onboarding options and labels (exams, degrees, years, help topics, availability days) plus related types. |
 | `student-onboarding.ts` | Student onboarding options and labels (class, board, stream, languages, state, mentorship needs, decision stage) plus related types. |
 | `mentor-dashboard-utils.ts` | Formatting helpers for the mentor dashboard (currency, dates, initials, slot keys, trends). Used by the server loader and the dashboard UI. |
-| `format.ts` | `formatCurrency` and `getInitials`, used everywhere amounts and avatars are shown. |
+| `money.ts` | The money convention: every amount (database, API, UI state) is an integer number of **paise**. `rupeesToPaise` / `paiseToRupees` convert only where people type or read rupees (price pickers, CSV exports, search URL filters). |
+| `format.ts` | `formatPaise` (149900 → "₹1,499", 9950 → "₹99.50") and `getInitials`, used everywhere amounts and avatars are shown. |
 | `roles.ts` | The user roles (`STUDENT`, `MENTOR`, `ADMIN`) and the `isAuthRole` check. |
 | `validations/url.ts` | Safe-URL checks (`isSafeHttpsUrl`, LinkedIn and image URL schemas). |
 

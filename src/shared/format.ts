@@ -9,9 +9,22 @@ const currencyFormatter = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0,
 });
 
-/** Formats a rupee amount, e.g. 1499 → "₹1,499". Missing values show as ₹0. */
-export function formatCurrency(value: number | null | undefined) {
-  return currencyFormatter.format(Math.round(value ?? 0));
+const currencyFormatterWithPaise = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/**
+ * Formats an amount in paise, e.g. 149900 → "₹1,499" and 9950 → "₹99.50".
+ * Missing values show as ₹0.
+ */
+export function formatPaise(paise: number | null | undefined) {
+  const value = Math.round(paise ?? 0);
+  return value % 100 === 0
+    ? currencyFormatter.format(value / 100)
+    : currencyFormatterWithPaise.format(value / 100);
 }
 
 /** Up to two uppercase initials from a name, e.g. "Aarav Vatsh" → "AV". */

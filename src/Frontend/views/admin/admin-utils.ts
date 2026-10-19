@@ -1,4 +1,4 @@
-export { formatCurrency } from "@/shared/format";
+export { formatPaise } from "@/shared/format";
 export function formatDateTime(value: string | Date | null | undefined) {
   if (!value) {
     return "Not available";

@@ -23,7 +23,7 @@ import {
 import { db } from "@/Backend/server/db";
 
 import { ProfileSignOutButton } from "@/Frontend/views/profile/profile-sign-out-button";
-import { formatCurrency as formatRupees } from "@/shared/format";
+import { formatPaise as formatSharedPaise } from "@/shared/format";
 
 const joinedDateFormatter = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
@@ -52,8 +52,8 @@ function formatLabel(value: string | null | undefined) {
     .join(" ");
 }
 
-function formatCurrency(value: number | null | undefined) {
-  return typeof value === "number" ? formatRupees(value) : "Not set yet";
+function formatPaise(value: number | null | undefined) {
+  return typeof value === "number" ? formatSharedPaise(value) : "Not set yet";
 }
 
 function toRoute(path: string) {
@@ -206,8 +206,8 @@ export default async function ProfilePage() {
           bio: true,
           examsCleared: true,
           specialisations: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
           linkedinUrl: true,
           isVerified: true,
         },
@@ -441,8 +441,8 @@ export default async function ProfilePage() {
                         : "Not set yet"
                     }
                   />
-                  <InfoRow label="30 min price" value={formatCurrency(mentorProfile?.priceMin)} />
-                  <InfoRow label="45 min price" value={formatCurrency(mentorProfile?.priceMax)} />
+                  <InfoRow label="30 min price" value={formatPaise(mentorProfile?.priceMinPaise)} />
+                  <InfoRow label="45 min price" value={formatPaise(mentorProfile?.priceMaxPaise)} />
                   <InfoRow
                     label="Verification"
                     value={mentorProfile?.isVerified ? "Verified" : "Not verified yet"}

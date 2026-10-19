@@ -14,7 +14,7 @@ import { getInitials } from "@/shared/format";
 import { cn } from "@/Frontend/lib/utils";
 import { isSafeHttpsUrl } from "@/shared/validations/url";
 
-import { formatCurrency, formatDateOnly, formatDateTime, formatEnumLabel } from "./admin-utils";
+import { formatPaise, formatDateOnly, formatDateTime, formatEnumLabel } from "./admin-utils";
 
 type Props = {
   queue: Awaited<ReturnType<typeof getAdminMentorVerificationQueueData>>;
@@ -438,7 +438,7 @@ export function AdminMentorVerificationPageClient({ queue }: Props) {
                         <DetailRow label="Graduation" value={openApplicant.profile.expectedGraduationYear ?? "Not provided"} />
                         <DetailRow
                           label="Pricing"
-                          value={`${formatCurrency(openApplicant.profile.priceMin)} to ${formatCurrency(openApplicant.profile.priceMax)}`}
+                          value={`${formatPaise(openApplicant.profile.priceMinPaise)} to ${formatPaise(openApplicant.profile.priceMaxPaise)}`}
                         />
                       </dl>
                     </section>

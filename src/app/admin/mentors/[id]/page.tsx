@@ -11,7 +11,7 @@ import {
   AdminPill,
   adminSectionLabelClass,
 } from "@/Frontend/views/admin/admin-ui";
-import { formatCurrency, formatDateOnly, formatDateTime, formatEnumLabel } from "@/Frontend/views/admin/admin-utils";
+import { formatPaise, formatDateOnly, formatDateTime, formatEnumLabel } from "@/Frontend/views/admin/admin-utils";
 
 function DetailCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return (
@@ -74,7 +74,7 @@ export default async function AdminMentorDetailPage({
                 { label: "Joined", value: formatDateOnly(mentor.createdAt) },
                 {
                   label: "Price",
-                  value: `${formatCurrency(mentor.mentorProfile.priceMin)} to ${formatCurrency(mentor.mentorProfile.priceMax)}`,
+                  value: `${formatPaise(mentor.mentorProfile.priceMinPaise)} to ${formatPaise(mentor.mentorProfile.priceMaxPaise)}`,
                 },
                 { label: "LinkedIn", value: <span className="break-all">{mentor.mentorProfile.linkedinUrl || "Not provided"}</span> },
               ]}
@@ -97,7 +97,7 @@ export default async function AdminMentorDetailPage({
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
                       <AdminStatusBadge status={session.status} kind="session" />
-                      <span className="text-xs text-[#64748B]">Earning: {formatCurrency(session.mentorEarning)}</span>
+                      <span className="text-xs text-[#64748B]">Earning: {formatPaise(session.mentorEarningPaise)}</span>
                     </div>
                   </li>
                 ))}

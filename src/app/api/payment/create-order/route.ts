@@ -67,25 +67,25 @@ export const POST = defineRoute(
   if (bookingSession.payment?.razorpayOrderId && bookingSession.payment.status === PaymentStatus.PENDING) {
     const existingAmountPaise =
       (bookingSession.payment.metadata as { razorpayAmountSubunits?: number } | null)
-        ?.razorpayAmountSubunits ?? bookingSession.price * 100;
+        ?.razorpayAmountSubunits ?? bookingSession.pricePaise;
 
     return NextResponse.json({
       orderId: bookingSession.payment.razorpayOrderId,
-      amount: existingAmountPaise,
+      amountPaise: existingAmountPaise,
       currency: DEFAULT_CURRENCY,
       key: process.env.RAZORPAY_KEY_ID,
     });
   }
 
   const receipt = `session_${sessionId.replaceAll("-", "")}`;
-  const order = await createOrder(bookingSession.price, DEFAULT_CURRENCY, receipt, {
+  const order = await createOrder(bookingSession.pricePaise, DEFAULT_CURRENCY, receipt, {
     sessionId,
     studentId: userId,
     mentorId: bookingSession.mentorId,
   });
 
-  const platformCut = Math.round(bookingSession.price * PLATFORM_CUT);
-  const mentorEarning = bookingSession.price - platformCut;
+  const platformCutPaise = Math.round(bookingSession.pricePaise * PLATFORM_CUT);
+  const mentorEarningPaise = bookingSession.pricePaise - platformCutPaise;
 
   await db.payment.upsert({
     where: { sessionId },
@@ -93,14 +93,14 @@ export const POST = defineRoute(
       sessionId,
       userId,
       razorpayOrderId: order.id,
-      amount: bookingSession.price,
+      amountPaise: bookingSession.pricePaise,
       currency: DEFAULT_CURRENCY,
       status: PaymentStatus.PENDING,
       metadata: {
         razorpayAmountSubunits: order.amount,
         mentorId: bookingSession.mentorId,
-        platformCut,
-        mentorEarning,
+        platformCutPaise,
+        mentorEarningPaise,
         scheduledAt: bookingSession.scheduledAt.toISOString(),
       },
     },
@@ -110,8 +110,8 @@ export const POST = defineRoute(
       metadata: {
         razorpayAmountSubunits: order.amount,
         mentorId: bookingSession.mentorId,
-        platformCut,
-        mentorEarning,
+        platformCutPaise,
+        mentorEarningPaise,
         scheduledAt: bookingSession.scheduledAt.toISOString(),
       },
     },
@@ -120,7 +120,7 @@ export const POST = defineRoute(
 
   return NextResponse.json({
     orderId: order.id,
-    amount: order.amount,
+    amountPaise: order.amount,
     currency: DEFAULT_CURRENCY,
     key: process.env.RAZORPAY_KEY_ID,
   });

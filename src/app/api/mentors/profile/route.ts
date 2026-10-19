@@ -5,7 +5,7 @@ import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { cacheDel, cacheDelPattern, cacheKeys } from "@/Backend/lib/cache";
 import { generalLimiter } from "@/Backend/lib/ratelimit";
 import { db } from "@/Backend/server/db";
-import { calculateFortyFiveMinutePrice, retireMentorAvailability } from "@/shared/mentor-onboarding";
+import { calculateFortyFiveMinutePricePaise, retireMentorAvailability } from "@/shared/mentor-onboarding";
 import { invalidateAllMatchingCaches } from "@/Backend/server/matching";
 import { mentorProfileUpdateSchema } from "@/Backend/validations/mentor";
 import { defineRoute } from "@/Backend/lib/define-route";
@@ -22,18 +22,18 @@ export const PATCH = defineRoute(
 
   const data = parsed.data;
   const mentorId = session.user.id;
-  const hasPriceUpdate = data.priceMin !== undefined || data.priceMax !== undefined;
+  const hasPriceUpdate = data.priceMinPaise !== undefined || data.priceMaxPaise !== undefined;
 
-  if (data.priceMax !== undefined && data.priceMin === undefined) {
-    return apiErrorResponse("priceMin is required when updating pricing", 400);
+  if (data.priceMaxPaise !== undefined && data.priceMinPaise === undefined) {
+    return apiErrorResponse("priceMinPaise is required when updating pricing", 400);
   }
 
   const existing = await db.mentorProfile.findUnique({
     where: { userId: mentorId },
     select: {
       username: true,
-      priceMin: true,
-      priceMax: true,
+      priceMinPaise: true,
+      priceMaxPaise: true,
     },
   });
 
@@ -47,7 +47,7 @@ export const PATCH = defineRoute(
     availabilitySlots,
     exams,
     specialisations,
-    priceMin,
+    priceMinPaise,
     timezone,
     avatarUrl,
     ...profileFields
@@ -75,9 +75,9 @@ export const PATCH = defineRoute(
     updateData.specialisations = specialisations;
   }
 
-  if (priceMin !== undefined) {
-    updateData.priceMin = priceMin;
-    updateData.priceMax = calculateFortyFiveMinutePrice(priceMin);
+  if (priceMinPaise !== undefined) {
+    updateData.priceMinPaise = priceMinPaise;
+    updateData.priceMaxPaise = calculateFortyFiveMinutePricePaise(priceMinPaise);
   }
 
   await db.$transaction(async (tx) => {
@@ -115,8 +115,8 @@ export const PATCH = defineRoute(
     // Log price change if applicable
     const priceChanged =
       hasPriceUpdate &&
-      ((updateData.priceMin as number | undefined) !== existing.priceMin ||
-        (updateData.priceMax as number | undefined) !== existing.priceMax);
+      ((updateData.priceMinPaise as number | undefined) !== existing.priceMinPaise ||
+        (updateData.priceMaxPaise as number | undefined) !== existing.priceMaxPaise);
 
     if (priceChanged) {
       await tx.auditLog.create({
@@ -126,10 +126,10 @@ export const PATCH = defineRoute(
           entityType: "MentorProfile",
           entityId: mentorId,
           metadata: {
-            oldPriceMin: existing.priceMin,
-            oldPriceMax: existing.priceMax,
-            newPriceMin: (updateData.priceMin as number | undefined) ?? existing.priceMin,
-            newPriceMax: (updateData.priceMax as number | undefined) ?? existing.priceMax,
+            oldPriceMin: existing.priceMinPaise,
+            oldPriceMax: existing.priceMaxPaise,
+            newPriceMin: (updateData.priceMinPaise as number | undefined) ?? existing.priceMinPaise,
+            newPriceMax: (updateData.priceMaxPaise as number | undefined) ?? existing.priceMaxPaise,
           },
         },
       });

@@ -9,8 +9,9 @@ import {
   renderEmailTemplate,
 } from "@emails";
 import { formatIstDateTime } from "@emails/utils";
-import { DEFAULT_CURRENCY, PLATFORM_NAME } from "@/shared/constants";
+import { PLATFORM_NAME } from "@/shared/constants";
 import { getAppUrl } from "@/Backend/lib/env";
+import { formatPaise } from "@/shared/format";
 
 type EmailUser = Pick<User, "name" | "email"> & {
   role?: User["role"];
@@ -25,11 +26,11 @@ type EmailUser = Pick<User, "name" | "email"> & {
 };
 type EmailSession = Pick<
   Session,
-  "id" | "type" | "scheduledAt" | "durationMinutes" | "price" | "meetingLink"
+  "id" | "type" | "scheduledAt" | "durationMinutes" | "pricePaise" | "meetingLink"
 >;
 type EmailPayout = Pick<
   Payout,
-  "id" | "amount" | "status" | "processedAt" | "transactionId" | "upiId" | "createdAt"
+  "id" | "amountPaise" | "status" | "processedAt" | "transactionId" | "upiId" | "createdAt"
 > & {
   sessionCount?: number;
   periodStart?: Date | null;
@@ -65,14 +66,6 @@ function getEmailFromAddress() {
   }
 
   return from;
-}
-
-function formatMoney(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: DEFAULT_CURRENCY,
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 function escapeHtml(value: string) {
@@ -298,13 +291,13 @@ export async function sendSessionCancellationEmails(
   details: {
     cancelledByName: string;
     reason: string;
-    refundAmount: number;
+    refundAmountPaise: number;
     isNoShow?: boolean;
   },
 ) {
   const refundLine =
-    details.refundAmount > 0
-      ? `Refund: ${formatMoney(details.refundAmount)}`
+    details.refundAmountPaise > 0
+      ? `Refund: ${formatPaise(details.refundAmountPaise)}`
       : "Refund: No refund applies to this cancellation.";
 
   return sendEmail(
@@ -332,7 +325,7 @@ export async function sendPayoutConfirmation(
   const rendered = await renderEmailTemplate(
     PayoutConfirmation({
       mentorName: mentor.name,
-      amount: payout.amount,
+      amountPaise: payout.amountPaise,
       sessionCount: payout.sessionCount ?? 1,
       upiId: payout.upiId ?? "UPI not recorded",
       transactionId: payout.transactionId ?? "Pending",
@@ -351,10 +344,10 @@ export async function sendPayoutConfirmation(
 export async function sendRefundConfirmationEmail(params: {
   student: EmailUser;
   sessionId: string;
-  refundAmount: number;
+  refundAmountPaise: number;
   reason?: string;
 }) {
-  const { student, sessionId, refundAmount, reason } = params;
+  const { student, sessionId, refundAmountPaise, reason } = params;
 
   return sendEmail(
     student.email,
@@ -364,7 +357,7 @@ export async function sendRefundConfirmationEmail(params: {
       title: "Refund initiated",
       body: [
         `${student.name}, your refund request has been processed for session ${sessionId}.`,
-        `Refund amount: ${formatMoney(refundAmount)}`,
+        `Refund amount: ${formatPaise(refundAmountPaise)}`,
         reason ? `Reason: ${reason}` : "Reason: Not specified",
       ],
       footer: "If you need help, reply to this email and our support team will assist you.",

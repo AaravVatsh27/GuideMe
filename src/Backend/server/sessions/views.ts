@@ -46,11 +46,11 @@ export function toSessionView(session: SessionDetailsRecord, viewerId: string) {
     payment: payment
       ? {
           id: payment.id,
-          amount: payment.amount,
+          amountPaise: payment.amountPaise,
           currency: payment.currency,
           status: payment.status,
           paidAt: payment.paidAt,
-          refundAmount: payment.refundAmount,
+          refundAmountPaise: payment.refundAmountPaise,
           refundStatus: payment.refundStatus,
           refundedAt: payment.refundedAt,
         }
@@ -59,7 +59,7 @@ export function toSessionView(session: SessionDetailsRecord, viewerId: string) {
       payout && viewerId === session.mentorId
         ? {
             id: payout.id,
-            amount: payout.amount,
+            amountPaise: payout.amountPaise,
             status: payout.status,
             scheduledAt: payout.scheduledAt,
             processedAt: payout.processedAt,

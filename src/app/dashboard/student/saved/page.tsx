@@ -8,7 +8,7 @@ import { HeartOff } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  formatCurrency,
+  formatPaise,
   getInitials,
 } from "@/Frontend/views/dashboard/student/student-dashboard-utils";
 import { Avatar, AvatarFallback } from "@/Frontend/components/ui/avatar";
@@ -31,7 +31,7 @@ type SavedMentor = {
       college?: string | null;
       tier?: string | null;
       avgRating?: number | null;
-      priceMin?: number | null;
+      priceMinPaise?: number | null;
     } | null;
   };
 };
@@ -190,7 +190,7 @@ export default function SavedMentorsPage() {
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="text-slate-500">Starting price</p>
                 <p className="mt-1 font-semibold text-slate-950">
-                  {formatCurrency(item.mentor.mentorProfile?.priceMin)}
+                  {formatPaise(item.mentor.mentorProfile?.priceMinPaise)}
                 </p>
               </div>
             </div>

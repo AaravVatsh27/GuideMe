@@ -1,4 +1,4 @@
-export { formatCurrency } from "@/shared/format";
+export { formatPaise } from "@/shared/format";
 
 export const IST_TIMEZONE = "Asia/Kolkata";
 export const FREE_INTRO_DURATION = 10;
@@ -30,7 +30,7 @@ export type SessionBookingResponse = {
 
 export type PaymentOrderResponse = {
   orderId: string;
-  amount: number;
+  amountPaise: number;
   currency: string;
   key?: string;
 };
@@ -47,6 +47,7 @@ type RazorpayCheckoutInstance = {
 
 type RazorpayCheckoutOptions = {
   key: string;
+  /** Razorpay's own field name; the value is in paise. */
   amount: number;
   currency: string;
   order_id: string;

@@ -8,10 +8,6 @@ import { DEFAULT_CURRENCY } from "@/shared/constants";
 
 export type RazorpayOrderNotes = Record<string, string | number>;
 
-function toSubunits(amount: number) {
-  return Math.round(amount * 100);
-}
-
 let razorpayClient: Razorpay | null = null;
 
 function getRazorpaySecret() {
@@ -44,14 +40,15 @@ function getRazorpayClient() {
   return razorpayClient;
 }
 
+/** Creates a Razorpay order. Amounts are in paise, which is what Razorpay expects. */
 export async function createOrder(
-  amount: number,
+  amountPaise: number,
   currency = DEFAULT_CURRENCY,
   receipt: string,
   notes?: RazorpayOrderNotes,
 ): Promise<Orders.RazorpayOrder> {
   return getRazorpayClient().orders.create({
-    amount: toSubunits(amount),
+    amount: amountPaise,
     currency,
     receipt,
     notes,
@@ -77,12 +74,13 @@ export function verifyPaymentSignature(
   return timingSafeEqual(expectedBuffer, receivedBuffer);
 }
 
+/** Refunds part or all of a payment. The amount is in paise. */
 export async function createRefund(
   paymentId: string,
-  amount: number,
+  amountPaise: number,
 ): Promise<Refunds.RazorpayRefund> {
   return getRazorpayClient().payments.refund(paymentId, {
-    amount: toSubunits(amount),
+    amount: amountPaise,
   });
 }
 

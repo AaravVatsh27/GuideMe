@@ -1,7 +1,8 @@
 /** Formatting and pricing helpers for the landing page sections. */
 
 import { type PublicMentorCard, type PublicPlatformSnapshot, type PublicReviewSpotlight } from "@/Backend/server/public-data";
-import { formatCurrency } from "@/shared/format";
+import { formatPaise } from "@/shared/format";
+import { roundToWholeRupees } from "@/shared/money";
 
 const SCHOOL_MENTOR_YEARS = new Set([1, 2]);
 
@@ -36,8 +37,8 @@ export function getMentorGroup(mentor: PublicMentorCard) {
 }
 
 export function getMentorPrice(mentor: PublicMentorCard) {
-  return mentor.priceMin && mentor.priceMin > 0
-    ? formatCurrency(mentor.priceMin)
+  return mentor.priceMinPaise && mentor.priceMinPaise > 0
+    ? formatPaise(mentor.priceMinPaise)
     : "View pricing";
 }
 
@@ -74,38 +75,38 @@ export function getMentorProof(mentor: PublicMentorCard) {
 }
 
 export function getStartingPrice(snapshot: PublicPlatformSnapshot) {
-  if (snapshot.minPrice > 0) {
-    return formatCurrency(snapshot.minPrice);
+  if (snapshot.minPricePaise > 0) {
+    return formatPaise(snapshot.minPricePaise);
   }
 
-  if (snapshot.averagePaidSessionPrice > 0) {
-    return formatCurrency(snapshot.averagePaidSessionPrice);
+  if (snapshot.averagePaidSessionPricePaise > 0) {
+    return formatPaise(snapshot.averagePaidSessionPricePaise);
   }
 
   return "₹—";
 }
 
 export function getTypicalPrice(snapshot: PublicPlatformSnapshot) {
-  if (snapshot.averagePaidSessionPrice > 0) {
-    return formatCurrency(snapshot.averagePaidSessionPrice);
+  if (snapshot.averagePaidSessionPricePaise > 0) {
+    return formatPaise(snapshot.averagePaidSessionPricePaise);
   }
 
-  if (snapshot.minPrice > 0) {
-    return formatCurrency(snapshot.minPrice);
+  if (snapshot.minPricePaise > 0) {
+    return formatPaise(snapshot.minPricePaise);
   }
 
   return "₹—";
 }
 
 export function getPriceRange(snapshot: PublicPlatformSnapshot) {
-  if (snapshot.minPrice > 0 && snapshot.maxPrice > 0) {
-    return `${formatCurrency(snapshot.minPrice)} – ${formatCurrency(
-      snapshot.maxPrice,
+  if (snapshot.minPricePaise > 0 && snapshot.maxPricePaise > 0) {
+    return `${formatPaise(snapshot.minPricePaise)} – ${formatPaise(
+      snapshot.maxPricePaise,
     )}`;
   }
 
-  if (snapshot.minPrice > 0) {
-    return `${formatCurrency(snapshot.minPrice)} onwards`;
+  if (snapshot.minPricePaise > 0) {
+    return `${formatPaise(snapshot.minPricePaise)} onwards`;
   }
 
   return "Pricing updates as mentors go live";
@@ -113,20 +114,20 @@ export function getPriceRange(snapshot: PublicPlatformSnapshot) {
 
 function estimateMonthlyEarnings(
   sessionsPerWeek: number,
-  averagePrice: number,
+  averagePricePaise: number,
 ) {
-  return Math.round(sessionsPerWeek * averagePrice * 4.33 * 0.8);
+  return roundToWholeRupees(sessionsPerWeek * averagePricePaise * 4.33 * 0.8);
 }
 
 export function getMentorIncomeEstimate(snapshot: PublicPlatformSnapshot) {
-  const price =
-    snapshot.averagePaidSessionPrice > 0
-      ? snapshot.averagePaidSessionPrice
-      : snapshot.minPrice > 0
-        ? snapshot.minPrice
-        : 249;
+  const pricePaise =
+    snapshot.averagePaidSessionPricePaise > 0
+      ? snapshot.averagePaidSessionPricePaise
+      : snapshot.minPricePaise > 0
+        ? snapshot.minPricePaise
+        : 24900;
 
-  return estimateMonthlyEarnings(4, price);
+  return estimateMonthlyEarnings(4, pricePaise);
 }
 
 export function getReviewInitials(review: PublicReviewSpotlight) {

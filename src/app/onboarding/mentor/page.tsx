@@ -32,8 +32,8 @@ function buildInitialDraft(data: {
     examsCleared: string[];
     examYears: Prisma.JsonValue | null;
     specialisations: string[];
-    priceMin: number | null;
-    priceMax: number | null;
+    priceMinPaise: number | null;
+    priceMaxPaise: number | null;
     linkedinUrl: string | null;
   } | null;
   availabilities: Array<{
@@ -68,8 +68,8 @@ function buildInitialDraft(data: {
     exams,
     specialisations:
       (data.mentorProfile?.specialisations as MentorOnboardingDraft["specialisations"]) ?? [],
-    priceMin: data.mentorProfile?.priceMin ?? EMPTY_MENTOR_DRAFT.priceMin,
-    priceMax: data.mentorProfile?.priceMax ?? EMPTY_MENTOR_DRAFT.priceMax,
+    priceMinPaise: data.mentorProfile?.priceMinPaise ?? EMPTY_MENTOR_DRAFT.priceMinPaise,
+    priceMaxPaise: data.mentorProfile?.priceMaxPaise ?? EMPTY_MENTOR_DRAFT.priceMaxPaise,
     headline: data.mentorProfile?.headline ?? undefined,
     bio: data.mentorProfile?.bio ?? undefined,
     avatarUrl: data.image ?? undefined,
@@ -149,8 +149,8 @@ export default async function MentorOnboardingPage() {
           examsCleared: true,
           examYears: true,
           specialisations: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
           linkedinUrl: true,
         },
       },

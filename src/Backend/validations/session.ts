@@ -1,7 +1,7 @@
 import {
   FREE_INTRO_DURATION,
-  MAX_PRICE,
-  MIN_PRICE,
+  MAX_PRICE_PAISE,
+  MIN_PRICE_PAISE,
   SESSION_DURATIONS,
 } from "@/shared/constants";
 import { z } from "zod";
@@ -18,7 +18,7 @@ export const createSessionSchema = z
     type: z.enum(["INTRO", "PAID"]),
     scheduledAt: z.coerce.date(),
     durationMinutes: z.number().int(),
-    price: z.number().int().min(0).max(MAX_PRICE),
+    pricePaise: z.number().int().min(0).max(MAX_PRICE_PAISE),
     notes: z.string().trim().max(500).optional(),
   })
   .refine((value) => value.scheduledAt.getTime() > Date.now(), {
@@ -28,9 +28,9 @@ export const createSessionSchema = z
   .refine(
     (value) =>
       value.type === "INTRO"
-        ? value.durationMinutes === FREE_INTRO_DURATION && value.price === 0
+        ? value.durationMinutes === FREE_INTRO_DURATION && value.pricePaise === 0
         : paidDurationSchema.safeParse(value.durationMinutes).success &&
-          value.price >= MIN_PRICE,
+          value.pricePaise >= MIN_PRICE_PAISE,
     {
       message:
         "Intro sessions must be free 10-minute calls and paid sessions must use a valid duration with a valid price",

@@ -111,7 +111,7 @@ export function MentorsSection({
                       <div>
                         <p className="text-sm font-bold text-[#1E1B4B]">
                           {getMentorPrice(mentor)}
-                          {mentor.priceMin && mentor.priceMin > 0 && (
+                          {mentor.priceMinPaise && mentor.priceMinPaise > 0 && (
                             <span className="ml-1 text-xs font-medium text-slate-400">
                               / session
                             </span>

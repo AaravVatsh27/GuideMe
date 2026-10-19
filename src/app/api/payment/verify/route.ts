@@ -141,8 +141,8 @@ export const POST = defineRoute(
     return apiErrorResponse("This slot was booked by someone else before your payment completed. A full refund has been issued.", 409);
   }
 
-  const platformCut = Math.round(bookingSession.price * PLATFORM_CUT);
-  const mentorEarning = bookingSession.price - platformCut;
+  const platformCutPaise = Math.round(bookingSession.pricePaise * PLATFORM_CUT);
+  const mentorEarningPaise = bookingSession.pricePaise - platformCutPaise;
   const now = new Date();
 
   const captured = await db.$transaction(async (tx) => {
@@ -168,8 +168,8 @@ export const POST = defineRoute(
       where: { id: sessionId },
       data: {
         status: SessionStatus.SCHEDULED,
-        platformCut,
-        mentorEarning,
+        platformCutPaise,
+        mentorEarningPaise,
       },
     });
 
@@ -178,12 +178,12 @@ export const POST = defineRoute(
       create: {
         mentorId: bookingSession.mentorId,
         sessionId,
-        amount: mentorEarning,
+        amountPaise: mentorEarningPaise,
         status: PayoutStatus.PENDING,
         scheduledAt: bookingSession.scheduledAt,
       },
       update: {
-        amount: mentorEarning,
+        amountPaise: mentorEarningPaise,
       },
     });
 
@@ -213,7 +213,7 @@ export const POST = defineRoute(
         action: "PAYMENT_CAPTURED",
         entityType: "Payment",
         entityId: sessionId,
-        metadata: { razorpayOrderId, razorpayPaymentId, amount: bookingSession.price },
+        metadata: { razorpayOrderId, razorpayPaymentId, amountPaise: bookingSession.pricePaise },
       },
     });
 

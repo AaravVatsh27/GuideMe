@@ -14,6 +14,7 @@ import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 import { searchLimiter } from "@/Backend/lib/ratelimit";
 import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 import { defineRoute } from "@/Backend/lib/define-route";
+import { rupeesToPaise } from "@/shared/money";
 
 const SCHOOL_MENTOR_YEARS = [1, 2] as const;
 const UG_MENTOR_YEARS = [3, 4, 5, 6] as const;
@@ -177,6 +178,7 @@ const searchQuerySchema = z
     stream: z.enum(Stream).optional(),
     exam: z.enum(TargetExam).optional(),
     tier: z.enum(MentorTier).optional(),
+    // Price filters in the URL are whole rupees.
     priceMin: z.coerce.number().int().min(0).optional(),
     priceMax: z.coerce.number().int().max(9999).optional(),
     minRating: z.coerce.number().min(0).max(5).optional(),
@@ -391,8 +393,8 @@ export const GET = defineRoute(
     isActive: true,
     isAvailable: true,
     ...(tier ? { tier } : {}),
-    ...(priceMin !== undefined ? { priceMax: { gte: priceMin } } : {}),
-    ...(priceMax !== undefined ? { priceMin: { lte: priceMax } } : {}),
+    ...(priceMin !== undefined ? { priceMaxPaise: { gte: rupeesToPaise(priceMin) } } : {}),
+    ...(priceMax !== undefined ? { priceMinPaise: { lte: rupeesToPaise(priceMax) } } : {}),
     ...(minRating !== undefined ? { avgRating: { gte: minRating } } : {}),
     ...(exam ? { examsCleared: { hasSome: mapTargetExamToExams(exam) } } : {}),
     ...(forClass === "school"
@@ -504,8 +506,8 @@ export const GET = defineRoute(
           bio: true,
           examsCleared: true,
           specialisations: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
           avgRating: true,
           totalReviews: true,
           totalSessions: true,
@@ -554,8 +556,8 @@ export const GET = defineRoute(
         bio: mentor.mentorProfile?.bio,
         examsCleared: mentor.mentorProfile?.examsCleared,
         specialisations: mentor.mentorProfile?.specialisations,
-        priceMin: mentor.mentorProfile?.priceMin,
-        priceMax: mentor.mentorProfile?.priceMax,
+        priceMinPaise: mentor.mentorProfile?.priceMinPaise,
+        priceMaxPaise: mentor.mentorProfile?.priceMaxPaise,
         avgRating: mentor.mentorProfile?.avgRating,
         totalReviews: mentor.mentorProfile?.totalReviews,
         totalSessions: mentor.mentorProfile?.totalSessions,

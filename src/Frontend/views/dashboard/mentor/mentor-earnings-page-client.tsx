@@ -12,7 +12,7 @@ import { Input } from "@/Frontend/components/ui/input";
 import { Label } from "@/Frontend/components/ui/label";
 
 import type { MentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
-import { formatCurrency, formatDateOnly, formatShortDateTime } from "@/shared/mentor-dashboard-utils";
+import { formatPaise, formatDateOnly, formatShortDateTime } from "@/shared/mentor-dashboard-utils";
 
 type Props = {
   mentorId: string;
@@ -128,7 +128,7 @@ export function MentorEarningsPageClient({ mentorId, mentorName, earnings }: Pro
     () =>
       earnings.weeklyEarnings.map((item) => ({
         label: formatDateOnly(item.weekOf).slice(0, 6),
-        amount: item.amount,
+        amountPaise: item.amountPaise,
       })),
     [earnings.weeklyEarnings],
   );
@@ -150,14 +150,14 @@ export function MentorEarningsPageClient({ mentorId, mentorName, earnings }: Pro
   function downloadStatementPdf() {
     const lines = [
       `Mentor: ${mentorName}`,
-      `All time earnings: ${formatCurrency(earnings.totalEarned)}`,
-      `This month: ${formatCurrency(earnings.thisMonthEarnings)}`,
-      `Pending payout: ${formatCurrency(earnings.pendingPayout)}`,
+      `All time earnings: ${formatPaise(earnings.totalEarned)}`,
+      `This month: ${formatPaise(earnings.thisMonthEarnings)}`,
+      `Pending payout: ${formatPaise(earnings.pendingPayout)}`,
       "",
       "Sessions",
       ...earnings.statementSessions.map(
         (session) =>
-          `${formatDateOnly(session.completedAt)} | ${session.studentName} | ${session.sessionType} ${session.durationMinutes}m | Gross ${formatCurrency(session.grossAmount)} | Net ${formatCurrency(session.mentorEarning)} | ${session.payoutStatus}${session.transactionId ? ` | ${session.transactionId}` : ""}`,
+          `${formatDateOnly(session.completedAt)} | ${session.studentName} | ${session.sessionType} ${session.durationMinutes}m | Gross ${formatPaise(session.grossAmount)} | Net ${formatPaise(session.mentorEarningPaise)} | ${session.payoutStatus}${session.transactionId ? ` | ${session.transactionId}` : ""}`,
       ),
     ];
 
@@ -196,9 +196,9 @@ export function MentorEarningsPageClient({ mentorId, mentorName, earnings }: Pro
 
       <section className="grid min-w-0 gap-4 md:grid-cols-3">
         {[
-          { label: "All time", value: formatCurrency(earnings.totalEarned), icon: IndianRupee },
-          { label: "This month", value: formatCurrency(earnings.thisMonthEarnings), icon: Wallet },
-          { label: "Pending payout", value: formatCurrency(earnings.pendingPayout), icon: CheckCircle2 },
+          { label: "All time", value: formatPaise(earnings.totalEarned), icon: IndianRupee },
+          { label: "This month", value: formatPaise(earnings.thisMonthEarnings), icon: Wallet },
+          { label: "Pending payout", value: formatPaise(earnings.pendingPayout), icon: CheckCircle2 },
         ].map((item) => (
           <Card key={item.label} className="min-w-0 rounded-2xl border-violet-100 bg-white shadow-sm shadow-violet-900/5">
             <CardContent className="px-4 py-3">
@@ -226,16 +226,16 @@ export function MentorEarningsPageClient({ mentorId, mentorName, earnings }: Pro
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
                   <YAxis
-                    tickFormatter={(value) => `₹${Number(value).toLocaleString("en-IN")}`}
+                    tickFormatter={(value) => formatPaise(Number(value))}
                     tickLine={false}
                     axisLine={false}
                     tick={{ fill: "#64748b", fontSize: 12 }}
                   />
                   <Tooltip
                     cursor={{ fill: "#f1f5f9" }}
-                    formatter={(value) => [formatCurrency(typeof value === "number" ? value : Number(value ?? 0)), "Earnings"]}
+                    formatter={(value) => [formatPaise(typeof value === "number" ? value : Number(value ?? 0)), "Earnings"]}
                   />
-                  <Bar dataKey="amount" fill="#7C3AED" radius={[10, 10, 0, 0]} />
+                  <Bar dataKey="amountPaise" fill="#7C3AED" radius={[10, 10, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -301,7 +301,7 @@ export function MentorEarningsPageClient({ mentorId, mentorName, earnings }: Pro
             </CardHeader>
             <CardContent className="space-y-2">
               <p className="text-3xl font-semibold tracking-tight text-slate-950">
-                {earnings.nextPayout ? formatCurrency(earnings.nextPayout.amount) : formatCurrency(0)}
+                {earnings.nextPayout ? formatPaise(earnings.nextPayout.amountPaise) : formatPaise(0)}
               </p>
               <p className="text-sm text-slate-600">
                 {earnings.nextPayout
@@ -332,7 +332,7 @@ export function MentorEarningsPageClient({ mentorId, mentorName, earnings }: Pro
               {earnings.payouts.map((payout) => (
                 <tr key={payout.id}>
                   <td className="py-4 pr-4 text-slate-700">{formatDateOnly(payout.date)}</td>
-                  <td className="px-4 py-4 font-medium text-slate-950">{formatCurrency(payout.amount)}</td>
+                  <td className="px-4 py-4 font-medium text-slate-950">{formatPaise(payout.amountPaise)}</td>
                   <td className="px-4 py-4">
                     <Badge variant="outline" className={getStatusBadgeClass(payout.status)}>
                       {payout.status}

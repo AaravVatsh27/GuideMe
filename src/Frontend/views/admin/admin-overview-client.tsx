@@ -23,7 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/
 import type { getAdminOverviewData } from "@/Backend/server/admin";
 
 import { usePendingVerificationCount } from "./admin-shell";
-import { formatCurrency } from "./admin-utils";
+import { formatPaise } from "./admin-utils";
 
 type Props = {
   data: Awaited<ReturnType<typeof getAdminOverviewData>>;
@@ -104,7 +104,7 @@ function PersonCell({ name }: { name: string }) {
 export function AdminOverviewClient({ data }: Props) {
   const alertCount =
     data.alerts.failedPayments.length + data.alerts.mentorNoShows.length + data.alerts.flaggedReviews.length;
-  const totalRevenueLast30Days = data.revenueLast30Days.reduce((sum, entry) => sum + entry.amount, 0);
+  const totalRevenueLast30Days = data.revenueLast30Days.reduce((sum, entry) => sum + entry.amountPaise, 0);
   const pendingVerificationCount = usePendingVerificationCount();
   const headerStats = [
     { label: "Pending reviews", value: pendingVerificationCount },
@@ -155,7 +155,7 @@ export function AdminOverviewClient({ data }: Props) {
           },
           {
             label: "Revenue today",
-            value: formatCurrency(data.kpis.revenueToday),
+            value: formatPaise(data.kpis.revenueToday),
             caption: "Collected today",
             icon: IndianRupee,
             tone: "bg-amber-50 text-amber-700",
@@ -185,7 +185,7 @@ export function AdminOverviewClient({ data }: Props) {
             </CardTitle>
             <div className="flex shrink-0 items-center gap-2">
               <span className="text-sm text-[#64748B]">
-                ₹{totalRevenueLast30Days.toLocaleString("en-IN")} total
+                {formatPaise(totalRevenueLast30Days)} total
               </span>
               <span className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-0.5 text-xs font-medium text-[#334155]">
                 Last 30 days
@@ -216,7 +216,7 @@ export function AdminOverviewClient({ data }: Props) {
                     domain={[0, "auto"]}
                     allowDecimals={false}
                     tickCount={4}
-                    tickFormatter={(value) => `₹${Number(value).toLocaleString("en-IN")}`}
+                    tickFormatter={(value) => formatPaise(Number(value))}
                     tickLine={false}
                     axisLine={false}
                     tick={{ fill: "#64748b", fontSize: 12 }}
@@ -226,11 +226,11 @@ export function AdminOverviewClient({ data }: Props) {
                     contentStyle={{ backgroundColor: "#0F172A", border: "none", borderRadius: 12, padding: "8px 12px" }}
                     labelStyle={{ color: "#FFFFFF", fontSize: 12, fontWeight: 600 }}
                     itemStyle={{ color: "#FFFFFF", fontSize: 12 }}
-                    formatter={(value) => [formatCurrency(Number(value ?? 0)), "Revenue"]}
+                    formatter={(value) => [formatPaise(Number(value ?? 0)), "Revenue"]}
                   />
                   <Area
                     type="monotone"
-                    dataKey="amount"
+                    dataKey="amountPaise"
                     stroke="#4F46E5"
                     strokeWidth={2.5}
                     fill="url(#admin-revenue-fill)"

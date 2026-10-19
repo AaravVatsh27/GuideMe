@@ -16,7 +16,7 @@ import { toast } from "sonner";
 
 import { MentorAvatar } from "@/Frontend/components/MentorAvatar";
 import {
-  formatCurrency,
+  formatPaise,
   formatDateOnly,
   formatDateTime,
   formatEnumLabel,
@@ -41,7 +41,7 @@ type SessionItem = {
   scheduledAt: string;
   cancelledAt?: string | null;
   cancellationReason?: string | null;
-  price: number;
+  pricePaise: number;
   aiSummary?: string | null;
   meetingLink?: string | null;
   mentor: {
@@ -56,8 +56,8 @@ type SessionItem = {
   };
   review?: { rating: number } | null;
   payment?: {
-    amount?: number | null;
-    refundAmount?: number | null;
+    amountPaise?: number | null;
+    refundAmountPaise?: number | null;
     refundStatus?: string | null;
     status?: string | null;
   } | null;
@@ -416,7 +416,7 @@ export default function StudentSessionsPage() {
                                 Refund amount
                               </p>
                               <p className="mt-2 text-sm font-medium text-slate-900">
-                                {formatCurrency(session.payment?.refundAmount ?? 0)}
+                                {formatPaise(session.payment?.refundAmountPaise ?? 0)}
                               </p>
                             </div>
                             <div>

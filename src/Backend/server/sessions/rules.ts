@@ -96,19 +96,19 @@ export function fitsAvailability(
   );
 }
 
-export function calculateSessionAmounts(type: SessionType, price: number) {
-  if (type === SessionType.INTRO || price === 0) {
+export function calculateSessionAmounts(type: SessionType, pricePaise: number) {
+  if (type === SessionType.INTRO || pricePaise === 0) {
     return {
-      platformCut: 0,
-      mentorEarning: 0,
+      platformCutPaise: 0,
+      mentorEarningPaise: 0,
     };
   }
 
-  const platformCut = Math.round(price * PLATFORM_CUT);
+  const platformCutPaise = Math.round(pricePaise * PLATFORM_CUT);
 
   return {
-    platformCut,
-    mentorEarning: price - platformCut,
+    platformCutPaise,
+    mentorEarningPaise: pricePaise - platformCutPaise,
   };
 }
 
@@ -214,15 +214,15 @@ export function calculateCancellationOutcome(
     mentorId: string;
     scheduledAt: Date;
     type: SessionType;
-    price: number;
+    pricePaise: number;
   },
   actorId: string,
   noShow?: boolean,
 ): CancellationOutcome {
-  if (session.type === SessionType.INTRO || session.price === 0) {
+  if (session.type === SessionType.INTRO || session.pricePaise === 0) {
     return {
       refundPercent: 0,
-      refundAmount: 0,
+      refundAmountPaise: 0,
       status: noShow ? SessionStatus.NO_SHOW : SessionStatus.CANCELLED,
     };
   }
@@ -230,7 +230,7 @@ export function calculateCancellationOutcome(
   if (noShow) {
     return {
       refundPercent: 100,
-      refundAmount: session.price,
+      refundAmountPaise: session.pricePaise,
       status: SessionStatus.NO_SHOW,
     };
   }
@@ -238,7 +238,7 @@ export function calculateCancellationOutcome(
   if (actorId === session.mentorId) {
     return {
       refundPercent: 100,
-      refundAmount: session.price,
+      refundAmountPaise: session.pricePaise,
       status: SessionStatus.CANCELLED,
     };
   }
@@ -249,7 +249,7 @@ export function calculateCancellationOutcome(
   if (hoursUntilSession > 24) {
     return {
       refundPercent: 100,
-      refundAmount: session.price,
+      refundAmountPaise: session.pricePaise,
       status: SessionStatus.CANCELLED,
     };
   }
@@ -257,14 +257,14 @@ export function calculateCancellationOutcome(
   if (hoursUntilSession >= 12) {
     return {
       refundPercent: 50,
-      refundAmount: Math.round(session.price * 0.5),
+      refundAmountPaise: Math.round(session.pricePaise * 0.5),
       status: SessionStatus.CANCELLED,
     };
   }
 
   return {
     refundPercent: 0,
-    refundAmount: 0,
+    refundAmountPaise: 0,
     status: SessionStatus.CANCELLED,
   };
 }

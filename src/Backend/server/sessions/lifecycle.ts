@@ -31,7 +31,7 @@ export async function cancelSessionById({
   if (session.status === SessionStatus.CANCELLED || session.status === SessionStatus.NO_SHOW) {
     return {
       session,
-      refundAmount: session.payment?.refundAmount ?? 0,
+      refundAmountPaise: session.payment?.refundAmountPaise ?? 0,
       refundPercent:
         session.payment?.refundStatus === PaymentStatus.REFUNDED
           ? 100
@@ -55,11 +55,11 @@ export async function cancelSessionById({
   let refundId: string | null = null;
 
   if (
-    outcome.refundAmount > 0 &&
+    outcome.refundAmountPaise > 0 &&
     session.payment?.razorpayPaymentId &&
     session.payment.status === PaymentStatus.CAPTURED
   ) {
-    const refund = await createRefund(session.payment.razorpayPaymentId, outcome.refundAmount);
+    const refund = await createRefund(session.payment.razorpayPaymentId, outcome.refundAmountPaise);
     refundId = refund.id;
   }
 
@@ -97,7 +97,7 @@ export async function cancelSessionById({
 
       if (refundId) {
         paymentUpdate.refundId = refundId;
-        paymentUpdate.refundAmount = outcome.refundAmount;
+        paymentUpdate.refundAmountPaise = outcome.refundAmountPaise;
         paymentUpdate.refundedAt = now;
         paymentUpdate.refundStatus =
           outcome.refundPercent === 100
@@ -138,7 +138,7 @@ export async function cancelSessionById({
         entityId: sessionId,
         metadata: {
           refundPercent: outcome.refundPercent,
-          refundAmount: outcome.refundAmount,
+          refundAmountPaise: outcome.refundAmountPaise,
         },
       },
     });
@@ -160,7 +160,7 @@ export async function cancelSessionById({
       {
         cancelledByName,
         reason,
-        refundAmount: outcome.refundAmount,
+        refundAmountPaise: outcome.refundAmountPaise,
         isNoShow: outcome.status === SessionStatus.NO_SHOW,
       },
     ),
@@ -168,7 +168,7 @@ export async function cancelSessionById({
 
   return {
     session: updatedSession,
-    refundAmount: outcome.refundAmount,
+    refundAmountPaise: outcome.refundAmountPaise,
     refundPercent: outcome.refundPercent,
     refundId,
   };
@@ -290,7 +290,7 @@ export async function completeSessionById({
         data: {
           mentorId: session.mentorId,
           sessionId,
-          amount: session.mentorEarning,
+          amountPaise: session.mentorEarningPaise,
           status: PayoutStatus.PENDING,
           scheduledAt: completedAt,
         },

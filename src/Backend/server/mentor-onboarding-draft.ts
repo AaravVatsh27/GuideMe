@@ -34,8 +34,8 @@ type ExistingMentorState = {
     examsCleared: string[];
     examYears: Prisma.JsonValue | null;
     specialisations: string[];
-    priceMin: number | null;
-    priceMax: number | null;
+    priceMinPaise: number | null;
+    priceMaxPaise: number | null;
     linkedinUrl: string | null;
     onboardingStep: number;
   } | null;
@@ -134,12 +134,12 @@ export function buildExistingDraft(
     specialisations:
       existing.mentorProfile?.specialisations ?? [],
 
-    priceMin:
-      existing.mentorProfile?.priceMin ??
+    priceMinPaise:
+      existing.mentorProfile?.priceMinPaise ??
       undefined,
 
-    priceMax:
-      existing.mentorProfile?.priceMax ??
+    priceMaxPaise:
+      existing.mentorProfile?.priceMaxPaise ??
       undefined,
 
     headline:

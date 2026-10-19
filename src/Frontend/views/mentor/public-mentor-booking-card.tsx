@@ -34,7 +34,7 @@ type PublicMentorBookingCardProps = {
   mentorId: string;
   username: string;
   mentorName: string;
-  priceMin: number | null;
+  priceMinPaise: number | null;
   totalSessions: number;
 };
 
@@ -50,7 +50,7 @@ export function PublicMentorBookingCard({
   mentorId,
   username,
   mentorName,
-  priceMin,
+  priceMinPaise,
   totalSessions,
 }: PublicMentorBookingCardProps) {
   const [selectedDate, setSelectedDate] = React.useState<string | null>(null);
@@ -133,7 +133,7 @@ export function PublicMentorBookingCard({
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-teal-50">Paid session</p>
-              <p className="mt-1 text-xs text-teal-100/80">30 min · {formatRupees(priceMin)}</p>
+              <p className="mt-1 text-xs text-teal-100/80">30 min · {formatRupees(priceMinPaise)}</p>
             </div>
             <Button
               asChild={hasSelection}

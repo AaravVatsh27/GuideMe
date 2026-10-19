@@ -36,7 +36,7 @@ import {
   buildScheduledAt,
   expectJson,
   fetchAvailability,
-  formatCurrency,
+  formatPaise,
   formatDateLabel,
   formatIstDateKey,
   formatTimeLabel,
@@ -56,8 +56,8 @@ type MentorBookingPageClientProps = {
   mentorName: string;
   mentorHeadline: string | null;
   mentorCollege: string | null;
-  priceMin: number | null;
-  priceMax: number | null;
+  priceMinPaise: number | null;
+  priceMaxPaise: number | null;
   initialDate?: string | null;
   initialSlot?: string | null;
 };
@@ -72,8 +72,8 @@ export function MentorBookingPageClient({
   mentorName,
   mentorHeadline,
   mentorCollege,
-  priceMin,
-  priceMax,
+  priceMinPaise,
+  priceMaxPaise,
   initialDate,
   initialSlot,
 }: MentorBookingPageClientProps) {
@@ -100,21 +100,21 @@ export function MentorBookingPageClient({
   const selectedDay = availability.find((day) => day.date === selectedDate) ?? null;
   const slotsForSelectedDate = selectedDay?.slots ?? EMPTY_SLOTS;
   const paidOptions = [
-    typeof priceMin === "number"
+    typeof priceMinPaise === "number"
       ? {
           durationMinutes: 30 as PaidDuration,
-          label: `30 minutes • ${formatCurrency(priceMin)}`,
-          price: priceMin,
+          label: `30 minutes • ${formatPaise(priceMinPaise)}`,
+          pricePaise: priceMinPaise,
         }
       : null,
-    typeof priceMax === "number"
+    typeof priceMaxPaise === "number"
       ? {
           durationMinutes: 45 as PaidDuration,
-          label: `45 minutes • ${formatCurrency(priceMax)}`,
-          price: priceMax,
+          label: `45 minutes • ${formatPaise(priceMaxPaise)}`,
+          pricePaise: priceMaxPaise,
         }
       : null,
-  ].filter((value): value is { durationMinutes: PaidDuration; label: string; price: number } =>
+  ].filter((value): value is { durationMinutes: PaidDuration; label: string; pricePaise: number } =>
     Boolean(value),
   );
   const [paidDuration, setPaidDuration] = React.useState<PaidDuration>(
@@ -275,7 +275,7 @@ export function MentorBookingPageClient({
     await new Promise<void>((resolve, reject) => {
       const checkout = new RazorpayCheckout({
         key: razorpayKey,
-        amount: order.amount,
+        amount: order.amountPaise,
         currency: order.currency,
         order_id: order.orderId,
         name: "GuideMe",
@@ -347,7 +347,7 @@ export function MentorBookingPageClient({
           type: "INTRO",
           scheduledAt: selection.scheduledAt,
           durationMinutes: FREE_INTRO_DURATION,
-          price: 0,
+          pricePaise: 0,
           notes: notes.trim() || undefined,
         }),
       });
@@ -392,7 +392,7 @@ export function MentorBookingPageClient({
           type: "PAID",
           scheduledAt: selection.scheduledAt,
           durationMinutes: paidOption.durationMinutes,
-          price: paidOption.price,
+          pricePaise: paidOption.pricePaise,
           notes: notes.trim() || undefined,
         }),
       });
@@ -776,7 +776,7 @@ export function MentorBookingPageClient({
                       <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                         You are booking the {selectedPaidOption.durationMinutes}-minute slot at{" "}
                         <span className="font-semibold text-slate-900">
-                          {formatCurrency(selectedPaidOption.price)}
+                          {formatPaise(selectedPaidOption.pricePaise)}
                         </span>
                         .
                       </div>

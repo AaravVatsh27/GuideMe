@@ -30,6 +30,7 @@ import type { PublicMentorCard } from "@/Backend/server/public-data";
 import { cn } from "@/Frontend/lib/utils";
 import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
 import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
+import { formatPaise } from "@/shared/format";
 
 export const revalidate = 300;
 
@@ -88,8 +89,8 @@ const CURATED_FEATURED_MENTORS: PublicMentorCard[] = [
     yearOfStudy: 4,
     yearLabel: "IIT Bombay · 4th Year",
     tier: "ELITE",
-    priceMin: 299,
-    priceMax: 499,
+    priceMinPaise: 29900,
+    priceMaxPaise: 49900,
     avgRating: 4.95,
     totalReviews: 38,
     totalSessions: 46,
@@ -109,8 +110,8 @@ const CURATED_FEATURED_MENTORS: PublicMentorCard[] = [
     yearOfStudy: 3,
     yearLabel: "AIIMS New Delhi · 3rd Year",
     tier: "ELITE",
-    priceMin: 249,
-    priceMax: 399,
+    priceMinPaise: 24900,
+    priceMaxPaise: 39900,
     avgRating: 5.0,
     totalReviews: 29,
     totalSessions: 35,
@@ -130,8 +131,8 @@ const CURATED_FEATURED_MENTORS: PublicMentorCard[] = [
     yearOfStudy: 4,
     yearLabel: "BITS Pilani · Final Year",
     tier: "VERIFIED",
-    priceMin: 199,
-    priceMax: 349,
+    priceMinPaise: 19900,
+    priceMaxPaise: 34900,
     avgRating: 4.9,
     totalReviews: 24,
     totalSessions: 31,
@@ -151,8 +152,8 @@ const CURATED_FEATURED_MENTORS: PublicMentorCard[] = [
     yearOfStudy: 2,
     yearLabel: "IIM Bangalore · 2nd Year",
     tier: "ELITE",
-    priceMin: 349,
-    priceMax: 599,
+    priceMinPaise: 34900,
+    priceMaxPaise: 59900,
     avgRating: 4.98,
     totalReviews: 42,
     totalSessions: 52,
@@ -172,8 +173,8 @@ const CURATED_FEATURED_MENTORS: PublicMentorCard[] = [
     yearOfStudy: 3,
     yearLabel: "NLU Delhi · 3rd Year",
     tier: "VERIFIED",
-    priceMin: 249,
-    priceMax: 399,
+    priceMinPaise: 24900,
+    priceMaxPaise: 39900,
     avgRating: 4.88,
     totalReviews: 19,
     totalSessions: 26,
@@ -193,8 +194,8 @@ const CURATED_FEATURED_MENTORS: PublicMentorCard[] = [
     yearOfStudy: 4,
     yearLabel: "NIT Trichy · Final Year",
     tier: "VERIFIED",
-    priceMin: 199,
-    priceMax: 349,
+    priceMinPaise: 19900,
+    priceMaxPaise: 34900,
     avgRating: 4.92,
     totalReviews: 16,
     totalSessions: 22,
@@ -216,9 +217,10 @@ function removeEmpty(query: FilterQuery): Record<string, string> {
   );
 }
 
-function formatPrice(v: number | null | undefined): string {
-  if (!v || v <= 0) return "₹249";
-  return `₹${v.toLocaleString("en-IN")}`;
+/** Formats a price in paise; mentors without a price show the default ₹249. */
+function formatPrice(paise: number | null | undefined): string {
+  if (!paise || paise <= 0) return "₹249";
+  return formatPaise(paise);
 }
 
 function getTopicIcon(topic: string) {
@@ -416,7 +418,7 @@ function MentorCard({
         <div>
           <div className="flex items-baseline gap-1">
             <span className="text-base font-extrabold text-[#1E1B4B]">
-              {formatPrice(mentor.priceMin)}
+              {formatPrice(mentor.priceMinPaise)}
             </span>
             <span className="text-xs text-slate-400">/ session</span>
           </div>

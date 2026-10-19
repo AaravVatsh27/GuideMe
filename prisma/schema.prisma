@@ -128,8 +128,8 @@ model MentorProfile {
   examsCleared           String[]     @default([])
   examYears              Json?
   specialisations        String[]     @default([])
-  priceMin               Int?
-  priceMax               Int?
+  priceMinPaise          Int?
+  priceMaxPaise          Int?
   isAvailable            Boolean      @default(true)
   isVerified             Boolean      @default(false)
   isActive               Boolean      @default(true)
@@ -163,9 +163,9 @@ model Session {
   startedAt          DateTime?     @db.Timestamptz(3)
   endedAt            DateTime?     @db.Timestamptz(3)
   durationMinutes    Int
-  price              Int
-  platformCut        Int
-  mentorEarning      Int
+  pricePaise         Int
+  platformCutPaise   Int
+  mentorEarningPaise Int
   meetingLink        String?
   meetingRoomId      String?
   cancelledBy        String?       @db.Uuid
@@ -223,11 +223,11 @@ model Payment {
   userId            String         @db.Uuid
   razorpayOrderId   String         @unique
   razorpayPaymentId String?        @unique
-  amount            Int
+  amountPaise       Int
   currency          String         @default("INR")
   status            PaymentStatus  @default(PENDING)
   refundId          String?
-  refundAmount      Int?
+  refundAmountPaise Int?
   refundStatus      PaymentStatus?
   paidAt            DateTime?      @db.Timestamptz(3)
   refundedAt        DateTime?      @db.Timestamptz(3)
@@ -246,7 +246,7 @@ model Payout {
   id            String       @id @default(uuid()) @db.Uuid
   mentorId      String       @db.Uuid
   sessionId     String       @unique @db.Uuid
-  amount        Int
+  amountPaise   Int
   status        PayoutStatus @default(PENDING)
   upiId         String?
   transactionId String?

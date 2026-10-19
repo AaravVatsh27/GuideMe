@@ -1,11 +1,11 @@
-import { DEFAULT_TIMEZONE, MAX_PRICE, MIN_PRICE } from "@/shared/constants";
+import { DEFAULT_TIMEZONE, MAX_45_MIN_PRICE_PAISE, MAX_PRICE_PAISE, MIN_PRICE_PAISE } from "@/shared/constants";
 import {
-  calculateFortyFiveMinutePrice,
+  calculateFortyFiveMinutePricePaise,
   DEGREE_VALUES,
   EXAM_VALUES,
   HELP_TOPIC_VALUES,
   MENTOR_TIER_VALUES,
-  PRICING_POINTS,
+  PRICING_POINTS_PAISE,
   YEAR_OF_STUDY_VALUES,
 } from "@/shared/mentor-onboarding";
 import { sanitizeText } from "@/Backend/lib/sanitize";
@@ -170,35 +170,35 @@ export const mentorHelpStepSchema = z
 
 export const mentorPricingStepSchema = z
   .object({
-    priceMin: z
+    priceMinPaise: z
       .number()
       .int()
-      .min(MIN_PRICE)
-      .max(MAX_PRICE)
+      .min(MIN_PRICE_PAISE)
+      .max(MAX_PRICE_PAISE)
       .refine(
         (value) =>
-          PRICING_POINTS.includes(
-            value as (typeof PRICING_POINTS)[number],
+          PRICING_POINTS_PAISE.includes(
+            value as (typeof PRICING_POINTS_PAISE)[number],
           ),
         "Choose one of the supported pricing points",
       ),
 
-    priceMax: z
+    priceMaxPaise: z
       .number()
       .int()
-      .min(MIN_PRICE)
-      .max(999),
+      .min(MIN_PRICE_PAISE)
+      .max(MAX_45_MIN_PRICE_PAISE),
   })
   .refine(
     (value) =>
-      value.priceMax ===
-      calculateFortyFiveMinutePrice(
-        value.priceMin,
+      value.priceMaxPaise ===
+      calculateFortyFiveMinutePricePaise(
+        value.priceMinPaise,
       ),
     {
       message:
         "45-minute pricing must be auto-calculated from the 30-minute session",
-      path: ["priceMax"],
+      path: ["priceMaxPaise"],
     },
   );
 
@@ -306,18 +306,18 @@ export const mentorProfileUpdateSchema = z
       .max(5)
       .optional(),
 
-    priceMin: z
+    priceMinPaise: z
       .number()
       .int()
-      .min(MIN_PRICE)
-      .max(MAX_PRICE)
+      .min(MIN_PRICE_PAISE)
+      .max(MAX_PRICE_PAISE)
       .optional(),
 
-    priceMax: z
+    priceMaxPaise: z
       .number()
       .int()
-      .min(MIN_PRICE)
-      .max(999)
+      .min(MIN_PRICE_PAISE)
+      .max(MAX_45_MIN_PRICE_PAISE)
       .optional(),
 
     headline: z
@@ -373,18 +373,18 @@ export const mentorProfileUpdateSchema = z
   )
   .superRefine((value, context) => {
     if (
-      value.priceMin !== undefined &&
-      value.priceMax !== undefined &&
-      value.priceMax !==
-      calculateFortyFiveMinutePrice(
-        value.priceMin,
+      value.priceMinPaise !== undefined &&
+      value.priceMaxPaise !== undefined &&
+      value.priceMaxPaise !==
+      calculateFortyFiveMinutePricePaise(
+        value.priceMinPaise,
       )
     ) {
       context.addIssue({
         code: "custom",
         message:
           "45-minute pricing must be derived from the 30-minute price",
-        path: ["priceMax"],
+        path: ["priceMaxPaise"],
       });
     }
 

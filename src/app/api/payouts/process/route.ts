@@ -46,7 +46,7 @@ export const POST = defineRoute(
           type: true,
           scheduledAt: true,
           durationMinutes: true,
-          price: true,
+          pricePaise: true,
           meetingLink: true,
         },
       },
@@ -92,7 +92,7 @@ export const POST = defineRoute(
           transactionId,
           upiId,
           notes,
-          totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0),
+          totalAmount: payouts.reduce((sum, p) => sum + p.amountPaise, 0),
         },
       },
     });
@@ -103,7 +103,7 @@ export const POST = defineRoute(
     sendPayoutConfirmation(
       {
         id: payout.id,
-        amount: payout.amount,
+        amountPaise: payout.amountPaise,
         status: PayoutStatus.PAID,
         createdAt: payout.createdAt,
         processedAt: now,
@@ -131,6 +131,6 @@ export const POST = defineRoute(
     processed: payouts.length,
     skipped: skipped.length,
     skippedIds: skipped,
-    totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0),
+    totalAmount: payouts.reduce((sum, p) => sum + p.amountPaise, 0),
   });
 }, "/api/payouts/process");

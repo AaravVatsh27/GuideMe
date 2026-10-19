@@ -80,16 +80,17 @@ export const HELP_TOPIC_VALUES = [
   "SUBJECT_COMBINATIONS",
 ] as const;
 
-export const PRICING_POINTS = [
-  99,
-  149,
-  199,
-  249,
-  299,
-  349,
-  399,
-  499,
-  599,
+// 30-minute session prices mentors can choose, in paise.
+export const PRICING_POINTS_PAISE = [
+  9900,
+  14900,
+  19900,
+  24900,
+  29900,
+  34900,
+  39900,
+  49900,
+  59900,
 ] as const;
 
 export const AVAILABILITY_DAYS = [
@@ -151,8 +152,8 @@ export type MentorOnboardingDraft = {
   exams: MentorExamEntry[];
   specialisations: MentorHelpTopicValue[];
 
-  priceMin: number;
-  priceMax: number;
+  priceMinPaise: number;
+  priceMaxPaise: number;
 
   headline?: string;
   bio?: string;
@@ -312,8 +313,8 @@ export const HELP_TOPIC_OPTIONS = [
 export const EMPTY_MENTOR_DRAFT: MentorOnboardingDraft = {
   exams: [],
   specialisations: [],
-  priceMin: 199,
-  priceMax: calculateFortyFiveMinutePrice(199),
+  priceMinPaise: 19900,
+  priceMaxPaise: calculateFortyFiveMinutePricePaise(19900),
   timezone: DEFAULT_TIMEZONE,
   availabilitySlots: [],
 };
@@ -376,20 +377,21 @@ function formatHour(hour: number) {
   return `${normalized}${suffix}`;
 }
 
-export function calculateFortyFiveMinutePrice(
-  price30: number,
+/** The 45-minute price is 1.4× the 30-minute price, rounded to whole rupees. */
+export function calculateFortyFiveMinutePricePaise(
+  price30Paise: number,
 ) {
-  return Math.round(price30 * 1.4);
+  return Math.round((price30Paise * 1.4) / 100) * 100;
 }
 
-export function calculateEstimatedMonthlyEarnings(
-  price30: number,
+export function calculateEstimatedMonthlyEarningsPaise(
+  price30Paise: number,
 ) {
   const sessionsPerMonth = 12;
   const mentorShare = 1 - PLATFORM_CUT;
 
   return Math.round(
-    price30 *
+    price30Paise *
     sessionsPerMonth *
     mentorShare,
   );

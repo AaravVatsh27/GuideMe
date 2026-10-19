@@ -32,7 +32,7 @@ export type AdminOverviewData = {
   revenueLast30Days: Array<{
     date: string;
     label: string;
-    amount: number;
+    amountPaise: number;
   }>;
   recentSessions: Array<{
     id: string;
@@ -43,12 +43,12 @@ export type AdminOverviewData = {
     studentName: string;
     mentorName: string;
     paymentStatus: PaymentStatus | null;
-    amount: number;
+    amountPaise: number;
   }>;
   alerts: {
     failedPayments: Array<{
       id: string;
-      amount: number;
+      amountPaise: number;
       createdAt: Date;
       studentName: string;
       mentorName: string;
@@ -91,7 +91,7 @@ function formatEnumLabel(value: string | null | undefined) {
     .join(" ");
 }
 
-function getRevenueBuckets(payments: Array<{ paidAt: Date | null; amount: number }>, days: number) {
+function getRevenueBuckets(payments: Array<{ paidAt: Date | null; amountPaise: number }>, days: number) {
   const now = new Date();
   const start = startOfDay(subDays(now, days - 1));
   const bucketMap = new Map<string, number>();
@@ -111,13 +111,13 @@ function getRevenueBuckets(payments: Array<{ paidAt: Date | null; amount: number
       continue;
     }
 
-    bucketMap.set(key, (bucketMap.get(key) ?? 0) + payment.amount);
+    bucketMap.set(key, (bucketMap.get(key) ?? 0) + payment.amountPaise);
   }
 
-  return Array.from(bucketMap.entries()).map(([date, amount]) => ({
+  return Array.from(bucketMap.entries()).map(([date, amountPaise]) => ({
     date,
     label: format(new Date(date), "d MMM"),
-    amount,
+    amountPaise,
   }));
 }
 
@@ -256,7 +256,7 @@ export async function getAdminOverviewData(): Promise<AdminOverviewData> {
         status: PaymentStatus.CAPTURED,
         paidAt: { gte: todayStart, lt: tomorrowStart },
       },
-      select: { amount: true },
+      select: { amountPaise: true },
     }),
     db.payment.findMany({
       where: {
@@ -264,7 +264,7 @@ export async function getAdminOverviewData(): Promise<AdminOverviewData> {
         paidAt: { gte: last30DaysStart },
       },
       select: {
-        amount: true,
+        amountPaise: true,
         paidAt: true,
       },
     }),
@@ -279,7 +279,7 @@ export async function getAdminOverviewData(): Promise<AdminOverviewData> {
         durationMinutes: true,
         student: { select: { name: true } },
         mentor: { select: { name: true } },
-        payment: { select: { status: true, amount: true } },
+        payment: { select: { status: true, amountPaise: true } },
       },
     }),
     db.payment.findMany({
@@ -290,7 +290,7 @@ export async function getAdminOverviewData(): Promise<AdminOverviewData> {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
-        amount: true,
+        amountPaise: true,
         createdAt: true,
         user: { select: { name: true } },
         session: {
@@ -334,7 +334,7 @@ export async function getAdminOverviewData(): Promise<AdminOverviewData> {
     kpis: {
       totalUsersToday,
       sessionsToday,
-      revenueToday: todayRevenuePayments.reduce((sum, payment) => sum + payment.amount, 0),
+      revenueToday: todayRevenuePayments.reduce((sum, payment) => sum + payment.amountPaise, 0),
       activeMentors,
     },
     revenueLast30Days: getRevenueBuckets(chartPayments, 30),
@@ -347,12 +347,12 @@ export async function getAdminOverviewData(): Promise<AdminOverviewData> {
       studentName: session.student.name,
       mentorName: session.mentor.name,
       paymentStatus: session.payment?.status ?? null,
-      amount: session.payment?.amount ?? 0,
+      amountPaise: session.payment?.amountPaise ?? 0,
     })),
     alerts: {
       failedPayments: failedPayments.map((payment) => ({
         id: payment.id,
-        amount: payment.amount,
+        amountPaise: payment.amountPaise,
         createdAt: payment.createdAt,
         studentName: payment.user.name,
         mentorName: payment.session.mentor.name,
@@ -401,8 +401,8 @@ export async function getAdminMentorsData() {
           isActive: true,
           headline: true,
           bio: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
         },
       },
       mentorVerification: {
@@ -442,8 +442,8 @@ export async function getAdminMentorsData() {
       isActive: mentor.mentorProfile?.isActive ?? true,
       headline: mentor.mentorProfile?.headline ?? "",
       bio: mentor.mentorProfile?.bio ?? "",
-      priceMin: mentor.mentorProfile?.priceMin ?? 0,
-      priceMax: mentor.mentorProfile?.priceMax ?? 0,
+      priceMinPaise: mentor.mentorProfile?.priceMinPaise ?? 0,
+      priceMaxPaise: mentor.mentorProfile?.priceMaxPaise ?? 0,
       collegeIdUrl: mentor.mentorVerification?.collegeIdUrl ?? null,
       submittedAt: mentor.mentorVerification?.submittedAt ?? null,
       reviewedAt: mentor.mentorVerification?.reviewedAt ?? null,
@@ -482,8 +482,8 @@ export async function getAdminMentorVerificationQueueData() {
           bio: true,
           examsCleared: true,
           specialisations: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
           linkedinUrl: true,
           responseRate: true,
           totalSessions: true,
@@ -532,8 +532,8 @@ export async function getAdminMentorVerificationQueueData() {
       bio: mentor.mentorProfile?.bio ?? "",
       examsCleared: mentor.mentorProfile?.examsCleared ?? [],
       specialisations: mentor.mentorProfile?.specialisations ?? [],
-      priceMin: mentor.mentorProfile?.priceMin ?? 0,
-      priceMax: mentor.mentorProfile?.priceMax ?? 0,
+      priceMinPaise: mentor.mentorProfile?.priceMinPaise ?? 0,
+      priceMaxPaise: mentor.mentorProfile?.priceMaxPaise ?? 0,
       linkedinUrl: mentor.mentorProfile?.linkedinUrl ?? "",
       responseRate: mentor.mentorProfile?.responseRate ?? 0,
       totalSessions: mentor.mentorProfile?.totalSessions ?? 0,
@@ -574,8 +574,8 @@ export async function getAdminMentorDetailData(mentorId: string) {
           bio: true,
           examsCleared: true,
           specialisations: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
           isVerified: true,
           isActive: true,
           totalSessions: true,
@@ -605,8 +605,8 @@ export async function getAdminMentorDetailData(mentorId: string) {
           type: true,
           scheduledAt: true,
           durationMinutes: true,
-          price: true,
-          mentorEarning: true,
+          pricePaise: true,
+          mentorEarningPaise: true,
           student: { select: { name: true, email: true } },
         },
       },
@@ -648,8 +648,8 @@ export async function getAdminSessionsData() {
       startedAt: true,
       endedAt: true,
       durationMinutes: true,
-      price: true,
-      mentorEarning: true,
+      pricePaise: true,
+      mentorEarningPaise: true,
       meetingLink: true,
       cancellationReason: true,
       cancelledAt: true,
@@ -672,17 +672,17 @@ export async function getAdminSessionsData() {
       payment: {
         select: {
           id: true,
-          amount: true,
+          amountPaise: true,
           status: true,
           paidAt: true,
-          refundAmount: true,
+          refundAmountPaise: true,
           refundStatus: true,
         },
       },
       payout: {
         select: {
           id: true,
-          amount: true,
+          amountPaise: true,
           status: true,
           transactionId: true,
           processedAt: true,
@@ -721,11 +721,11 @@ export async function getAdminPaymentsData() {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
-        amount: true,
+        amountPaise: true,
         status: true,
         paidAt: true,
         createdAt: true,
-        refundAmount: true,
+        refundAmountPaise: true,
         refundStatus: true,
         user: { select: { id: true, name: true } },
         session: {
@@ -740,7 +740,7 @@ export async function getAdminPaymentsData() {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
-        amount: true,
+        amountPaise: true,
         status: true,
         transactionId: true,
         upiId: true,
@@ -760,10 +760,10 @@ export async function getAdminPaymentsData() {
 
   const totalCollected = payments
     .filter((payment) => payment.status === PaymentStatus.CAPTURED)
-    .reduce((sum, payment) => sum + payment.amount, 0);
+    .reduce((sum, payment) => sum + payment.amountPaise, 0);
   const totalPaidOut = payouts
     .filter((payout) => payout.status === PayoutStatus.PAID)
-    .reduce((sum, payout) => sum + payout.amount, 0);
+    .reduce((sum, payout) => sum + payout.amountPaise, 0);
 
   return {
     payments,

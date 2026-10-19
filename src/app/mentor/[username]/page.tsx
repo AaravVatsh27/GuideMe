@@ -69,8 +69,8 @@ const getMentor = cache(async (username: string) => {
           examsCleared: true,
           examYears: true,
           specialisations: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
           avgRating: true,
           totalReviews: true,
           totalSessions: true,
@@ -355,7 +355,7 @@ export default async function PublicMentorProfilePage({ params }: MentorPageProp
             mentorId={mentor.id}
             username={mentorProfile.username}
             mentorName={mentor.name}
-            priceMin={mentorProfile.priceMin}
+            priceMinPaise={mentorProfile.priceMinPaise}
             totalSessions={mentorProfile.totalSessions}
           />
 

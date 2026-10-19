@@ -1,6 +1,6 @@
 /** Step metadata, validation and payload building for the mentor onboarding wizard. */
 
-import { PRICING_POINTS, type MentorOnboardingDraft, type MentorOnboardingStep } from "@/shared/mentor-onboarding";
+import { PRICING_POINTS_PAISE, type MentorOnboardingDraft, type MentorOnboardingStep } from "@/shared/mentor-onboarding";
 
 export type InstitutionSearchResult = {
   id: string;
@@ -124,7 +124,7 @@ export function isStepValid(step: MentorOnboardingStep, draft: MentorOnboardingD
     case 4:
       return draft.specialisations.length > 0 && draft.specialisations.length <= MAX_HELP_TOPICS;
     case 5:
-      return PRICING_POINTS.includes(draft.priceMin as (typeof PRICING_POINTS)[number]);
+      return PRICING_POINTS_PAISE.includes(draft.priceMinPaise as (typeof PRICING_POINTS_PAISE)[number]);
     case 6:
       return Boolean(
         draft.headline?.trim() &&
@@ -164,8 +164,8 @@ export function getStepPayload(step: MentorOnboardingStep, draft: MentorOnboardi
       };
     case 5:
       return {
-        priceMin: draft.priceMin,
-        priceMax: draft.priceMax,
+        priceMinPaise: draft.priceMinPaise,
+        priceMaxPaise: draft.priceMaxPaise,
       };
     case 6:
       return {

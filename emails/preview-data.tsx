@@ -93,7 +93,7 @@ export const emailPreviewRegistry = {
     element: (
       <PayoutConfirmation
         mentorName="Riya"
-        amount={3200}
+        amountPaise={320000}
         sessionCount={5}
         upiId="riya.mehta@oksbi"
         transactionId="UTR20481234"

@@ -15,6 +15,7 @@ import { db } from "@/Backend/server/db";
 import { sendBookingConfirmation, sendPaymentFailureEmail, sendRefundConfirmationEmail } from "@/Backend/server/resend";
 import { refundPaymentForClosedSession, releaseBookingIfSlotLost } from "@/Backend/server/sessions";
 import { defineRoute } from "@/Backend/lib/define-route";
+import { formatPaise } from "@/shared/format";
 
 function verifyWebhookSignature(body: string, signature: string): boolean {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
@@ -94,8 +95,8 @@ async function handlePaymentCaptured(payload: any, requestId: string) {
     return;
   }
 
-  const platformCut = Math.round(payment.amount * PLATFORM_CUT);
-  const mentorEarning = payment.amount - platformCut;
+  const platformCutPaise = Math.round(payment.amountPaise * PLATFORM_CUT);
+  const mentorEarningPaise = payment.amountPaise - platformCutPaise;
   const now = new Date();
 
   const captured = await db.$transaction(async (tx) => {
@@ -123,7 +124,7 @@ async function handlePaymentCaptured(payload: any, requestId: string) {
 
     await tx.session.update({
       where: { id: payment.sessionId },
-      data: { status: SessionStatus.SCHEDULED, platformCut, mentorEarning },
+      data: { status: SessionStatus.SCHEDULED, platformCutPaise, mentorEarningPaise },
     });
 
     await tx.payout.upsert({
@@ -131,12 +132,12 @@ async function handlePaymentCaptured(payload: any, requestId: string) {
       create: {
         mentorId: payment.session.mentorId,
         sessionId: payment.sessionId,
-        amount: mentorEarning,
+        amountPaise: mentorEarningPaise,
         status: PayoutStatus.PENDING,
         scheduledAt: payment.session.scheduledAt,
       },
       update: {
-        amount: mentorEarning,
+        amountPaise: mentorEarningPaise,
       },
     });
 
@@ -238,14 +239,14 @@ async function handleRefundCreated(payload: any) {
   // A completed full refund must never be downgraded by a late or replayed event.
   if (payment.refundStatus === PaymentStatus.REFUNDED) return;
 
-  const refundAmount = Math.round(amountPaise / 100);
-  const isFullRefund = refundAmount >= payment.amount;
+  const refundAmountPaise = amountPaise;
+  const isFullRefund = refundAmountPaise >= payment.amountPaise;
 
   await db.payment.update({
     where: { id: payment.id },
     data: {
       refundId,
-      refundAmount,
+      refundAmountPaise,
       refundStatus: isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED,
     },
   });
@@ -275,8 +276,8 @@ async function handleRefundProcessed(payload: any, requestId: string) {
   });
   if (!payment) return;
 
-  const refundAmount = Math.round(amountPaise / 100);
-  const isFullRefund = refundAmount >= payment.amount;
+  const refundAmountPaise = amountPaise;
+  const isFullRefund = refundAmountPaise >= payment.amountPaise;
   const nextRefundStatus = isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED;
 
   // Already recorded (by our own refund flow or an earlier delivery of this event):
@@ -293,7 +294,7 @@ async function handleRefundProcessed(payload: any, requestId: string) {
       where: { id: payment.id },
       data: {
         refundId,
-        refundAmount,
+        refundAmountPaise,
         refundedAt: new Date(),
         refundStatus: nextRefundStatus,
         status: nextRefundStatus,
@@ -316,7 +317,7 @@ async function handleRefundProcessed(payload: any, requestId: string) {
         userId: payment.session.studentId,
         type: NotificationType.SYSTEM,
         title: "Refund processed",
-        body: `Your refund of INR ${refundAmount} has been processed.`,
+        body: `Your refund of ${formatPaise(refundAmountPaise)} has been processed.`,
         link: `/session/${payment.sessionId}`,
       },
     });
@@ -325,7 +326,7 @@ async function handleRefundProcessed(payload: any, requestId: string) {
   sendRefundConfirmationEmail({
     student: payment.session.student,
     sessionId: payment.sessionId,
-    refundAmount,
+    refundAmountPaise,
   }).catch((err) =>
     log.error("Razorpay refund email failed", err, {
       requestId,

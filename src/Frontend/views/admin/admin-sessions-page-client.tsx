@@ -30,7 +30,8 @@ import {
   adminSectionLabelClass,
   adminSelectClass,
 } from "./admin-ui";
-import { formatCurrency, formatDateTime, isDateInRange } from "./admin-utils";
+import { formatPaise, formatDateTime, isDateInRange } from "./admin-utils";
+import { paiseToRupees } from "@/shared/money";
 
 type Props = {
   sessions: Awaited<ReturnType<typeof getAdminSessionsData>>;
@@ -104,11 +105,12 @@ export function AdminSessionsPageClient({ sessions }: Props) {
         row.payment ? <AdminStatusBadge status={row.payment.status} kind="payment" /> : <span className="text-[#64748B]">No payment</span>,
     },
     {
-      id: "amount",
+      id: "amountPaise",
       header: "Amount",
-      accessor: (row) => row.price,
+      accessor: (row) => row.pricePaise,
+      csvValue: (row) => paiseToRupees(row.pricePaise),
       sortable: true,
-      cell: (row) => formatCurrency(row.price),
+      cell: (row) => formatPaise(row.pricePaise),
     },
   ];
 
@@ -266,8 +268,8 @@ export function AdminSessionsPageClient({ sessions }: Props) {
                   <div className="mt-2">
                     <AdminDetailRows
                       rows={[
-                        { label: "Price", value: formatCurrency(selectedSession.price) },
-                        { label: "Mentor earning", value: formatCurrency(selectedSession.mentorEarning) },
+                        { label: "Price", value: formatPaise(selectedSession.pricePaise) },
+                        { label: "Mentor earning", value: formatPaise(selectedSession.mentorEarningPaise) },
                         {
                           label: "Payment",
                           value: selectedSession.payment ? (

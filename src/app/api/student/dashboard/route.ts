@@ -28,7 +28,7 @@ export const GET = defineRoute(
           },
         },
         payment: {
-          select: { status: true, amount: true, refundAmount: true, refundStatus: true },
+          select: { status: true, amountPaise: true, refundAmountPaise: true, refundStatus: true },
         },
       },
       orderBy: { scheduledAt: "asc" },
@@ -38,7 +38,7 @@ export const GET = defineRoute(
     }),
     db.payment.aggregate({
       where: { userId: session.user.id, status: "CAPTURED" },
-      _sum: { amount: true },
+      _sum: { amountPaise: true },
     }),
     db.session.findMany({
       where: { studentId: session.user.id },
@@ -61,7 +61,7 @@ export const GET = defineRoute(
         : null,
     quickStats: {
       sessionsCompleted: completedSessions,
-      moneySpent: spentAgg._sum.amount ?? 0,
+      moneySpent: spentAgg._sum.amountPaise ?? 0,
       mentorsTried: mentorCountAgg.length,
     },
     recentActivity: activity,

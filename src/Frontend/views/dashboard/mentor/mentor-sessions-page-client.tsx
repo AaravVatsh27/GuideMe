@@ -14,12 +14,13 @@ import { cn } from "@/Frontend/lib/utils";
 import type { MentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
 import {
   escapeCsvValue,
-  formatCurrency,
+  formatPaise,
   formatDateOnly,
   formatDateTime,
   formatEnumLabel,
   getInitials,
 } from "@/shared/mentor-dashboard-utils";
+import { paiseToRupees } from "@/shared/money";
 
 type SessionTab = "upcoming" | "completed" | "cancelled";
 
@@ -59,13 +60,13 @@ export function MentorSessionsPageClient({ sessions }: Props) {
         type: session.type,
         scheduledAt: formatDateTime(session.scheduledAt),
         durationMinutes: session.durationMinutes,
-        earnings: session.mentorEarning,
+        earnings: paiseToRupees(session.mentorEarningPaise),
       })),
     [sessions],
   );
 
   function downloadCsv() {
-    const headers = ["Student", "Class", "City", "Status", "Session Type", "Scheduled At", "Duration Minutes", "Earnings"];
+    const headers = ["Student", "Class", "City", "Status", "Session Type", "Scheduled At", "Duration Minutes", "Earnings (INR)"];
     const lines = [
       headers.join(","),
       ...csvRows.map((row) =>
@@ -167,7 +168,7 @@ export function MentorSessionsPageClient({ sessions }: Props) {
           <p className="mt-2 text-sm font-medium text-slate-900">
             {formatEnumLabel(session.type)} • {session.durationMinutes} min
           </p>
-          <p className="mt-2 text-sm text-slate-600">Expected mentor earning {formatCurrency(session.mentorEarning)}</p>
+          <p className="mt-2 text-sm text-slate-600">Expected mentor earning {formatPaise(session.mentorEarningPaise)}</p>
         </div>
       </div>,
       session.meetingLink ? (
@@ -203,7 +204,7 @@ export function MentorSessionsPageClient({ sessions }: Props) {
       <div className="mt-4 grid gap-3 rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4 lg:grid-cols-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Earnings</p>
-          <p className="mt-2 text-sm font-medium text-slate-900">{formatCurrency(session.mentorEarning)}</p>
+          <p className="mt-2 text-sm font-medium text-slate-900">{formatPaise(session.mentorEarningPaise)}</p>
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Rating received</p>
@@ -251,7 +252,7 @@ export function MentorSessionsPageClient({ sessions }: Props) {
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Refund amount</p>
-          <p className="mt-2 text-sm font-medium text-slate-900">{formatCurrency(session.payment?.refundAmount)}</p>
+          <p className="mt-2 text-sm font-medium text-slate-900">{formatPaise(session.payment?.refundAmountPaise)}</p>
         </div>
         {session.cancellationReason ? (
           <div className="sm:col-span-3">

@@ -38,7 +38,7 @@ import { Skeleton } from "@/Frontend/components/ui/skeleton";
 import { Textarea } from "@/Frontend/components/ui/textarea";
 import { SESSION_JOIN_EARLY_WINDOW_MINUTES } from "@/shared/constants";
 import { cn } from "@/Frontend/lib/utils";
-import { formatCurrency } from "@/shared/format";
+import { formatPaise } from "@/shared/format";
 
 type SessionStatus = "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
 type SessionType = "INTRO" | "PAID";
@@ -53,8 +53,8 @@ type SessionDetails = {
   startedAt?: string | null;
   endedAt?: string | null;
   durationMinutes: number;
-  price: number;
-  mentorEarning: number;
+  pricePaise: number;
+  mentorEarningPaise: number;
   meetingLink?: string | null;
   aiSummary?: string | null;
   mentor: {
@@ -91,7 +91,7 @@ type SessionDetails = {
   } | null;
   payout?: {
     id: string;
-    amount: number;
+    amountPaise: number;
     status: string;
     scheduledAt?: string | null;
     processedAt?: string | null;
@@ -99,7 +99,7 @@ type SessionDetails = {
   } | null;
   payment?: {
     status: string;
-    amount: number;
+    amountPaise: number;
   } | null;
 };
 
@@ -675,7 +675,7 @@ export function SessionRoomPageClient({
                     <p className="mt-2 text-sm font-medium text-white">
                       {session.type === "INTRO"
                         ? "Free intro"
-                        : `${formatCurrency(session.payment?.amount ?? session.price)} • ${session.payment?.status ?? "PENDING"}`}
+                        : `${formatPaise(session.payment?.amountPaise ?? session.pricePaise)} • ${session.payment?.status ?? "PENDING"}`}
                     </p>
                   </div>
                 </div>
@@ -684,7 +684,7 @@ export function SessionRoomPageClient({
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">Payout</p>
                     <p className="mt-2 text-sm font-medium text-white">
                       {session.payout
-                        ? `${formatCurrency(session.payout.amount)} • ${session.payout.status}`
+                        ? `${formatPaise(session.payout.amountPaise)} • ${session.payout.status}`
                         : "Payout not found"}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-emerald-100/80">

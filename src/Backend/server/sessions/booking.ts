@@ -53,8 +53,8 @@ export async function createSessionBooking({
             select: {
               isAvailable: true,
               isActive: true,
-              priceMin: true,
-              priceMax: true,
+              priceMinPaise: true,
+              priceMaxPaise: true,
               college: true,
             },
           },
@@ -77,10 +77,10 @@ export async function createSessionBooking({
   if (input.type === SessionType.PAID) {
     const expectedPrice =
       input.durationMinutes === 30
-        ? mentor.mentorProfile.priceMin
-        : mentor.mentorProfile.priceMax;
+        ? mentor.mentorProfile.priceMinPaise
+        : mentor.mentorProfile.priceMaxPaise;
 
-    if (expectedPrice === null || input.price !== expectedPrice) {
+    if (expectedPrice === null || input.pricePaise !== expectedPrice) {
       throw new SessionApiError("Requested price does not match mentor pricing", 400);
     }
   }
@@ -155,14 +155,14 @@ export async function createSessionBooking({
   });
   const order =
     input.type === SessionType.PAID
-      ? await createOrder(input.price, DEFAULT_CURRENCY, buildSessionReceipt(sessionId), {
+      ? await createOrder(input.pricePaise, DEFAULT_CURRENCY, buildSessionReceipt(sessionId), {
           sessionId,
           studentId,
           mentorId: mentor.id,
           type: input.type,
         })
       : null;
-  const amounts = calculateSessionAmounts(input.type, input.price);
+  const amounts = calculateSessionAmounts(input.type, input.pricePaise);
 
   await db.$transaction(async (tx) => {
     await lockBookingParticipants(tx, mentor.id, studentId);
@@ -179,9 +179,9 @@ export async function createSessionBooking({
         status: SessionStatus.SCHEDULED,
         scheduledAt: input.scheduledAt,
         durationMinutes: input.durationMinutes,
-        price: input.price,
-        platformCut: amounts.platformCut,
-        mentorEarning: amounts.mentorEarning,
+        pricePaise: input.pricePaise,
+        platformCutPaise: amounts.platformCutPaise,
+        mentorEarningPaise: amounts.mentorEarningPaise,
         meetingLink: room.meetingLink,
         meetingRoomId: room.roomId,
       },
@@ -211,7 +211,7 @@ export async function createSessionBooking({
           sessionId,
           userId: studentId,
           razorpayOrderId: order.id,
-          amount: input.price,
+          amountPaise: input.pricePaise,
           currency: DEFAULT_CURRENCY,
           status: PaymentStatus.PENDING,
           metadata: {
@@ -258,7 +258,7 @@ export async function createSessionBooking({
     paymentOrder: order
       ? {
           orderId: order.id,
-          amount: order.amount,
+          amountPaise: order.amount,
           currency: DEFAULT_CURRENCY,
         }
       : null,

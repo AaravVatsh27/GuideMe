@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { getClientIp } from "@/Backend/lib/client-ip";
 import { sanitizeText } from "@/Backend/lib/sanitize";
 import { getSafeRedirectTo } from "@/shared/auth-flow";
-import { formatCurrency, getInitials } from "@/shared/format";
+import { formatPaise, getInitials } from "@/shared/format";
 import { imageUrlSchema, isSafeHttpsUrl, linkedinUrlSchema } from "@/shared/validations/url";
 
 describe("getSafeRedirectTo", () => {
@@ -46,9 +46,10 @@ describe("sanitizeText", () => {
 });
 
 describe("format helpers", () => {
-  it("formats rupees", () => {
-    expect(formatCurrency(1499)).toBe("₹1,499");
-    expect(formatCurrency(null)).toBe("₹0");
+  it("formats paise as rupees, showing paise only when there are any", () => {
+    expect(formatPaise(149900)).toBe("₹1,499");
+    expect(formatPaise(9950)).toBe("₹99.50");
+    expect(formatPaise(null)).toBe("₹0");
   });
 
   it("builds initials", () => {

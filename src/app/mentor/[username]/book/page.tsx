@@ -54,8 +54,8 @@ async function getMentorForBooking(username: string) {
           tier: true,
           avgRating: true,
           totalReviews: true,
-          priceMin: true,
-          priceMax: true,
+          priceMinPaise: true,
+          priceMaxPaise: true,
           isVerified: true,
         },
       },
@@ -145,8 +145,8 @@ export default async function MentorBookingPage({
           mentorName={mentor.name}
           mentorHeadline={mentor.mentorProfile.headline}
           mentorCollege={mentor.mentorProfile.college}
-          priceMin={mentor.mentorProfile.priceMin}
-          priceMax={mentor.mentorProfile.priceMax}
+          priceMinPaise={mentor.mentorProfile.priceMinPaise}
+          priceMaxPaise={mentor.mentorProfile.priceMaxPaise}
           initialDate={searchParams?.date ?? null}
           initialSlot={searchParams?.slot ?? null}
         />

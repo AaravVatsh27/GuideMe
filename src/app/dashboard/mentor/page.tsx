@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Frontend/components/
 import { cn } from "@/Frontend/lib/utils";
 import { getMentorDashboardData } from "@/Backend/server/mentor-dashboard-data";
 import {
-  formatCurrency,
+  formatPaise,
   formatShortDateTime,
   formatTrend,
   getInitials,
@@ -105,7 +105,7 @@ export default async function MentorDashboardPage() {
     },
     {
       label: "This week earnings",
-      value: formatCurrency(data.overview.thisWeekEarnings),
+      value: formatPaise(data.overview.thisWeekEarnings),
       detail: data.overview.thisWeekEarnings > 0
         ? "Earned this week"
         : "No earnings yet. Earnings appear after your first completed session.",
@@ -201,7 +201,7 @@ export default async function MentorDashboardPage() {
           </CardHeader>
           <CardContent className="px-4 pb-3 pt-0 sm:px-5">
             <p className="text-2xl font-semibold tracking-tight text-slate-950">
-              {formatCurrency(data.overview.thisMonthEarnings)}
+              {formatPaise(data.overview.thisMonthEarnings)}
             </p>
             <p
               className={cn(
@@ -213,7 +213,7 @@ export default async function MentorDashboardPage() {
             </p>
             <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-violet-200/70 bg-white/80 px-3 py-1.5">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Pending</span>
-              <span className="text-sm font-semibold text-slate-900">{formatCurrency(data.earnings.pendingPayout)}</span>
+              <span className="text-sm font-semibold text-slate-900">{formatPaise(data.earnings.pendingPayout)}</span>
             </div>
             <Link
               href="/dashboard/mentor/earnings"
@@ -496,7 +496,7 @@ export default async function MentorDashboardPage() {
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Next payout</p>
               <p className="mt-0.5 text-sm font-semibold text-slate-950">
                 {data.earnings.nextPayout
-                  ? `${formatCurrency(data.earnings.nextPayout.amount)} · ${formatShortDateTime(data.earnings.nextPayout.date)}`
+                  ? `${formatPaise(data.earnings.nextPayout.amountPaise)} · ${formatShortDateTime(data.earnings.nextPayout.date)}`
                   : "No payout queued"}
               </p>
             </div>
@@ -512,7 +512,7 @@ export default async function MentorDashboardPage() {
                   className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-950">{formatCurrency(payout.amount)}</p>
+                    <p className="text-sm font-semibold text-slate-950">{formatPaise(payout.amountPaise)}</p>
                     <p className="text-[11px] text-slate-500">
                       {formatShortDateTime(payout.date)} · {payout.studentFirstName}
                     </p>
@@ -628,11 +628,11 @@ export default async function MentorDashboardPage() {
                   </p>
 
                   <p className="mt-2 text-sm font-semibold text-slate-950">
-                    {formatCurrency(data.mentor.profile.priceMin)} / 30 min
+                    {formatPaise(data.mentor.profile.priceMinPaise)} / 30 min
                   </p>
 
                   <p className="mt-1 text-sm text-slate-600">
-                    {formatCurrency(data.mentor.profile.priceMax)} / 45 min
+                    {formatPaise(data.mentor.profile.priceMaxPaise)} / 45 min
                   </p>
                 </div>
               </div>
