@@ -168,6 +168,9 @@ const SPECIALISATION_SEARCH_INDEX = HELP_TOPIC_OPTIONS.map((option) => ({
   searchText: `${option.value} ${option.label}`.toLowerCase().replaceAll("_", " "),
 }));
 
+// Text searches rank at most this many matches in memory.
+const SEARCH_CANDIDATE_LIMIT: number = 200;
+
 const searchQuerySchema = z
   .object({
     q: z.string().trim().max(120).optional(),
@@ -462,9 +465,29 @@ export const GET = defineRoute(
   const now = new Date();
   const nextWeek = new Date(now);
   nextWeek.setDate(now.getDate() + 7);
+  const availableThisWeekWhere: Prisma.AvailabilityWhereInput = {
+    isActive: true,
+    OR: [{ isRecurring: true }, { specificDate: { gte: now, lte: nextWeek } }],
+  };
 
+  if (availableThisWeek) {
+    where.availabilities = { some: availableThisWeekWhere };
+  }
+
+  // Without a search term, rank and page in the database. With one, relevance is scored
+  // in memory over the best SEARCH_CANDIDATE_LIMIT matches, so a broad query can't load
+  // every mentor at once.
+  const total = await db.user.count({ where });
   const mentors = await db.user.findMany({
     where,
+    orderBy: [
+      { mentorProfile: { avgRating: "desc" } },
+      { mentorProfile: { totalReviews: "desc" } },
+      { createdAt: "asc" },
+    ],
+    ...(q
+      ? { take: SEARCH_CANDIDATE_LIMIT }
+      : { skip: (page - 1) * limit, take: limit }),
     select: {
       id: true,
       name: true,
@@ -491,19 +514,16 @@ export const GET = defineRoute(
         },
       },
       availabilities: {
-        where: {
-          isActive: true,
-          OR: [{ isRecurring: true }, { specificDate: { gte: now, lte: nextWeek } }],
-        },
+        where: availableThisWeekWhere,
         select: {
           id: true,
         },
+        take: 1,
       },
     },
   });
 
   const sorted = mentors
-    .filter((mentor) => !availableThisWeek || mentor.availabilities.length > 0)
     .map((mentor) => {
       const isAvailableThisWeek = mentor.availabilities.length > 0;
       const relevanceScore = computeRelevanceScore({
@@ -546,6 +566,10 @@ export const GET = defineRoute(
       };
     })
     .sort((left, right) => {
+      if (!q) {
+        return 0; // already ordered by the database
+      }
+
       if (right.relevanceScore !== left.relevanceScore) {
         return right.relevanceScore - left.relevanceScore;
       }
@@ -553,14 +577,14 @@ export const GET = defineRoute(
       return (right.avgRating ?? 0) - (left.avgRating ?? 0);
     });
 
-  const total = sorted.length;
-  const data = sorted.slice((page - 1) * limit, (page - 1) * limit + limit);
+  const pagedTotal = q ? Math.min(total, SEARCH_CANDIDATE_LIMIT) : total;
+  const data = q ? sorted.slice((page - 1) * limit, (page - 1) * limit + limit) : sorted;
   const response = {
     data,
     page,
     pageSize: limit,
-    total,
-    totalPages: Math.max(1, Math.ceil(total / limit)),
+    total: pagedTotal,
+    totalPages: Math.max(1, Math.ceil(pagedTotal / limit)),
   };
 
   cacheSet(cacheKey, response, cacheTtl.searchResults).catch(() => {});
