@@ -32,6 +32,10 @@ Before launch:
 
 Resend's test sender, `onboarding@resend.dev`, only delivers to the email on your own Resend account, so sign-in emails to anyone else will not arrive. The admin Settings page shows the current `EMAIL_FROM` value as "Support email".
 
+## Tests
+
+`npm test` runs the Vitest suite in `tests/`: session rules (refunds, no-shows, start/end times, holds), the `defineRoute` wrapper, shared helpers, and `database-rules.test.ts`, which replays every Prisma migration into an in-memory Postgres (PGlite) and checks the database rejects invalid data. `npm run typecheck` and `npm run lint` cover the rest. GitHub Actions runs all three on every push to `main` and every pull request (`.github/workflows/ci.yml`).
+
 ## Getting Started
 
 Install dependencies and start the development server:
