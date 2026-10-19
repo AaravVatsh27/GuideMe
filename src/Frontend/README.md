@@ -8,7 +8,8 @@ UI code only: React components, page views, styles and browser-side helpers. Not
 | `components/brand/` | Mentra branding: `MentraLogo`, `MentraMark`, and the marketing-site `HomepageHeader` / `HomepageFooter` used by the landing, community, find-mentor, privacy, terms and 404 pages. |
 | `components/` (top level) | Small shared pieces: `MentorAvatar`, `ErrorBoundary` (wraps the whole app in `src/app/layout.tsx`), `HowItWorksSteps` (landing page). |
 | `views/auth/` | Sign-in and sign-up screens: `signin-view.tsx`, `signup-view.tsx`, the split-screen `auth-shell.tsx`, `already-authenticated-view.tsx`, the admin sign-in (`admin-signin-view.tsx`, `admin-auth-shell.tsx`) and `search-params.ts` (reads `?callbackUrl=` etc.). |
-| `views/onboarding/` | The step-by-step wizards new users fill in: `student-onboarding-wizard.tsx`, `mentor-onboarding-wizard.tsx`. |
+| `views/onboarding/` | The step-by-step wizards new users fill in: `student-onboarding-wizard.tsx`, `mentor-onboarding-wizard.tsx`, with their step rules, validation and payload helpers in `student-onboarding-helpers.tsx` and `mentor-onboarding-helpers.ts`. |
+| `views/home/` | The landing page (`src/app/page.tsx`) sections, one file each: hero, problem, mentors, testimonials, pricing, mentor income, community, final call to action, plus `home-helpers.ts`. |
 | `views/dashboard/student/` | Student dashboard frame (`student-shell.tsx`: sidebar + top bar) and display helpers (`student-dashboard-utils.ts`). The student pages themselves are client components in `src/app/dashboard/student/`. |
 | `views/dashboard/mentor/` | Mentor dashboard frame (`mentor-shell.tsx`) and one `*-page-client.tsx` per tab: availability, earnings, profile, reviews, sessions. |
 | `views/dashboard/` | `dashboard-account-panel.tsx`, the signed-in account panel shown in the onboarding wizards. |
