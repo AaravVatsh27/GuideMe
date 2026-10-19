@@ -196,13 +196,13 @@ export const PATCH = defineRoute(
   const parsedRequest = patchRequestSchema.safeParse(payload);
 
   if (!parsedRequest.success) {
-    return apiErrorResponse("Invalid onboarding request", 400, parsedRequest.error.flatten());
+    return apiErrorResponse("Invalid onboarding request", 400, z.flattenError(parsedRequest.error));
   }
 
   const validatedStep = getValidatedStepData(parsedRequest.data.step, parsedRequest.data.data);
 
   if (!validatedStep.success) {
-    return apiErrorResponse("Invalid step data", 400, validatedStep.error.flatten());
+    return apiErrorResponse("Invalid step data", 400, z.flattenError(validatedStep.error));
   }
 
   const existing = await db.user.findUnique({
@@ -280,7 +280,7 @@ export const POST = defineRoute(
   const parsed = studentOnboardingSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid onboarding data", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid onboarding data", 400, z.flattenError(parsed.error));
   }
 
   // Only validated values are written; the raw request body is never used directly.

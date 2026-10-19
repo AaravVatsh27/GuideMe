@@ -7,7 +7,7 @@ import { generalLimiter } from "@/Backend/lib/ratelimit";
 import { db } from "@/Backend/server/db";
 import { defineRoute } from "@/Backend/lib/define-route";
 
-type RouteParams = { params: Promise<{ username: string }> };
+type RouteParams = { params: { username: string } };
 
 const reviewsQuerySchema = z.object({
   rating: z.coerce.number().int().min(1).max(5).optional(),
@@ -22,7 +22,7 @@ const reviewsQuerySchema = z.object({
 export const GET = defineRoute(
   { auth: "none", rateLimit: generalLimiter },
   async (request: Request, context: RouteParams) => {
-  const { username } = await context.params;
+  const { username } = context.params;
 
   if (!username || username.length < 2) {
     return apiErrorResponse("Invalid username", 400);
@@ -32,7 +32,7 @@ export const GET = defineRoute(
   const parsed = reviewsQuerySchema.safeParse(rawQuery);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid query parameters", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid query parameters", 400, z.flattenError(parsed.error));
   }
 
   const { rating, wouldRebook, sort, page } = parsed.data;

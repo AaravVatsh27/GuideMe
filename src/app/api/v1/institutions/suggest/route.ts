@@ -28,7 +28,7 @@ export const POST = defineRoute(
   const parsed = requestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid request", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid request", 400, z.flattenError(parsed.error));
   }
 
   const { submittedName } = parsed.data;

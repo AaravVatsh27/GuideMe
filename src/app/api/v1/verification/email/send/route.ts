@@ -14,7 +14,7 @@ const SEND_LIMIT = 3;
 const SEND_WINDOW_SECONDS = 60 * 60;
 
 const sendEmailVerificationSchema = z.object({
-  email: z.string().trim().email(),
+  email: z.string().trim().pipe(z.email()),
 });
 
 async function consumeMentorSendLimit(mentorId: string) {

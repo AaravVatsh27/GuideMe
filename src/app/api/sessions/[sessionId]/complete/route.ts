@@ -17,7 +17,7 @@ export const POST = defineRoute(
   const parsedBody = completeSessionRequestSchema.safeParse(payload);
 
   if (!parsedBody.success) {
-    return apiErrorResponse("Invalid completion payload", 400, parsedBody.error.flatten());
+    return apiErrorResponse("Invalid completion payload", 400, z.flattenError(parsedBody.error));
   }
 
   const updatedSession = await completeSessionById({

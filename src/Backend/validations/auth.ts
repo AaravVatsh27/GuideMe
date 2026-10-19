@@ -19,7 +19,7 @@ export const signUpSchema = z.object({
     .min(2, "Name is too short")
     .max(100, "Name is too long")
     .transform(sanitizeText),
-  email: z.string().trim().email("Enter a valid email address"),
+  email: z.string().trim().pipe(z.email("Enter a valid email address")),
   phone: optionalPhoneSchema.optional(),
   role: studentOrMentorRoleSchema.default("STUDENT"),
   acceptedTerms: z.boolean().refine((value) => value, {

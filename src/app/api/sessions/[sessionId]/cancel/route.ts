@@ -17,7 +17,7 @@ export const POST = defineRoute(
   const parsedBody = cancelSessionRequestSchema.safeParse(payload);
 
   if (!parsedBody.success) {
-    return apiErrorResponse("Invalid cancellation payload", 400, parsedBody.error.flatten());
+    return apiErrorResponse("Invalid cancellation payload", 400, z.flattenError(parsedBody.error));
   }
 
   const result = await cancelSessionById({

@@ -100,7 +100,6 @@ const availabilitySlotSchema = z
  */
 export const mentorInstitutionStepSchema = z.object({
   institutionId: z
-    .string()
     .uuid("Invalid institution ID")
     .optional(),
 
@@ -272,7 +271,6 @@ export const mentorProfileUpdateSchema = z
      * New institution reference.
      */
     institutionId: z
-      .string()
       .uuid("Invalid institution ID")
       .optional(),
 
@@ -383,7 +381,7 @@ export const mentorProfileUpdateSchema = z
       )
     ) {
       context.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "45-minute pricing must be derived from the 30-minute price",
         path: ["priceMax"],
@@ -399,7 +397,7 @@ export const mentorProfileUpdateSchema = z
       ).size !== value.exams.length
     ) {
       context.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "Duplicate exams are not allowed",
         path: ["exams"],
@@ -412,7 +410,7 @@ export const mentorProfileUpdateSchema = z
       value.specialisations.length
     ) {
       context.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "Duplicate help topics are not allowed",
         path: ["specialisations"],

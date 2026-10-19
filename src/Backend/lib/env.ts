@@ -15,13 +15,13 @@ const optionalString = z.preprocess(
 );
 const optionalUrl = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
-  z.string().trim().url().optional(),
+  z.string().trim().pipe(z.url()).optional(),
 );
 
 const envSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-    DATABASE_URL: z.string().trim().url(),
+    DATABASE_URL: z.string().trim().pipe(z.url()),
     NEXT_PUBLIC_APP_URL: optionalUrl,
     AUTH_URL: optionalUrl,
     AUTH_SECRET: optionalString,

@@ -96,7 +96,7 @@ function validateStudentBoard(
 ) {
   if (requiresBoard(value.class) && !value.board) {
     context.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["board"],
       message: "Board is required for school students",
     });
@@ -104,7 +104,7 @@ function validateStudentBoard(
 
   if (!requiresBoard(value.class) && value.board) {
     context.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["board"],
       message: "Board should only be set for school students",
     });
@@ -120,7 +120,7 @@ function validateStudentStream(
 ) {
   if (!getAllowedStreamValues(value.class).includes(value.stream)) {
     context.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["stream"],
       message: "Choose a valid stream or focus for your current stage",
     });
@@ -140,7 +140,7 @@ function validateStudentConfusions(
 
   if (value.confusionTypes.some((confusion) => !allowedConfusions.has(confusion))) {
     context.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["confusionTypes"],
       message: "Choose valid confusion areas for your current stage",
     });
@@ -148,7 +148,7 @@ function validateStudentConfusions(
 
   if (!isUGClass(value.class) && value.confusionTypes.includes("POST_GRADUATION_PATH")) {
     context.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["confusionTypes"],
       message: "Post-graduation confusion only applies to UG students",
     });

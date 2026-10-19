@@ -96,7 +96,7 @@ export const PATCH = defineRoute(
   const payload = await request.json().catch(() => null);
   const parsed = profileUpdateSchema.safeParse(payload);
   if (!parsed.success) {
-    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid payload", 400, z.flattenError(parsed.error));
   }
 
   const data = parsed.data;

@@ -23,7 +23,7 @@ const verifyPaymentSchema = z.object({
   razorpayOrderId: z.string().trim().min(1),
   razorpayPaymentId: z.string().trim().min(1),
   razorpaySignature: z.string().trim().min(1),
-  sessionId: z.string().uuid(),
+  sessionId: z.uuid(),
 });
 
 export const POST = defineRoute(
@@ -33,7 +33,7 @@ export const POST = defineRoute(
   const parsed = verifyPaymentSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid payload", 400, z.flattenError(parsed.error));
   }
 
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature, sessionId } = parsed.data;

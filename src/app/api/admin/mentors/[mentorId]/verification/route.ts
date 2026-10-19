@@ -33,7 +33,7 @@ export const POST = defineRoute(
   const parsed = verificationActionSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid payload", 400, z.flattenError(parsed.error));
   }
 
   const mentor = await db.user.findFirst({

@@ -12,7 +12,7 @@ import { expireUnpaidBooking, isBookingHoldExpired } from "@/Backend/server/sess
 import { defineRoute } from "@/Backend/lib/define-route";
 
 const createOrderSchema = z.object({
-  sessionId: z.string().uuid("sessionId must be a valid UUID"),
+  sessionId: z.uuid("sessionId must be a valid UUID"),
 });
 
 export const POST = defineRoute(
@@ -22,7 +22,7 @@ export const POST = defineRoute(
   const parsed = createOrderSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid payload", 400, z.flattenError(parsed.error));
   }
 
   const { sessionId } = parsed.data;

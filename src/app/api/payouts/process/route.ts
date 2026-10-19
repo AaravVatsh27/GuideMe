@@ -11,7 +11,7 @@ import { sendPayoutConfirmation } from "@/Backend/server/resend";
 import { defineRoute } from "@/Backend/lib/define-route";
 
 const processPayoutsSchema = z.object({
-  payoutIds: z.array(z.string().uuid()).min(1).max(50),
+  payoutIds: z.array(z.uuid()).min(1).max(50),
   transactionId: z.string().trim().min(3).max(100),
   upiId: z.string().trim().min(5).max(100).optional(),
   notes: z.string().trim().max(500).optional(),
@@ -24,7 +24,7 @@ export const POST = defineRoute(
   const parsed = processPayoutsSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid payload", 400, z.flattenError(parsed.error));
   }
 
   const { payoutIds, transactionId, upiId, notes } = parsed.data;

@@ -9,7 +9,7 @@ import { db } from "@/Backend/server/db";
 import { slotHoldingSessionWhere } from "@/Backend/server/sessions";
 import { defineRoute } from "@/Backend/lib/define-route";
 
-type RouteParams = { params: Promise<{ username: string }> };
+type RouteParams = { params: { username: string } };
 
 type SlotsByDate = Record<string, Set<string>>;
 type AvailabilityResponse = Array<{
@@ -107,7 +107,7 @@ function zonedTimeToDate(dateKey: string, time: string, timeZone: string) {
 export const GET = defineRoute(
   { auth: "none", rateLimit: generalLimiter },
   async (request: Request, context: RouteParams) => {
-  const { username } = await context.params;
+  const { username } = context.params;
 
   if (!username || username.length < 2) {
     return apiErrorResponse("Invalid username", 400);

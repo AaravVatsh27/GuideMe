@@ -4,7 +4,7 @@ import { emailPreviewRegistry, emailPreviewTemplates, renderEmailTemplate } from
 import { defineRoute } from "@/Backend/lib/define-route";
 import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 
-type RouteParams = { params: Promise<{ template: string }> };
+type RouteParams = { params: { template: string } };
 
 export const GET = defineRoute(
   { auth: "optional" },
@@ -14,7 +14,7 @@ export const GET = defineRoute(
     return apiErrorResponse("Not found", 404);
   }
 
-  const { template } = await context.params;
+  const { template } = context.params;
   const preview = emailPreviewRegistry[template as keyof typeof emailPreviewRegistry];
 
   if (!preview) {

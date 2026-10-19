@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/Backend/lib/api-helpers";
@@ -16,7 +17,7 @@ export const PATCH = defineRoute(
   const parsed = mentorProfileUpdateSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid payload", 400, z.flattenError(parsed.error));
   }
 
   const data = parsed.data;

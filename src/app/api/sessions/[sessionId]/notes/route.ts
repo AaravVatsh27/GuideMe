@@ -18,7 +18,7 @@ export const POST = defineRoute(
   const parsedBody = createSessionNoteSchema.safeParse(payload);
 
   if (!parsedBody.success) {
-    return apiErrorResponse("Invalid note payload", 400, parsedBody.error.flatten());
+    return apiErrorResponse("Invalid note payload", 400, z.flattenError(parsedBody.error));
   }
 
   const record = await db.session.findUnique({

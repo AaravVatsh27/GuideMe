@@ -9,7 +9,7 @@ import { defineRoute } from "@/Backend/lib/define-route";
 import { apiErrorResponse } from "@/Backend/lib/api-helpers";
 
 const verifyEmailSchema = z.object({
-  email: z.string().trim().email(),
+  email: z.string().trim().pipe(z.email()),
   otp: z.string().trim().regex(/^\d{6}$/),
 });
 

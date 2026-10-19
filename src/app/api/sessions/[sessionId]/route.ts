@@ -75,7 +75,7 @@ export const PATCH = defineRoute(
   const parsedBody = sessionPatchSchema.safeParse(payload);
 
   if (!parsedBody.success) {
-    return apiErrorResponse("Invalid session update payload", 400, parsedBody.error.flatten());
+    return apiErrorResponse("Invalid session update payload", 400, z.flattenError(parsedBody.error));
   }
 
   switch (parsedBody.data.action) {

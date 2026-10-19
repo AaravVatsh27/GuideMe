@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { NotificationType, Role, SessionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
@@ -37,7 +38,7 @@ export const POST = defineRoute(
   const parsed = createReviewSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid review payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid review payload", 400, z.flattenError(parsed.error));
   }
 
   const sessionRecord = await db.session.findUnique({

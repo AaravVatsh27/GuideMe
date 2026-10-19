@@ -8,9 +8,9 @@ import { db } from "@/Backend/server/db";
 import { defineRoute } from "@/Backend/lib/define-route";
 
 const listPayoutsQuerySchema = z.object({
-  status: z.nativeEnum(PayoutStatus).optional(),
-  mentorId: z.string().uuid().optional(),
-  sessionId: z.string().uuid().optional(),
+  status: z.enum(PayoutStatus).optional(),
+  mentorId: z.uuid().optional(),
+  sessionId: z.uuid().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
@@ -22,7 +22,7 @@ export const GET = defineRoute(
   const parsed = listPayoutsQuerySchema.safeParse(query);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid query parameters", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid query parameters", 400, z.flattenError(parsed.error));
   }
 
   const { status, mentorId, sessionId, page, limit } = parsed.data;

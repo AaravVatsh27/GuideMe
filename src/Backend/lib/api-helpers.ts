@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 
 import { getClientIp } from "@/Backend/lib/client-ip";
 import { log } from "@/Backend/lib/logger";
@@ -145,7 +145,7 @@ function buildErrorResponse(error: unknown): BuiltApiErrorResponse {
       capture: false,
       message: "Validation failed",
       status: 400,
-      details: error.flatten(),
+      details: z.flattenError(error),
     };
   }
 

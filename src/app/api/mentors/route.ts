@@ -171,9 +171,9 @@ const SPECIALISATION_SEARCH_INDEX = HELP_TOPIC_OPTIONS.map((option) => ({
 const searchQuerySchema = z
   .object({
     q: z.string().trim().max(120).optional(),
-    stream: z.nativeEnum(Stream).optional(),
-    exam: z.nativeEnum(TargetExam).optional(),
-    tier: z.nativeEnum(MentorTier).optional(),
+    stream: z.enum(Stream).optional(),
+    exam: z.enum(TargetExam).optional(),
+    tier: z.enum(MentorTier).optional(),
     priceMin: z.coerce.number().int().min(0).optional(),
     priceMax: z.coerce.number().int().max(9999).optional(),
     minRating: z.coerce.number().min(0).max(5).optional(),
@@ -349,7 +349,7 @@ export const GET = defineRoute(
   const parsed = searchQuerySchema.safeParse(rawQuery);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid query parameters", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid query parameters", 400, z.flattenError(parsed.error));
   }
 
   const {

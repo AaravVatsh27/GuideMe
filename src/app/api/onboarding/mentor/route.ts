@@ -24,7 +24,7 @@ export const PATCH = defineRoute(
       patchRequestSchema.safeParse(payload);
 
     if (!parsedRequest.success) {
-      return apiErrorResponse("Invalid onboarding request", 400, parsedRequest.error.flatten());
+      return apiErrorResponse("Invalid onboarding request", 400, z.flattenError(parsedRequest.error));
     }
 
     const existing = await db.user.findUnique({
@@ -101,7 +101,7 @@ export const PATCH = defineRoute(
       );
 
     if (!validatedStep.success) {
-      return apiErrorResponse("Invalid step data", 400, validatedStep.error.flatten());
+      return apiErrorResponse("Invalid step data", 400, z.flattenError(validatedStep.error as z.ZodError));
     }
 
     const finalValidation =
@@ -115,7 +115,7 @@ export const PATCH = defineRoute(
       finalValidation &&
       !finalValidation.success
     ) {
-      return apiErrorResponse("Complete all required mentor onboarding fields before submitting", 400, finalValidation.error.flatten());
+      return apiErrorResponse("Complete all required mentor onboarding fields before submitting", 400, z.flattenError(finalValidation.error));
     }
 
     const maxSavedStep = Math.max(

@@ -24,7 +24,7 @@ export const POST = defineRoute(
   const parsed = adminSessionActionSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid payload", 400, z.flattenError(parsed.error));
   }
 
   const ipAddress = extractRequestIp(request);

@@ -14,7 +14,7 @@ import { defineRoute } from "@/Backend/lib/define-route";
 import { timingSafeEqual } from "node:crypto";
 
 const refundSchema = z.object({
-  sessionId: z.string().uuid("sessionId must be a valid UUID"),
+  sessionId: z.uuid("sessionId must be a valid UUID"),
   reason: z.string().trim().min(10).max(280),
 });
 
@@ -60,7 +60,7 @@ export const POST = defineRoute(
   const parsed = refundSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid payload", 400, z.flattenError(parsed.error));
   }
 
   const { sessionId, reason } = parsed.data;

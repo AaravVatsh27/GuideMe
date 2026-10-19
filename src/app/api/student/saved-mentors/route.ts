@@ -6,7 +6,7 @@ import { db } from "@/Backend/server/db";
 import { defineRoute } from "@/Backend/lib/define-route";
 
 const saveMentorSchema = z.object({
-  mentorId: z.string().uuid(),
+  mentorId: z.uuid(),
 });
 
 export const GET = defineRoute(
@@ -47,7 +47,7 @@ export const POST = defineRoute(
   const payload = await request.json().catch(() => null);
   const parsed = saveMentorSchema.safeParse(payload);
   if (!parsed.success) {
-    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid payload", 400, z.flattenError(parsed.error));
   }
 
   const mentor = await db.user.findUnique({

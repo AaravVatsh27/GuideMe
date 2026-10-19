@@ -15,8 +15,8 @@ import { createSessionSchema } from "@/Backend/validations/session";
 import { defineRoute } from "@/Backend/lib/define-route";
 
 const listSessionsQuerySchema = z.object({
-  status: z.nativeEnum(SessionStatus).optional(),
-  type: z.nativeEnum(SessionType).optional(),
+  status: z.enum(SessionStatus).optional(),
+  type: z.enum(SessionType).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(10).default(10),
 });
@@ -28,7 +28,7 @@ export const GET = defineRoute(
   const parsedQuery = listSessionsQuerySchema.safeParse(query);
 
   if (!parsedQuery.success) {
-    return apiErrorResponse("Invalid query parameters", 400, parsedQuery.error.flatten());
+    return apiErrorResponse("Invalid query parameters", 400, z.flattenError(parsedQuery.error));
   }
 
   const { status, type, page, limit } = parsedQuery.data;
@@ -69,7 +69,7 @@ export const POST = defineRoute(
   const parsedBody = createSessionSchema.safeParse(payload);
 
   if (!parsedBody.success) {
-    return apiErrorResponse("Invalid session payload", 400, parsedBody.error.flatten());
+    return apiErrorResponse("Invalid session payload", 400, z.flattenError(parsedBody.error));
   }
 
   const result = await createSessionBooking({

@@ -7,7 +7,7 @@ import { cacheGet, cacheKeys, cacheSet, cacheTtl } from "@/Backend/lib/cache";
 import { db } from "@/Backend/server/db";
 import { defineRoute } from "@/Backend/lib/define-route";
 
-type RouteParams = { params: Promise<{ username: string }> };
+type RouteParams = { params: { username: string } };
 
 type MentorProfileResponse = {
   id: string;
@@ -109,7 +109,7 @@ function persistProfileViewIncrement(
 export const GET = defineRoute(
   { auth: "none", rateLimit: generalLimiter },
   async (request: Request, context: RouteParams) => {
-  const { username } = await context.params;
+  const { username } = context.params;
 
   if (!username || username.length < 2) {
     return apiErrorResponse("Invalid username", 400);

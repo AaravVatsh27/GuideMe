@@ -13,8 +13,8 @@ const paidDurationSchema = z.union([
 
 export const createSessionSchema = z
   .object({
-    mentorId: z.string().uuid("mentorId must be a valid UUID"),
-    availabilityId: z.string().uuid("availabilityId must be a valid UUID").optional(),
+    mentorId: z.uuid("mentorId must be a valid UUID"),
+    availabilityId: z.uuid("availabilityId must be a valid UUID").optional(),
     type: z.enum(["INTRO", "PAID"]),
     scheduledAt: z.coerce.date(),
     durationMinutes: z.number().int(),
@@ -39,7 +39,7 @@ export const createSessionSchema = z
   );
 
 export const cancelSessionSchema = z.object({
-  sessionId: z.string().uuid("sessionId must be a valid UUID"),
+  sessionId: z.uuid("sessionId must be a valid UUID"),
   reason: z.string().trim().min(10).max(280),
 });
 

@@ -17,16 +17,16 @@ import { setMentorVerification } from "@/Backend/server/mentor-state";
 const bulkMentorActionSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("verify"),
-    mentorIds: z.array(z.string().uuid()).min(1).max(100),
+    mentorIds: z.array(z.uuid()).min(1).max(100),
   }),
   z.object({
     action: z.literal("suspend"),
-    mentorIds: z.array(z.string().uuid()).min(1).max(100),
+    mentorIds: z.array(z.uuid()).min(1).max(100),
   }),
   z.object({
     action: z.literal("change-tier"),
-    mentorIds: z.array(z.string().uuid()).min(1).max(100),
-    tier: z.nativeEnum(MentorTier),
+    mentorIds: z.array(z.uuid()).min(1).max(100),
+    tier: z.enum(MentorTier),
   }),
 ]);
 
@@ -37,7 +37,7 @@ export const POST = defineRoute(
   const parsed = bulkMentorActionSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return apiErrorResponse("Invalid payload", 400, parsed.error.flatten());
+    return apiErrorResponse("Invalid payload", 400, z.flattenError(parsed.error));
   }
 
   const mentors = await db.user.findMany({
