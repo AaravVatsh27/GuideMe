@@ -250,20 +250,66 @@ export const mentorAvailabilityStepSchema = z
       ).size ===
       value.availabilitySlots.length,
     {
-      message:
-        "Duplicate time slots are not allowed",
+      message: "Duplicate time slots are not allowed",
       path: ["availabilitySlots"],
     },
   );
 
 export const mentorOnboardingSchema =
   mentorInstitutionStepSchema
-    .merge(mentorCourseStepSchema)
-    .merge(mentorExamsStepSchema)
-    .merge(mentorHelpStepSchema)
-    .merge(mentorPricingStepSchema)
-    .merge(mentorProfileStepSchema)
-    .merge(mentorAvailabilityStepSchema);
+    .safeExtend(mentorCourseStepSchema.shape)
+    .safeExtend(mentorExamsStepSchema.shape)
+    .safeExtend(mentorHelpStepSchema.shape)
+    .safeExtend(mentorPricingStepSchema.shape)
+    .safeExtend(mentorProfileStepSchema.shape)
+    .safeExtend(mentorAvailabilityStepSchema.shape)
+    .refine(
+      (value) =>
+        new Set(
+          value.exams.map(
+            (entry) => entry.exam,
+          ),
+        ).size === value.exams.length,
+      {
+        message: "Duplicate exams are not allowed",
+        path: ["exams"],
+      },
+    )
+    .refine(
+      (value) =>
+        new Set(value.specialisations).size ===
+        value.specialisations.length,
+      {
+        message: "Duplicate topics are not allowed",
+        path: ["specialisations"],
+      },
+    )
+    .refine(
+      (value) =>
+        value.priceMaxPaise ===
+        calculateFortyFiveMinutePricePaise(
+          value.priceMinPaise,
+        ),
+      {
+        message:
+          "45-minute pricing must be auto-calculated from the 30-minute session",
+        path: ["priceMaxPaise"],
+      },
+    )
+    .refine(
+      (value) =>
+        new Set(
+          value.availabilitySlots.map(
+            (slot) =>
+              `${slot.dayOfWeek}-${slot.startTime}-${slot.endTime}`,
+          ),
+        ).size ===
+        value.availabilitySlots.length,
+      {
+        message: "Duplicate time slots are not allowed",
+        path: ["availabilitySlots"],
+      },
+    );
 
 export const mentorProfileUpdateSchema = z
   .object({
