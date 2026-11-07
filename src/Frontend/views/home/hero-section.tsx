@@ -1,6 +1,5 @@
 /** Landing page hero and the trust strip under it. */
 
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Clock3, HeartHandshake, ShieldCheck, Star, Users } from "lucide-react";
 import { type PublicPlatformSnapshot } from "@/Backend/server/public-data";
@@ -139,28 +138,6 @@ export function HeroSection({
           {/* Mentor preview */}
           <div className="relative mx-auto w-full max-w-xl">
             <div className="home-glass-card relative animate-[hero-float_8s_ease-in-out_infinite] p-5 transition-transform duration-500 hover:-translate-y-1 motion-reduce:animate-none sm:p-6">
-              {/* Live Session Photo Banner */}
-              <div className="group relative mb-5 overflow-hidden rounded-2xl border border-[var(--border)]">
-                <Image
-                  src="/hero/senior-mentor-guidance.jpg"
-                  alt="Live 1:1 senior mentorship session"
-                  width={600}
-                  height={338}
-                  className="w-full object-cover aspect-[16/9] transition-transform duration-500 group-hover:scale-[1.03]"
-                  priority
-                />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[var(--bg)]/85 via-transparent to-[var(--bg)]/20" />
-                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[var(--text)] text-xs">
-                  <div className="flex items-center gap-1.5 font-medium">
-                    <span className="size-2 rounded-full bg-[var(--accent)] animate-pulse" />
-                    <span className="font-semibold text-[var(--text)] drop-shadow-sm">Live 1:1 Guidance Session</span>
-                  </div>
-                  <span className="rounded-full bg-[var(--card)] px-2.5 py-0.5 text-[10.5px] font-semibold backdrop-blur-md">
-                    IIT & AIIMS Seniors
-                  </span>
-                </div>
-              </div>
-
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
