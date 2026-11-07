@@ -2,10 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, HeartHandshake, ShieldCheck, Star } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock3, HeartHandshake, ShieldCheck, Star, Users } from "lucide-react";
 import { type PublicPlatformSnapshot } from "@/Backend/server/public-data";
+import dynamic from "next/dynamic";
 
 import { formatNumber, getMentorContext, getMentorGroup, getMentorInitials, getMentorPrice, getMentorProof, getMentorTopic, getStartingPrice } from "@/Frontend/views/home/home-helpers";
+
+const HeroBackground = dynamic(() => import("./hero-background"), {
+  ssr: false,
+});
 
 export function HeroSection({
   snapshot,
@@ -20,45 +25,42 @@ export function HeroSection({
   return (
     <section
       id="top"
-      className="mentra-hero-depth relative overflow-hidden border-b border-violet-100/70 bg-[#FAF5FF]"
+      className="mentra-hero-depth isolate relative overflow-hidden bg-[var(--bg)] pt-16 text-[var(--text)]"
     >
-      {/* Ambient background */}
+      <HeroBackground />
       <div
-        className="pointer-events-none absolute -left-32 top-0 h-[28rem] w-[28rem] rounded-full bg-[#7C3AED]/10 blur-[110px]"
+        className="pointer-events-none absolute bottom-0 left-1/2 z-[1] w-screen -translate-x-1/2"
+        style={{
+          height: 160,
+          background:
+            "linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--bg) 48%, transparent) 38%, color-mix(in srgb, var(--bg) 82%, transparent) 72%, var(--bg) 100%)",
+        }}
         aria-hidden="true"
       />
+      <style>{`
+        @keyframes hero-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+      `}</style>
 
-      <div
-        className="pointer-events-none absolute -right-32 top-20 h-[32rem] w-[32rem] rounded-full bg-[#EC4899]/10 blur-[120px]"
-        aria-hidden="true"
-      />
-
-      <div
-        className="pointer-events-none absolute left-1/2 top-[45%] h-[24rem] w-[24rem] -translate-x-1/2 rounded-full bg-[#F97316]/[0.06] blur-[110px]"
-        aria-hidden="true"
-      />
-
-      <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-14 sm:px-6 sm:pb-20 sm:pt-18 lg:px-8 lg:pb-24 lg:pt-20">
+      <div className="relative z-20 mx-auto max-w-7xl px-4 pb-14 pt-14 sm:px-6 sm:pb-20 sm:pt-18 lg:px-8 lg:pb-24 lg:pt-20">
         <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
           {/* Hero copy */}
           <div className="max-w-3xl">
-            <div className="mentra-clay-pill inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-semibold text-[#6D28D9] backdrop-blur-xl">
-              <span
-                className="size-1.5 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#EC4899]"
-                aria-hidden="true"
-              />
+            <div className="home-section-label text-xs font-semibold">
               Your senior friend for every big decision
             </div>
 
-            <h1 className="mt-7 max-w-4xl text-balance text-5xl font-extrabold leading-[0.98] tracking-[-0.055em] text-[#1E1B4B] sm:text-6xl lg:text-[5.2rem]">
+            <h1 className="mt-7 max-w-4xl text-balance text-5xl font-extrabold leading-[0.98] tracking-[-0.055em] text-[var(--text)] sm:text-6xl lg:text-[5.2rem]">
               Find your mantra.
               <span className="block">Find your</span>
-              <span className="mt-1 block bg-gradient-to-r from-[#7C3AED] via-[#EC4899] to-[#F97316] bg-clip-text text-transparent">
+              <span className="mt-1 block text-[var(--accent)]">
                 mentor.
               </span>
             </h1>
 
-            <p className="mt-7 max-w-xl text-base leading-7 text-[#4B5875] sm:text-lg sm:leading-8">
+            <p className="mt-7 max-w-xl text-base leading-7 text-[var(--muted)] sm:text-lg sm:leading-8">
               One honest conversation can change everything. Talk to a
               college senior who has recently walked the same road and can
               help you choose with more clarity.
@@ -67,7 +69,7 @@ export function HeroSection({
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/find-mentor"
-                className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#7C3AED] px-6 text-sm font-semibold text-white shadow-[0_16px_36px_-18px_rgba(124,58,237,0.72)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#6D28D9]"
+                className="home-primary-button group inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-sm font-semibold transition duration-200 hover:-translate-y-0.5"
               >
                 Find My Senior Friend
                 <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -75,14 +77,14 @@ export function HeroSection({
 
               <Link
                 href="/auth/signup"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-violet-200 bg-white/75 px-6 text-sm font-semibold text-[#1E1B4B] shadow-sm backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white"
+                className="home-secondary-button inline-flex min-h-12 items-center justify-center rounded-full px-6 text-sm font-semibold transition duration-200 hover:-translate-y-0.5"
               >
                 Create free account
               </Link>
             </div>
 
-            <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#667085]">
-              <span className="font-semibold text-[#7C3AED]">
+            <div className="relative z-20 mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--muted)]">
+              <span className="font-semibold text-[var(--accent)]">
                 {startingPrice} / session
               </span>
               <span aria-hidden="true">·</span>
@@ -101,7 +103,7 @@ export function HeroSection({
                     {previewMentors.map((mentor) => (
                       <span
                         key={mentor.id}
-                        className="flex size-9 items-center justify-center rounded-full bg-[#EEF2FF] text-xs font-bold text-[#4F46E5] ring-2 ring-white sm:size-10"
+                        className="flex size-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-xs font-bold text-[var(--accent)] ring-2 ring-[var(--bg)] sm:size-10"
                       >
                         {getMentorInitials(mentor.name)}
                       </span>
@@ -109,12 +111,12 @@ export function HeroSection({
                   </div>
                 ) : null}
 
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-left text-xs font-bold text-[#1E1B4B]">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-left text-xs font-bold text-[var(--text)]">
                   {snapshot.totalPublicReviews > 0 ? (
                     <>
-                      <Star className="size-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+                      <Star className="size-3.5 fill-[var(--accent)] text-[var(--accent)]" aria-hidden="true" />
                       <span className="font-extrabold">{snapshot.averageRating.toFixed(1)}/5</span>
-                      <span className="font-medium text-slate-500">
+                      <span className="font-medium text-[var(--muted)]">
                         from {formatNumber(snapshot.totalPublicReviews)}{" "}
                         {snapshot.totalPublicReviews === 1 ? "review" : "reviews"}
                       </span>
@@ -124,7 +126,7 @@ export function HeroSection({
                     <span className="size-1 rounded-full bg-slate-300" aria-hidden="true" />
                   ) : null}
                   {snapshot.totalStudents > 0 ? (
-                    <span className="font-bold text-[#7C3AED]">
+                  <span className="font-bold text-[var(--accent)]">
                       {formatNumber(snapshot.totalStudents)}{" "}
                       {snapshot.totalStudents === 1 ? "student has" : "students have"} joined
                     </span>
@@ -136,14 +138,9 @@ export function HeroSection({
 
           {/* Mentor preview */}
           <div className="relative mx-auto w-full max-w-xl">
-            <div
-              className="pointer-events-none absolute -inset-8 rounded-[2.5rem] bg-gradient-to-br from-[#7C3AED]/12 via-[#EC4899]/10 to-[#F97316]/8 blur-2xl"
-              aria-hidden="true"
-            />
-
-            <div className="mentra-clay-card relative rounded-[2rem] border bg-white/70 p-5 backdrop-blur-2xl transition-transform duration-500 hover:-translate-y-1 sm:p-6">
+            <div className="home-glass-card relative animate-[hero-float_8s_ease-in-out_infinite] p-5 transition-transform duration-500 hover:-translate-y-1 motion-reduce:animate-none sm:p-6">
               {/* Live Session Photo Banner */}
-              <div className="relative mb-5 overflow-hidden rounded-2xl border border-violet-100/90 shadow-xs group">
+              <div className="group relative mb-5 overflow-hidden rounded-2xl border border-[var(--border)]">
                 <Image
                   src="/hero/senior-mentor-guidance.jpg"
                   alt="Live 1:1 senior mentorship session"
@@ -152,13 +149,13 @@ export function HeroSection({
                   className="w-full object-cover aspect-[16/9] transition-transform duration-500 group-hover:scale-[1.03]"
                   priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1E1B4B]/85 via-transparent to-black/20 pointer-events-none" />
-                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[var(--bg)]/85 via-transparent to-[var(--bg)]/20" />
+                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[var(--text)] text-xs">
                   <div className="flex items-center gap-1.5 font-medium">
-                    <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="font-semibold text-white drop-shadow-sm">Live 1:1 Guidance Session</span>
+                    <span className="size-2 rounded-full bg-[var(--accent)] animate-pulse" />
+                    <span className="font-semibold text-[var(--text)] drop-shadow-sm">Live 1:1 Guidance Session</span>
                   </div>
-                  <span className="rounded-full bg-white/25 px-2.5 py-0.5 text-[10.5px] font-semibold backdrop-blur-md">
+                  <span className="rounded-full bg-[var(--card)] px-2.5 py-0.5 text-[10.5px] font-semibold backdrop-blur-md">
                     IIT & AIIMS Seniors
                   </span>
                 </div>
@@ -166,16 +163,16 @@ export function HeroSection({
 
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7C3AED]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
                     Start with someone who has been there
                   </p>
 
-                  <h2 className="mt-2 text-xl font-bold tracking-tight text-[#1E1B4B]">
+                  <h2 className="mt-2 text-xl font-bold tracking-tight text-[var(--text)]">
                     Find a mentor who gets it.
                   </h2>
                 </div>
 
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-violet-100 bg-white/90 text-[#7C3AED] shadow-sm">
+                <div className="home-accent-surface flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--border)]">
                   <HeartHandshake className="size-5" />
                 </div>
               </div>
@@ -195,13 +192,13 @@ export function HeroSection({
                               )}`
                             : "/find-mentor"
                         }
-                        className="group flex items-center gap-3 rounded-2xl border border-slate-100/90 bg-white/85 p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:shadow-[0_12px_28px_-22px_rgba(124,58,237,0.45)]"
+                        className="home-glass-card group flex items-center gap-3 p-3.5 transition duration-200 hover:-translate-y-0.5"
                       >
                         <div
                           className={`flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                             group === "school"
-                              ? "bg-violet-100 text-[#7C3AED]"
-                              : "bg-orange-100 text-orange-700"
+                            ? "home-accent-surface"
+                            : "home-accent-surface"
                           }`}
                         >
                           {getMentorInitials(mentor.name)}
@@ -209,30 +206,30 @@ export function HeroSection({
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="truncate text-sm font-semibold text-[#1E1B4B]">
+                            <p className="truncate text-sm font-semibold text-[var(--text)]">
                               {mentor.name}
                             </p>
 
                             {mentor.totalReviews > 0 && (
-                              <ShieldCheck className="size-3.5 shrink-0 text-emerald-500" />
+                              <ShieldCheck className="size-3.5 shrink-0 text-[var(--accent)]" />
                             )}
                           </div>
 
-                          <p className="truncate text-xs text-slate-500">
+                          <p className="truncate text-xs text-[var(--muted)]">
                             {getMentorContext(mentor)}
                           </p>
 
-                          <p className="mt-1 text-xs font-medium text-[#7C3AED]">
+                          <p className="mt-1 text-xs font-medium text-[var(--accent)]">
                             {getMentorTopic(mentor)}
                           </p>
                         </div>
 
                         <div className="text-right">
-                          <p className="text-sm font-bold text-[#1E1B4B]">
+                          <p className="text-sm font-bold text-[var(--text)]">
                             {getMentorPrice(mentor)}
                           </p>
 
-                          <p className="mt-1 text-[11px] text-slate-400">
+                          <p className="mt-1 text-[11px] text-[var(--muted)]">
                             {getMentorProof(mentor)}
                           </p>
                         </div>
@@ -242,19 +239,19 @@ export function HeroSection({
 
                   <Link
                     href="/find-mentor"
-                    className="group flex min-h-11 items-center justify-between rounded-2xl border border-dashed border-violet-200 bg-white/55 px-4 text-sm font-semibold text-[#7C3AED] backdrop-blur transition hover:bg-violet-50/70"
+                    className="home-secondary-button group flex min-h-11 items-center justify-between rounded-2xl border-dashed px-4 text-sm font-semibold backdrop-blur transition"
                   >
                     Explore all mentors
                     <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
                   </Link>
                 </div>
               ) : (
-                <div className="mt-6 rounded-2xl border border-dashed border-violet-200 bg-violet-50/60 p-6">
-                  <p className="text-sm font-semibold text-[#1E1B4B]">
+                <div className="home-glass-card mt-6 p-6">
+                <p className="text-sm font-semibold text-[var(--text)]">
                     Mentor profiles are opening now.
                   </p>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
                     Search the mentor network and see who is currently live.
                   </p>
                 </div>
@@ -265,17 +262,17 @@ export function HeroSection({
 
         {/* College marquee: real colleges of verified mentors, hidden when there are none */}
         {colleges.length > 0 ? (
-        <div className="relative mt-14 overflow-hidden rounded-[1.75rem] border border-violet-100/80 bg-white/60 py-5 shadow-[0_12px_40px_-30px_rgba(30,27,75,0.25)] backdrop-blur-xl sm:mt-16">
+        <div className="home-glass-card relative mt-14 overflow-hidden py-5 sm:mt-16">
           <div className="flex items-center gap-5 px-5 sm:px-6">
-            <div className="z-10 shrink-0 border-r border-violet-100 pr-5 sm:pr-7">
-              <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.2em] text-[#7C3AED]">
+            <div className="z-10 shrink-0 border-r border-[var(--border)] pr-5 sm:pr-7">
+              <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent)]">
                 Mentors from
               </p>
             </div>
 
             <div className="relative min-w-0 flex-1 overflow-hidden">
-              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-white/80 to-transparent" />
-              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-white/80 to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[var(--bg)] to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[var(--bg)] to-transparent" />
 
               <div
                 className="mentra-college-marquee"
@@ -285,11 +282,11 @@ export function HeroSection({
                   {[...colleges, ...colleges].map((college, index) => (
                     <span
                       key={`${college}-${index}`}
-                      className="inline-flex shrink-0 items-center gap-4 whitespace-nowrap text-sm font-semibold text-slate-500"
+                      className="inline-flex shrink-0 items-center gap-4 whitespace-nowrap text-sm font-semibold text-[var(--muted)]"
                     >
                       {college}
                       <span
-                        className="size-1 rounded-full bg-violet-200"
+                        className="size-1 rounded-full bg-[var(--accent)]"
                         aria-hidden="true"
                       />
                     </span>
@@ -310,50 +307,54 @@ export function TrustStrip({
 }: {
   snapshot: PublicPlatformSnapshot;
 }) {
+  const realStats = [
+    { key: "mentors", value: snapshot.totalMentors, label: "Verified mentors", Icon: ShieldCheck },
+    { key: "students", value: snapshot.totalStudents, label: "Students onboarded", Icon: Users },
+    { key: "sessions", value: snapshot.completedSessions, label: "Sessions completed", Icon: CheckCircle2 },
+  ].filter((stat) => stat.value > 0);
+
+  const valuePoints = [
+    { label: "Verified mentors, reviewed before they go live", Icon: ShieldCheck },
+    { label: "Free 10-minute intro call", Icon: Clock3 },
+    { label: "Real students, real experience", Icon: Users },
+  ];
+
   return (
-    <section className="relative z-10 -mt-1 bg-[#FAF5FF] px-4 pb-2 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="overflow-hidden rounded-[1.5rem] border border-white/80 bg-white/75 shadow-[0_20px_60px_-40px_rgba(30,27,75,0.28)] backdrop-blur-xl">
-          <div className="grid grid-cols-2 divide-x divide-violet-100 sm:grid-cols-4">
-            <div className="px-4 py-6 sm:px-7 sm:py-7">
-              <p className="text-2xl font-bold tracking-[-0.03em] text-[#7C3AED]">
-                {formatNumber(snapshot.totalMentors)}
-              </p>
-
-              <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
-                Verified mentors
-              </p>
-            </div>
-
-            <div className="px-4 py-6 sm:px-7 sm:py-7">
-              <p className="text-2xl font-bold tracking-[-0.03em] text-[#7C3AED]">
-                {formatNumber(snapshot.totalStudents)}
-              </p>
-
-              <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
-                Students onboarded
-              </p>
-            </div>
-
-            <div className="border-t border-violet-100 px-4 py-6 sm:border-t-0 sm:px-7 sm:py-7">
-              <p className="text-2xl font-bold tracking-[-0.03em] text-[#7C3AED]">
-                {formatNumber(snapshot.completedSessions)}
-              </p>
-
-              <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
-                Sessions completed
-              </p>
-            </div>
-
-            <div className="border-t border-violet-100 px-4 py-6 sm:border-t-0 sm:px-7 sm:py-7">
-              <p className="text-2xl font-bold tracking-[-0.03em] text-[#7C3AED]">
-                {snapshot.introMinutes} min
-              </p>
-
-              <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
-                Free intro conversation
-              </p>
-            </div>
+    <section className="relative z-10 -mt-px overflow-hidden bg-[var(--bg)] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="home-glass-card group relative overflow-hidden transition-colors duration-200 motion-reduce:transition-none">
+          <div
+            className="relative grid grid-cols-1 divide-y divide-[var(--border)] md:grid-cols-3 md:divide-x md:divide-y-0"
+          >
+            {realStats.length === 3
+              ? realStats.map((stat) => {
+                  const Icon = stat.Icon;
+                  return (
+                    <div key={stat.key} className="flex min-h-[88px] items-center gap-4 px-5 py-5 sm:px-7">
+                      <span className="home-accent-surface flex size-10 shrink-0 items-center justify-center rounded-2xl">
+                        <Icon className="size-4" aria-hidden="true" />
+                      </span>
+                      <div>
+                        <p className="text-2xl font-bold tracking-[-0.03em] text-[var(--text)]">
+                          {formatNumber(stat.value)}
+                        </p>
+                        <p className="mt-1 text-sm font-medium text-[var(--muted)]">
+                          {stat.label}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              : valuePoints.map(({ label, Icon }) => (
+                  <div key={label} className="flex min-h-[88px] items-center gap-4 px-5 py-5 sm:px-7">
+                    <span className="home-accent-surface flex size-10 shrink-0 items-center justify-center rounded-2xl">
+                      <Icon className="size-4" aria-hidden="true" />
+                    </span>
+                    <p className="text-sm font-semibold leading-5 text-[var(--text)] sm:text-base">
+                      {label}
+                    </p>
+                  </div>
+                ))}
           </div>
         </div>
       </div>

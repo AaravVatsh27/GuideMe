@@ -1,5 +1,6 @@
-import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
-import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
+import { HomePageHeader } from "@/Frontend/views/home/home-page-header";
+import { HomePageFooter } from "@/Frontend/views/home/home-page-footer";
+import { HomeHowItWorksSection } from "@/Frontend/views/home/how-it-works-section";
 import { getPublicPlatformSnapshot, getPublicReviewSpotlights, type PublicPlatformSnapshot } from "@/Backend/server/public-data";
 
 import { HomeCommunitySection } from "@/Frontend/views/home/community-section";
@@ -25,14 +26,16 @@ export default async function Home() {
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#FAF5FF] text-[#1E1B4B]">
-      <HomepageHeader />
+    <main className="mentra-home min-h-screen overflow-x-hidden bg-[var(--bg)] text-[var(--text)]">
+      <HomePageHeader />
 
       <HeroSection snapshot={pageSnapshot} />
 
       <TrustStrip snapshot={pageSnapshot} />
 
       <ProblemSection />
+
+      <HomeHowItWorksSection />
 
       <MentorsSection snapshot={pageSnapshot} />
 
@@ -46,7 +49,7 @@ export default async function Home() {
 
       <FinalCtaSection snapshot={pageSnapshot} />
 
-      <HomepageFooter />
+      <HomePageFooter />
     </main>
   );
 }

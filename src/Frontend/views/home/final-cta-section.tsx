@@ -1,6 +1,7 @@
 /** Landing page: closing call to action. */
 
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { type PublicPlatformSnapshot } from "@/Backend/server/public-data";
 
 export function FinalCtaSection({
@@ -9,49 +10,59 @@ export function FinalCtaSection({
   snapshot: PublicPlatformSnapshot;
 }) {
   return (
-    <section id="cta" className="relative overflow-hidden bg-[#1E1B4B] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      {/* Background image stays untinted; the foreground card preserves text contrast. */}
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <Image
-          src="/brand/cta-campus-bg.jpg"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover object-center opacity-90 blur-[1px] scale-105"
-          priority={false}
-        />
-      </div>
-
+    <section id="cta" className="relative overflow-hidden bg-[var(--bg)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <div
-        className="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-[#7C3AED]/25 blur-[100px]"
+        className="home-ambient-glow pointer-events-none absolute -left-24 -top-24 size-80 rounded-full blur-[110px]"
         aria-hidden="true"
       />
 
       <div
-        className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-[#EC4899]/20 blur-[110px]"
+        className="home-ambient-glow pointer-events-none absolute -bottom-24 -right-24 size-80 rounded-full blur-[110px]"
         aria-hidden="true"
       />
 
       <div className="relative z-10 mx-auto max-w-5xl">
-        <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.12] bg-[#1E1B4B]/45 px-6 py-12 text-center shadow-[0_30px_90px_-50px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:px-10 sm:py-14">
+        <div
+          className="home-glass-card relative overflow-hidden px-6 py-12 text-center sm:px-10 sm:py-14"
+        >
           <div
-            className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-[#EC4899]/50 to-transparent"
+            className="pointer-events-none absolute inset-x-12 top-0 h-px bg-[var(--border)]"
             aria-hidden="true"
           />
 
           <div className="relative">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-violet-200">
+            <p className="home-section-label text-xs font-semibold uppercase tracking-[0.22em]">
               Your senior friend · your guide
             </p>
 
-            <h2 className="mx-auto mt-5 max-w-3xl text-3xl font-bold leading-tight tracking-[-0.04em] text-white sm:text-4xl lg:text-5xl">
-              Find the person who can make your next decision clearer.
+            <h2 className="mx-auto mt-5 max-w-3xl text-3xl font-bold leading-tight tracking-[-0.04em] text-[var(--text)] sm:text-4xl lg:text-5xl">
+              Find the person who can make your{" "}
+              <span className="text-[var(--accent)]">
+                next decision clearer.
+              </span>
             </h2>
 
-            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-violet-100/70 sm:text-base">
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-[var(--muted)] sm:text-base">
               Start with a free {snapshot.introMinutes}-minute conversation
               and see whether the mentor feels right for you.
             </p>
+
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link
+                href="/find-mentor"
+                className="home-primary-button group inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-sm font-semibold transition duration-200 hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none"
+              >
+                Find My Senior Friend
+                <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none" />
+              </Link>
+
+              <Link
+                href="/auth/signup"
+                className="home-secondary-button inline-flex min-h-12 items-center justify-center rounded-full px-6 text-sm font-semibold transition duration-200 motion-reduce:transition-none"
+              >
+                Create free account
+              </Link>
+            </div>
           </div>
         </div>
       </div>

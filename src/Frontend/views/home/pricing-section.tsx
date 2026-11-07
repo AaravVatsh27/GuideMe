@@ -25,7 +25,7 @@ export function PricingSection({
       name: "Free Fit Check",
       tagline: "Test chemistry with zero risk",
       badge: "100% Free",
-      badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200/70",
+      badgeColor: "bg-emerald-400/10 text-emerald-200 border-emerald-300/20",
       price: "₹0",
       period: `first ${introMinutes}-min call`,
       subPriceNote: "No card or upfront payment needed",
@@ -48,8 +48,8 @@ export function PricingSection({
       id: "deep-dive",
       name: "1:1 Strategy Session",
       tagline: "Tailored deep-dive for your exam target",
-      badge: "Most Popular",
-      badgeColor: "bg-[#7C3AED] text-white border-transparent",
+      badge: "Recommended",
+      badgeColor: "bg-[rgba(79,70,229,0.18)] text-[#C7D2FE] border-white/[0.08]",
       price: typicalPrice,
       period: `/ session (${sessionLengths} mins)`,
       subPriceNote: `Fair mentor rates · ${priceRange}`,
@@ -74,10 +74,10 @@ export function PricingSection({
       name: "Milestone Mentorship",
       tagline: "Ongoing checkpoints till exam day",
       badge: "Continuous Prep",
-      badgeColor: "bg-violet-50 text-[#7C3AED] border-violet-200/70",
+      badgeColor: "bg-[rgba(79,70,229,0.18)] text-[#A5B4FC] border-white/[0.08]",
       price: "Pay-As-You-Go",
       period: "flexible milestone check-ins",
-      subPriceNote: "Zero subscription lock-in or recurring auto-debit",
+      subPriceNote: "Fair, transparent pricing set by each mentor.",
       description:
         "Stay accountable with regular senior checkpoints throughout your entire preparation cycle, right through counselling rounds.",
       features: [
@@ -104,21 +104,19 @@ export function PricingSection({
     },
     {
       icon: Zap,
-      title: "Zero Subscription Traps",
-      description:
-        "No monthly recurring charges, auto-debits, or forced bundles. You pay strictly per session only when you need guidance.",
+      title: "Mentor-set pricing",
+      description: "Fair, transparent pricing set by each mentor.",
     },
     {
       icon: GraduationCap,
-      title: "Verified Senior Mentors",
-      description:
-        "Every senior is verified with college IDs & institutional credentials from IITs, BITS, AIIMS, NITs, and top universities.",
+      title: "Senior review process",
+      description: "Every senior is reviewed before they go live.",
     },
     {
       icon: Lock,
-      title: "Secure & RBI-Compliant",
+      title: "Secure payments",
       description:
-        "Encrypted transactions powered by standard Indian payment gateways. Pay safely via UPI, Net Banking, or cards.",
+        "Pay via UPI, Net Banking, or cards.",
     },
   ];
 
@@ -136,35 +134,35 @@ export function PricingSection({
       a: `${refundPolicy} Refunds go back to your original payment method. To move a session, cancel it and book a new slot.`,
     },
     {
-      q: "How does Mentra compare to expensive coaching institute counselling?",
-      a: "Traditional coaching institutes charge ₹30,000 to ₹1,00,000+ upfront for generic advice from counsellors who haven't taken competitive exams in years. Mentra gives you direct 1:1 access to students who actually cracked it recently, starting at ₹0.",
+      q: "How is pricing set?",
+      a: "Fair, transparent pricing set by each mentor.",
     },
   ];
 
   return (
     <section
       id="pricing"
-      className="relative scroll-mt-24 overflow-hidden bg-[#FAF5FF] py-20 sm:py-24 lg:py-28"
+      className="relative scroll-mt-24 overflow-hidden bg-[#07060F] py-20 sm:py-24 lg:py-28"
     >
       {/* Ambient background glows */}
       <div
-        className="pointer-events-none absolute left-1/2 top-1/4 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#7C3AED]/[0.07] blur-[140px]"
+        className="pointer-events-none absolute -left-32 top-20 size-[26rem] rounded-full bg-[rgba(79,70,229,0.18)] blur-[120px]"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute right-10 bottom-20 h-[350px] w-[350px] rounded-full bg-[#EC4899]/[0.05] blur-[120px]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-16 bg-gradient-to-b from-transparent to-[#07060F] sm:h-20 lg:h-24"
         aria-hidden="true"
       />
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-[#1E1B4B] sm:text-4xl lg:text-5xl">
-            Invest in clarity, not coaching packages.
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            Fair, transparent pricing set by each mentor.
           </h2>
 
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[#5B6475] sm:text-lg">
-            Start with a 100% free intro call to test chemistry. When you find the right senior guide, book focused 1:1 sessions with zero subscription lock-in.
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/[0.65] sm:text-lg">
+            Fair, transparent pricing set by each mentor.
           </p>
         </div>
 
@@ -173,29 +171,36 @@ export function PricingSection({
           {pricingTiers.map((tier) => (
             <article
               key={tier.id}
-              className={`relative flex flex-col justify-between rounded-[2rem] p-7 transition duration-300 sm:p-8 ${
+              className={`relative flex flex-col justify-between overflow-visible rounded-[24px] border p-7 transition-colors duration-200 motion-reduce:transition-none sm:p-8 ${
                 tier.featured
-                  ? "border-2 border-[#7C3AED]/40 bg-white shadow-[0_24px_50px_-20px_rgba(124,58,237,0.28)] lg:-translate-y-2.5 z-10"
-                  : "border border-violet-100/90 bg-white/85 shadow-sm backdrop-blur-md hover:border-violet-200 hover:shadow-md"
+                  ? "z-10 border-transparent shadow-[0_0_44px_rgba(79,70,229,0.18)] lg:-translate-y-2.5"
+                  : "border-white/[0.08] bg-white/[0.04] shadow-sm backdrop-blur-md hover:border-[rgba(165,180,252,0.35)]"
               }`}
+              style={
+                tier.featured
+                  ? {
+                      background:
+                        "radial-gradient(circle at top left, rgba(255,255,255,0.06), transparent 52%) padding-box, linear-gradient(rgba(255,255,255,0.04), rgba(255,255,255,0.04)) padding-box, linear-gradient(135deg, #4F46E5, #7C3AED) border-box",
+                    }
+                  : {
+                      backgroundImage:
+                        "radial-gradient(circle at top left, rgba(255,255,255,0.06), transparent 52%)",
+                    }
+              }
             >
               {tier.featured && (
                 <>
-                  <div
-                    className="pointer-events-none absolute -inset-px rounded-[2rem] bg-gradient-to-br from-[#7C3AED]/10 via-[#EC4899]/[0.05] to-[#F97316]/[0.03]"
-                    aria-hidden="true"
-                  />
-                  <div className="absolute -top-3.5 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-[#7C3AED] via-[#8B5CF6] to-[#EC4899] px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-md">
+                  <div className="absolute -top-3.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-md">
                     <Sparkles className="size-3 text-white" />
-                    <span>Most Chosen · Best Value</span>
+                    <span>Recommended</span>
                   </div>
                 </>
               )}
 
-              <div className="relative">
+              <div className="relative z-10">
                 {/* Header: Name & Badge */}
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-lg font-bold text-[#1E1B4B]">
+                  <h3 className="text-lg font-bold text-white">
                     {tier.name}
                   </h3>
                   <span
@@ -204,46 +209,40 @@ export function PricingSection({
                     {tier.badge}
                   </span>
                 </div>
-                <p className="mt-1 text-xs font-medium text-slate-500">
+                <p className="mt-1 text-xs font-medium text-white/[0.65]">
                   {tier.tagline}
                 </p>
 
                 {/* Pricing Display */}
-                <div className="mt-6 border-b border-violet-100/80 pb-6">
+                <div className="mt-6 border-b border-white/[0.08] pb-6">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-4xl font-extrabold tracking-tight text-[#1E1B4B]">
+                    <span className="text-4xl font-extrabold tracking-tight text-white">
                       {tier.price}
                     </span>
-                    <span className="text-xs font-medium text-slate-500">
+                    <span className="text-xs font-medium text-white/[0.65]">
                       {tier.period}
                     </span>
                   </div>
-                  <p className="mt-1.5 text-xs font-medium text-[#7C3AED]">
+                  <p className="mt-1.5 text-xs font-medium text-[#A5B4FC]">
                     {tier.subPriceNote}
                   </p>
-                  <p className="mt-3 text-sm leading-relaxed text-[#5B6475]">
+                  <p className="mt-3 text-sm leading-relaxed text-white/[0.65]">
                     {tier.description}
                   </p>
                 </div>
 
                 {/* Feature Checklist */}
                 <div className="mt-6">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-[#1E1B4B]/80">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#A5B4FC]">
                     What&apos;s included:
                   </p>
                   <ul className="mt-4 space-y-3">
                     {tier.features.map((feature) => (
                       <li
                         key={feature}
-                        className="flex items-start gap-2.5 text-sm text-[#4B5875]"
+                        className="flex items-start gap-2.5 text-sm text-white/[0.65]"
                       >
-                        <span
-                          className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${
-                            tier.featured
-                              ? "bg-violet-100 text-[#7C3AED]"
-                              : "bg-emerald-50 text-emerald-600"
-                          }`}
-                        >
+                        <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[rgba(79,70,229,0.18)] text-[#A5B4FC]">
                           <Check className="size-3" />
                         </span>
                         <span className="leading-snug">{feature}</span>
@@ -254,19 +253,19 @@ export function PricingSection({
               </div>
 
               {/* Card Footer: CTA & Audience note */}
-              <div className="relative mt-8 border-t border-violet-100/60 pt-6">
+              <div className="relative z-10 mt-8 border-t border-white/[0.08] pt-6">
                 <Link
                   href={tier.ctaHref as Route}
-                  className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                  className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors duration-200 motion-reduce:transition-none ${
                     tier.ctaVariant === "primary"
-                      ? "bg-[#7C3AED] text-white shadow-[0_12px_24px_-10px_rgba(124,58,237,0.75)] hover:-translate-y-0.5 hover:bg-[#6D28D9] hover:shadow-[0_16px_30px_-10px_rgba(124,58,237,0.85)]"
-                      : "border border-violet-200/90 bg-white text-[#1E1B4B] shadow-xs hover:border-violet-300 hover:bg-violet-50/70 hover:text-[#7C3AED]"
+                      ? "bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white shadow-[0_12px_24px_-10px_rgba(79,70,229,0.55)] hover:shadow-[0_16px_30px_-10px_rgba(79,70,229,0.65)]"
+                      : "border border-white/[0.2] text-white hover:bg-white/[0.08]"
                   }`}
                 >
                   <span>{tier.ctaText}</span>
                   <ArrowRight className="size-4" />
                 </Link>
-                <p className="mt-3 text-center text-[11px] font-medium text-slate-500">
+                <p className="mt-3 text-center text-[11px] font-medium text-white/[0.65]">
                   {tier.audience}
                 </p>
               </div>
@@ -275,19 +274,25 @@ export function PricingSection({
         </div>
 
         {/* Trust & Risk-Reversal Guarantee Strip */}
-        <div className="mt-14 rounded-3xl border border-violet-100/90 bg-white/90 p-6 shadow-sm backdrop-blur-md sm:p-8">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div
+          className="relative mt-14 overflow-hidden rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-6 shadow-sm backdrop-blur-md transition-colors duration-200 hover:border-[rgba(165,180,252,0.35)] motion-reduce:transition-none sm:p-8"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at top left, rgba(255,255,255,0.06), transparent 52%)",
+          }}
+        >
+          <div className="relative grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {trustGuarantees.map((item) => {
               const Icon = item.icon;
               return (
                 <div key={item.title} className="flex flex-col items-start">
-                  <div className="flex size-10 items-center justify-center rounded-2xl bg-violet-50 text-[#7C3AED]">
+                  <div className="flex size-10 items-center justify-center rounded-2xl bg-[rgba(79,70,229,0.18)] text-[#A5B4FC]">
                     <Icon className="size-5" />
                   </div>
-                  <h4 className="mt-3.5 text-sm font-bold text-[#1E1B4B]">
+                  <h4 className="mt-3.5 text-sm font-bold text-white">
                     {item.title}
                   </h4>
-                  <p className="mt-1.5 text-xs leading-relaxed text-[#5B6475]">
+                  <p className="mt-1.5 text-xs leading-relaxed text-white/[0.65]">
                     {item.description}
                   </p>
                 </div>
@@ -296,76 +301,94 @@ export function PricingSection({
           </div>
         </div>
 
-        {/* Mentra vs Traditional Coaching Institutes Comparison */}
-        <div className="mt-12 overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-white via-[#FAF5FF] to-white p-6 shadow-sm sm:p-8">
+        {/* Pricing details */}
+        <div
+          className="relative mt-12 overflow-hidden rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-6 shadow-sm transition-colors duration-200 hover:border-[rgba(165,180,252,0.35)] motion-reduce:transition-none sm:p-8"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at top left, rgba(255,255,255,0.06), transparent 52%)",
+          }}
+        >
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">
-              The Honest Difference
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#A5B4FC]">
+              Pricing details
             </p>
-            <h3 className="mt-2 text-xl font-bold text-[#1E1B4B] sm:text-2xl">
-              Why Mentra beats expensive coaching packages
+            <h3 className="mt-2 text-xl font-bold text-white sm:text-2xl">
+              Fair, transparent pricing set by each mentor.
             </h3>
           </div>
 
           <div className="mt-8 grid gap-6 md:grid-cols-2">
-            {/* Traditional institutes */}
-            <div className="rounded-2xl border border-rose-100 bg-rose-50/40 p-5 sm:p-6">
+            {/* Session pricing */}
+            <div
+              className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-5 transition-colors duration-200 hover:border-[rgba(165,180,252,0.35)] motion-reduce:transition-none sm:p-6"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at top left, rgba(255,255,255,0.06), transparent 52%)",
+              }}
+            >
               <div className="flex items-center gap-2">
-                <span className="flex size-6 items-center justify-center rounded-full bg-rose-100 text-xs font-bold text-rose-600">
-                  ✕
+                <span className="flex size-6 items-center justify-center rounded-full bg-rose-400/15 text-xs font-bold text-rose-200">
+                  •
                 </span>
-                <h4 className="text-sm font-bold text-slate-800">
-                  Traditional Coaching & Career Institutes
+                <h4 className="text-sm font-bold text-white">
+                  Session pricing
                 </h4>
               </div>
-              <ul className="mt-4 space-y-2.5 text-xs text-slate-600">
+              <ul className="mt-4 space-y-2.5 text-xs text-white/[0.65]">
                 <li className="flex items-center gap-2">
-                  <span className="font-bold text-rose-500">−</span>
-                  <span>₹25,000 – ₹1,00,000+ non-refundable upfront packages</span>
+                  <span className="font-bold text-rose-300">•</span>
+                  <span>Fair, transparent pricing set by each mentor.</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="font-bold text-rose-500">−</span>
-                  <span>Counsellors who never took modern JEE/NEET/BITS/CUET</span>
+                  <span className="font-bold text-rose-300">•</span>
+                  <span>Fair, transparent pricing set by each mentor.</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="font-bold text-rose-500">−</span>
-                  <span>Generic batch advice without seeing your mock answers</span>
+                  <span className="font-bold text-rose-300">•</span>
+                  <span>Fair, transparent pricing set by each mentor.</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="font-bold text-rose-500">−</span>
-                  <span>Zero refunds if the advice doesn&apos;t match campus reality</span>
+                  <span className="font-bold text-rose-300">•</span>
+                  <span>Fair, transparent pricing set by each mentor.</span>
                 </li>
               </ul>
             </div>
 
             {/* Mentra */}
-            <div className="rounded-2xl border border-violet-200 bg-white p-5 shadow-xs sm:p-6">
+            <div
+              className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-5 shadow-xs transition-colors duration-200 hover:border-[rgba(165,180,252,0.35)] motion-reduce:transition-none sm:p-6"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at top left, rgba(255,255,255,0.06), transparent 52%)",
+              }}
+            >
               <div className="flex items-center gap-2">
-                <span className="flex size-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
-                  ✓
+                <span className="flex size-6 items-center justify-center rounded-full bg-[rgba(79,70,229,0.18)] text-xs font-bold text-[#A5B4FC]">
+                  •
                 </span>
-                <h4 className="text-sm font-bold text-[#1E1B4B]">
-                  Mentra 1:1 Senior Guidance
+                <h4 className="text-sm font-bold text-white">
+                  Mentor-set pricing
                 </h4>
               </div>
-              <ul className="mt-4 space-y-2.5 text-xs text-[#4B5875]">
+              <ul className="mt-4 space-y-2.5 text-xs text-white/[0.65]">
                 <li className="flex items-center gap-2">
-                  <span className="font-bold text-emerald-600">✓</span>
-                  <span className="font-medium text-[#1E1B4B]">
-                    ₹0 free intro call · Pay per session only when needed
+                  <span className="font-bold text-[#A5B4FC]">•</span>
+                  <span className="font-medium text-white">
+                    Fair, transparent pricing set by each mentor.
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="font-bold text-emerald-600">✓</span>
-                  <span>Verified seniors studying at your dream college right now</span>
+                  <span className="font-bold text-[#A5B4FC]">•</span>
+                  <span>Fair, transparent pricing set by each mentor.</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="font-bold text-emerald-600">✓</span>
-                  <span>Tailored advice on your specific rank, marks, and bottlenecks</span>
+                  <span className="font-bold text-[#A5B4FC]">•</span>
+                  <span>Fair, transparent pricing set by each mentor.</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="font-bold text-emerald-600">✓</span>
-                  <span>Full refund if your mentor doesn&apos;t show up</span>
+                  <span className="font-bold text-[#A5B4FC]">•</span>
+                  <span>Fair, transparent pricing set by each mentor.</span>
                 </li>
               </ul>
             </div>
@@ -375,10 +398,10 @@ export function PricingSection({
         {/* Pricing FAQ Accordion */}
         <div className="mx-auto mt-14 max-w-3xl">
           <div className="text-center">
-            <h3 className="text-xl font-bold text-[#1E1B4B] sm:text-2xl">
+            <h3 className="text-xl font-bold text-white sm:text-2xl">
               Frequently asked questions about pricing
             </h3>
-            <p className="mt-2 text-sm text-[#5B6475]">
+            <p className="mt-2 text-sm text-white/[0.65]">
               Everything you need to know about sessions, payments, and refunds.
             </p>
           </div>
@@ -387,14 +410,18 @@ export function PricingSection({
             {faqs.map((faq, idx) => (
               <details
                 key={faq.q}
-                className="group rounded-2xl border border-violet-100/90 bg-white/90 p-5 shadow-xs transition-all hover:border-violet-200 open:border-violet-200 open:bg-white open:shadow-sm"
+                className="group rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-5 shadow-xs transition-colors duration-200 hover:border-[rgba(165,180,252,0.35)] open:border-[rgba(165,180,252,0.35)] motion-reduce:transition-none"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at top left, rgba(255,255,255,0.06), transparent 52%)",
+                }}
                 {...(idx === 0 ? { open: true } : {})}
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-[#1E1B4B] select-none sm:text-base">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-white select-none sm:text-base">
                   <span>{faq.q}</span>
-                  <ChevronDown className="ml-3 size-4 shrink-0 text-[#7C3AED] transition-transform duration-200 group-open:rotate-180" />
+                  <ChevronDown className="ml-3 size-4 shrink-0 text-[#A5B4FC] transition-transform duration-200 group-open:rotate-180 motion-reduce:transform-none motion-reduce:transition-none" />
                 </summary>
-                <p className="mt-3 text-xs leading-relaxed text-[#5B6475] sm:text-sm">
+                <p className="mt-3 text-xs leading-relaxed text-white/[0.65] sm:text-sm">
                   {faq.a}
                 </p>
               </details>

@@ -291,6 +291,138 @@ html:has([data-admin-shell]) {
   }
 }
 
+/* Home page palette and shared landing-page surfaces. Scoped to / only. */
+.mentra-home {
+  --bg: #0B0A0A;
+  --card: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #F2A65A;
+  --glow: #C8663A;
+  --text: #F5F1EA;
+  --muted: #A39B90;
+
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.mentra-home .home-primary-button,
+.mentra-home .home-secondary-button {
+  box-shadow: none;
+  text-decoration: none;
+  transition-property: color, background-color, border-color;
+  transition-duration: 180ms;
+}
+
+.mentra-home .home-primary-button {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.mentra-home .home-primary-button:hover {
+  border-color: var(--glow);
+  background: var(--glow);
+  color: var(--bg);
+}
+
+.mentra-home .home-secondary-button {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+.mentra-home .home-secondary-button:hover {
+  border-color: var(--accent);
+  background: var(--card);
+  color: var(--text);
+}
+
+.mentra-home .home-glass-card {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  background-image: none;
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+}
+
+.mentra-home .home-section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: transparent;
+  padding: 0.375rem 0.75rem;
+  color: var(--accent);
+}
+
+.mentra-home .home-section-label::before {
+  width: 0.375rem;
+  height: 0.375rem;
+  flex: none;
+  border-radius: 9999px;
+  background: var(--accent);
+  content: "";
+}
+
+.mentra-home .home-nav {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.mentra-home .home-nav-scrolled {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  box-shadow: none;
+  backdrop-filter: blur(16px);
+}
+
+.mentra-home .home-ambient-glow {
+  background-color: color-mix(in srgb, var(--glow) 18%, transparent);
+}
+
+.mentra-home .home-accent-surface {
+  background-color: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+.mentra-home .home-logo-lockup {
+  position: relative;
+  width: 156px;
+  height: 40px;
+}
+
+.mentra-home .home-logo-mark {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40px;
+  height: 40px;
+  background-color: var(--accent);
+  mask: url("/brand/mentra-icon.png") center / contain no-repeat;
+  -webkit-mask: url("/brand/mentra-icon.png") center / contain no-repeat;
+}
+
+.mentra-home .home-logo-wordmark-crop {
+  position: absolute;
+  top: 0;
+  left: 40px;
+  width: 116px;
+  height: 40px;
+  overflow: hidden;
+}
+
+.mentra-home .home-logo-wordmark {
+  position: absolute;
+  top: 0;
+  left: -40px;
+  width: 156px;
+  height: 40px;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
