@@ -63,8 +63,8 @@ export function PricingSection({
     },
     {
       id: "ongoing",
-      name: "Milestone Mentorship",
-      tagline: "Ongoing checkpoints till exam day",
+      name: "Ongoing Guidance",
+      tagline: "Book follow-up sessions whenever you need them.",
       pricePrefix: null,
       price: "Pay-As-You-Go",
       period: "flexible milestone check-ins",
@@ -109,7 +109,10 @@ export function PricingSection({
     },
     {
       q: "How do mentors set their prices?",
-      a: `Mentors set their own fees based on their year, degree and preparation experience. Sessions are ${sessionLengths} minutes, and prices on Mentra are currently ${priceRange}. There are no hidden platform surcharges.`,
+      // Without any mentor prices, priceRange is a fallback phrase that doesn't fit this sentence.
+      a: hasRealPrice
+        ? `Mentors set their own fees based on their year, degree and preparation experience. Sessions are ${sessionLengths} minutes, and prices on Mentra are currently ${priceRange}. There are no hidden platform surcharges.`
+        : "Mentors set their own prices. See each mentor's profile for current rates.",
     },
     {
       q: "What happens if my mentor doesn't show up or I need to reschedule?",

@@ -3,6 +3,7 @@
 import { type PublicMentorCard, type PublicPlatformSnapshot, type PublicReviewSpotlight } from "@/Backend/server/public-data";
 import { formatPaise } from "@/shared/format";
 import { roundToWholeRupees } from "@/shared/money";
+import { PLATFORM_CUT } from "@/shared/constants";
 
 const SCHOOL_MENTOR_YEARS = new Set([1, 2]);
 
@@ -112,22 +113,26 @@ export function getPriceRange(snapshot: PublicPlatformSnapshot) {
   return "Pricing updates as mentors go live";
 }
 
-function estimateMonthlyEarnings(
-  sessionsPerWeek: number,
-  averagePricePaise: number,
-) {
-  return roundToWholeRupees(sessionsPerWeek * averagePricePaise * 4.33 * 0.8);
+/** Sessions per week in the mentor earnings example. */
+export const EXAMPLE_SESSIONS_PER_WEEK = 4;
+
+/** Monthly earnings for a mentor at this price, after the platform's cut (about 4.33 weeks a month). */
+function estimateMonthlyEarnings(sessionsPerWeek: number, pricePaise: number) {
+  return roundToWholeRupees(sessionsPerWeek * pricePaise * 4.33 * (1 - PLATFORM_CUT));
 }
 
+/**
+ * The mentor earnings example: EXAMPLE_SESSIONS_PER_WEEK sessions a week at the lowest current
+ * mentor price. Null when no mentor has set a price, so the page hides the example instead of
+ * inventing one.
+ */
 export function getMentorIncomeEstimate(snapshot: PublicPlatformSnapshot) {
-  const pricePaise =
-    snapshot.averagePaidSessionPricePaise > 0
-      ? snapshot.averagePaidSessionPricePaise
-      : snapshot.minPricePaise > 0
-        ? snapshot.minPricePaise
-        : 24900;
+  if (snapshot.minPricePaise <= 0) return null;
 
-  return estimateMonthlyEarnings(4, pricePaise);
+  return {
+    pricePaise: snapshot.minPricePaise,
+    monthlyPaise: estimateMonthlyEarnings(EXAMPLE_SESSIONS_PER_WEEK, snapshot.minPricePaise),
+  };
 }
 
 export function getReviewInitials(review: PublicReviewSpotlight) {

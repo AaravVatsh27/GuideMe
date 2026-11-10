@@ -27,7 +27,6 @@ const footerColumns: { title: string; links: FooterLink[] }[] = [
     links: [
       { label: "For Mentors", href: "/#for-mentors" },
       { label: "Become a Mentor", href: "/auth/signup?role=MENTOR" },
-      { label: "Admin / HR Login", href: "/admin/signin" },
     ],
   },
   {

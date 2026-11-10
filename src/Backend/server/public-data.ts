@@ -71,7 +71,7 @@ function buildYearLabel(college: string | null, year: number | null): string {
     5: "Masters Year 1", 6: "Masters Year 2",
   };
   const parts = [college, year ? yearMap[year] : null].filter(Boolean);
-  return parts.join(" · ") || "GuideMe Mentor";
+  return parts.join(" · ");
 }
 
 function examToLabel(raw: string): string {
@@ -231,7 +231,7 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
 
       // new: top 3 featured mentors for homepage hero
       db.mentorProfile.findMany({
-        where: { isVerified: true, isActive: true },
+        where: { isVerified: true, isActive: true, user: { is: { name: { not: "" } } } },
         include: {
           user: {
             select: {
@@ -297,8 +297,9 @@ export async function getPublicPlatformSnapshot(): Promise<PlatformSnapshot> {
       .map(([exam]) => ({ label: examToLabel(exam), query: examToLabel(exam) }));
 
     // map featured mentors to PublicMentorCard shape
-    const featuredMentors: PublicMentorCard[] = featuredMentorsRows.map((m) => {
-      const name = m.user?.name ?? "GuideMe Mentor";
+    // Nameless accounts are excluded in the query; the trim check also skips whitespace-only names.
+    const featuredMentors: PublicMentorCard[] = featuredMentorsRows.filter((m) => Boolean(m.user?.name?.trim())).map((m) => {
+      const name = m.user.name.trim();
       return {
         id: m.userId,
         name,
@@ -359,6 +360,8 @@ export async function getPublicMentorDirectory(
     const baseWhere: Prisma.MentorProfileWhereInput = {
       isVerified: true,
       isActive: true,
+      // Accounts without a name never get a public mentor card.
+      user: { is: { name: { not: "" } } },
     };
 
     if (query) {
@@ -440,8 +443,8 @@ export async function getPublicMentorDirectory(
       }),
     ]);
 
-    const mentors: PublicMentorCard[] = rawMentors.map((m) => {
-      const name = m.user?.name ?? "GuideMe Mentor";
+    const mentors: PublicMentorCard[] = rawMentors.filter((m) => Boolean(m.user?.name?.trim())).map((m) => {
+      const name = m.user.name.trim();
       return {
         id: m.userId,
         name,

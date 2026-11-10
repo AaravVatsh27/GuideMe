@@ -38,7 +38,7 @@ export function HomeCommunitySection() {
           </p>
 
           <h2 className="mt-4 text-balance text-3xl font-bold leading-tight tracking-[-0.04em] text-[var(--text)] sm:text-4xl">
-            A space to ask, share and learn together.
+            Ask seniors your questions, one-on-one.
           </h2>
 
           <p className="mt-4 text-base leading-7 text-[var(--muted)]">

@@ -20,7 +20,7 @@ const topicPills: { label: string; Icon: LucideIcon }[] = [
   { label: "Higher Studies", Icon: GraduationCap },
   { label: "Placements", Icon: Briefcase },
   { label: "Careers", Icon: Compass },
-  { label: "Skills", Icon: Laptop },
+  { label: "Exam Prep", Icon: Laptop },
   { label: "College Life", Icon: School },
 ];
 

@@ -5,7 +5,7 @@ import { ArrowRight, Check, GraduationCap } from "lucide-react";
 import { type PublicPlatformSnapshot } from "@/Backend/server/public-data";
 import { formatPaise } from "@/shared/format";
 
-import { getMentorIncomeEstimate } from "@/Frontend/views/home/home-helpers";
+import { EXAMPLE_SESSIONS_PER_WEEK, getMentorIncomeEstimate } from "@/Frontend/views/home/home-helpers";
 import { PLATFORM_CUT } from "@/shared/constants";
 
 export function MentorIncomeSection({
@@ -14,6 +14,8 @@ export function MentorIncomeSection({
   snapshot: PublicPlatformSnapshot;
 }) {
   const estimate = getMentorIncomeEstimate(snapshot);
+  const mentorSharePercent = Math.round((1 - PLATFORM_CUT) * 100);
+  const platformFeePercent = Math.round(PLATFORM_CUT * 100);
 
   return (
     <section
@@ -96,36 +98,40 @@ export function MentorIncomeSection({
                 <div
                   className="home-glass-card mt-8 p-6"
                 >
-                  <p className="text-sm font-medium text-[var(--muted)]">
-                    Example at 4 sessions / week
-                  </p>
+                  {/* The earnings example only appears once a mentor has set a real price */}
+                  {estimate ? (
+                    <>
+                      <p className="text-sm font-medium text-[var(--muted)]">
+                        Example at {EXAMPLE_SESSIONS_PER_WEEK} sessions / week
+                      </p>
 
-                  <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <p className="text-4xl font-bold tracking-[-0.04em] text-[var(--accent)] sm:text-5xl">
-                      {formatPaise(estimate)}
-                    </p>
+                      <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                        <p className="text-4xl font-bold tracking-[-0.04em] text-[var(--accent)] sm:text-5xl">
+                          {formatPaise(estimate.monthlyPaise)}
+                        </p>
 
-                    <span className="text-sm font-medium text-[var(--muted)]">
-                      / month
-                    </span>
-                  </div>
+                        <span className="text-sm font-medium text-[var(--muted)]">
+                          / month
+                        </span>
+                      </div>
 
-                  <p className="mt-4 max-w-lg text-sm leading-6 text-[var(--muted)]">
-                    Estimate based on the current platform booking value and a{" "}
-                    {Math.round((1 - PLATFORM_CUT) * 100)}% mentor share.
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
-                    Illustrative estimate. Actual earnings depend on the sessions you complete.
-                  </p>
+                      <p className="mt-4 max-w-lg text-sm leading-6 text-[var(--muted)]">
+                        Example: {EXAMPLE_SESSIONS_PER_WEEK} sessions a week at the lowest current mentor price ({formatPaise(estimate.pricePaise)}), after the {platformFeePercent}% platform fee.
+                      </p>
+                      <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
+                        Illustrative estimate. Actual earnings depend on the sessions you complete.
+                      </p>
+                    </>
+                  ) : null}
 
-                  <div className="home-glass-card mt-7 p-4">
+                  <div className={`home-glass-card p-4 ${estimate ? "mt-7" : ""}`}>
                     <div className="flex items-center justify-between text-xs font-semibold text-[var(--muted)]">
                       <span>Mentor share</span>
-                      <span className="text-[var(--text)]">80%</span>
+                      <span className="text-[var(--text)]">{mentorSharePercent}%</span>
                     </div>
 
                     <div className="mt-3 h-3 overflow-hidden rounded-full bg-[var(--card)]">
-                      <div className="h-full w-[80%] rounded-full bg-[var(--accent)]" />
+                      <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${mentorSharePercent}%` }} />
                     </div>
 
                     <div className="mt-3 flex justify-between text-[11px] text-[var(--muted)]">

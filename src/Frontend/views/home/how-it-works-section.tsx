@@ -13,6 +13,7 @@ import type { LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { HowItWorksCubeFallback } from "@/Frontend/views/home/how-it-works-cube-fallback";
+import { FREE_INTRO_DURATION } from "@/shared/constants";
 
 const HowItWorksCube = dynamic(() => import("./how-it-works-cube"), {
   ssr: false,
@@ -57,7 +58,7 @@ const steps: HowItWorksStep[] = [
     index: "03 —",
     icon: MessageCircle,
     title: "Start with a free intro",
-    caption: "A 10-minute call to see if it feels right.",
+    caption: `A ${FREE_INTRO_DURATION}-minute call to see if it feels right.`,
     placement: "order-4 md:order-none md:col-start-1 md:row-start-2",
   },
   {

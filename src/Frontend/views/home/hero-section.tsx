@@ -18,7 +18,7 @@ const HeroBackground = dynamic(() => import("./hero-background"), {
  */
 const heroTopicChips = [
   { label: "Higher Studies", Icon: GraduationCap, position: "left-[4%] top-[14%]", delay: "0s", connector: true },
-  { label: "Technical Skills", Icon: Laptop, position: "left-[46%] top-[4%]", delay: "-3s", connector: true },
+  { label: "Exam Prep", Icon: Laptop, position: "left-[46%] top-[4%]", delay: "-3s", connector: true },
   { label: "Career Guidance", Icon: Briefcase, position: "left-[12%] top-[62%]", delay: "-1.5s", connector: false },
   { label: "College & More", Icon: School, position: "left-[54%] top-[76%]", delay: "-4.5s", connector: false },
 ];
@@ -101,7 +101,7 @@ export function HeroSection({
               {hasRealPrice ? (
                 <>
                   <span className="font-semibold text-[var(--accent)]">
-                    {getStartingPrice(snapshot)} / session
+                    From {getStartingPrice(snapshot)} / session
                   </span>
                   <span aria-hidden="true">·</span>
                 </>
@@ -247,8 +247,8 @@ export function TrustStrip({
       Icon: HeartHandshake,
     },
     {
-      title: "A Trusted Community",
-      subline: "Verified mentors, reviewed before they go live.",
+      title: "Reviewed Mentors",
+      subline: "Approved by our team before they go live.",
       Icon: Users,
     },
   ];
