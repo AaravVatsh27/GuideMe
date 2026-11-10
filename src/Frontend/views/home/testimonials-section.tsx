@@ -84,13 +84,13 @@ export function TestimonialsSection({
         </figure>
 
         {reviews.length > 1 ? (
-          <div className="mt-6 flex justify-center gap-1" role="group" aria-label="Choose a review">
+          <div className="mt-4 flex justify-center" role="group" aria-label="Choose a review">
             {reviews.map((item, index) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setActiveIndex(index)}
-                className="flex size-6 items-center justify-center rounded-full"
+                className="flex size-11 items-center justify-center rounded-full"
                 aria-label={`Show review ${index + 1} of ${reviews.length}`}
                 aria-current={index === activeIndex ? "true" : undefined}
               >

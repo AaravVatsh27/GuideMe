@@ -73,7 +73,8 @@ export function HeroSection({
               </span>
             </h1>
 
-            <p className="mt-7 max-w-xl text-base leading-7 text-[var(--muted)] sm:text-lg sm:leading-8">
+            {/* Below 1280px this paragraph crosses the light column, so it uses a lighter tone to keep 4.5:1 contrast */}
+            <p className="mt-7 max-w-xl text-base leading-7 text-[color-mix(in_srgb,var(--text)_85%,var(--bg))] sm:text-lg sm:leading-8 xl:text-[var(--muted)]">
               One honest conversation can change everything. Talk to a
               college senior who has recently walked the same road and can
               help you choose with more clarity.

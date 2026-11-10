@@ -47,8 +47,9 @@ const socialLinks = [
     : []),
 ];
 
+// Each footer link is a full 44px-tall tap target.
 const linkClass =
-  "text-sm text-[var(--muted)] transition-colors hover:text-[var(--text)] motion-reduce:transition-none";
+  "inline-flex min-h-11 items-center text-sm text-[var(--muted)] transition-colors hover:text-[var(--text)] motion-reduce:transition-none";
 
 function FooterAnchor({ link }: { link: FooterLink }) {
   // mailto: and other external links use a plain anchor; internal routes use Link.
@@ -75,7 +76,7 @@ export function HomePageFooter() {
             <Link
               href="/"
               aria-label="Mentra home"
-              className="inline-flex items-center transition-opacity hover:opacity-90 motion-reduce:transition-none"
+              className="inline-flex min-h-11 items-center transition-opacity hover:opacity-90 motion-reduce:transition-none"
             >
               <MentraLogo variant="light" layout="horizontal" showTagline={true} size="sm" />
             </Link>
@@ -90,7 +91,7 @@ export function HomePageFooter() {
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="flex size-10 items-center justify-center rounded-full border border-[var(--border)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] motion-reduce:transition-none"
+                  className="flex size-11 items-center justify-center rounded-full border border-[var(--border)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] motion-reduce:transition-none"
                   {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 >
                   <Icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
@@ -104,7 +105,7 @@ export function HomePageFooter() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
                 {column.title}
               </p>
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-2">
                 {column.links.map((link) => (
                   <li key={link.label}>
                     <FooterAnchor link={link} />
@@ -115,19 +116,19 @@ export function HomePageFooter() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-[var(--border)] pt-5 text-xs sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-1 border-t border-[var(--border)] pt-4 text-xs sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[var(--muted)]">
             © {new Date().getFullYear()} Mentra. All rights reserved.
           </p>
 
           <div className="flex items-center gap-3">
-            <Link href={"/privacy" as Route} className="text-[var(--muted)] transition-colors hover:text-[var(--text)] motion-reduce:transition-none">
+            <Link href={"/privacy" as Route} className="inline-flex min-h-11 items-center text-[var(--muted)] transition-colors hover:text-[var(--text)] motion-reduce:transition-none">
               Privacy Policy
             </Link>
             <span aria-hidden="true" className="text-[var(--muted)]">
               ·
             </span>
-            <Link href={"/terms" as Route} className="text-[var(--muted)] transition-colors hover:text-[var(--text)] motion-reduce:transition-none">
+            <Link href={"/terms" as Route} className="inline-flex min-h-11 items-center text-[var(--muted)] transition-colors hover:text-[var(--text)] motion-reduce:transition-none">
               Terms of Service
             </Link>
           </div>

@@ -248,14 +248,15 @@ export function PricingSection({
             {faqs.map((faq, idx) => (
               <details
                 key={faq.q}
-                className="group rounded-[20px] border border-[var(--border)] bg-[var(--card)] p-5"
+                className="group rounded-[20px] border border-[var(--border)] bg-[var(--card)] px-5"
                 {...(idx === 0 ? { open: true } : {})}
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-[var(--text)] select-none sm:text-base">
+                {/* The whole question row is the tap target, at least 56px tall */}
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between py-3 text-sm font-semibold text-[var(--text)] select-none sm:text-base">
                   <span>{faq.q}</span>
                   <ChevronDown className="ml-3 size-4 shrink-0 text-[var(--accent)] transition-transform duration-200 group-open:rotate-180 motion-reduce:transform-none motion-reduce:transition-none" />
                 </summary>
-                <p className="mt-3 text-xs leading-relaxed text-[var(--muted)] sm:text-sm">
+                <p className="pb-5 text-xs leading-relaxed text-[var(--muted)] sm:text-sm">
                   {faq.a}
                 </p>
               </details>

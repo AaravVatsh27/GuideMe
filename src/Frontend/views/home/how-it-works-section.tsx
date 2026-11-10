@@ -131,8 +131,9 @@ function StepCard({
           aria-hidden="true"
         />
       )}
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold tracking-[0.16em] text-[var(--muted)]">
+      {/* On phones the numbered circle beside the card shows the step, so the "01 —" label is hidden */}
+      <div className="flex items-center justify-end md:justify-between">
+        <span className="hidden text-[11px] font-semibold tracking-[0.16em] text-[var(--muted)] md:inline">
           {step.index}
         </span>
         <span className="home-accent-surface flex size-10 items-center justify-center rounded-2xl">

@@ -305,6 +305,18 @@ html:has([data-admin-shell]) {
   color: var(--text);
 }
 
+/* Visible keyboard focus on every interactive element of the home page, in the accent colour.
+   The resting outline colour is the accent too, so elements whose colour transitions include
+   outline-color never fade in from the app's default violet ring. */
+.mentra-home :is(a, button, input, select, textarea, summary, [tabindex]) {
+  outline-color: var(--accent);
+}
+
+.mentra-home :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .mentra-home .home-primary-button,
 .mentra-home .home-secondary-button {
   box-shadow: none;
