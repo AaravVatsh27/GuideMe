@@ -176,16 +176,24 @@ export function getAdminRedirectPath() {
   return "/dashboard";
 }
 
+/**
+ * Institution names behind the ELITE and VERIFIED tiers, which the Find a Mentor page shows as
+ * "Top Institutes (IIT/AIIMS)" and "NIT & BITS Verified". Abbreviations match whole words only,
+ * so "nit" no longer matches inside words like "United" and "iit" no longer matches inside "iiit".
+ */
+const ELITE_COLLEGE_PATTERN =
+  /\b(iit|iim|aiims|nlsiu|iisc|isb)\b|\bbits pilani\b|indian institute of (technology|management)\b|indian institute of science(?! education)|all india institute of medical sciences/;
+const VERIFIED_COLLEGE_PATTERN =
+  /\b(nit|nitk|iiit|bits|dtu|nsut|du|jnu|iiser|vnit|pec|jamia)\b|national institute of technology|indian institute of information technology|indian institute of science education and research|delhi technological university|university of delhi|delhi university|jawaharlal nehru university/;
+
 export function autoAssignMentorTier(college: string | null | undefined) {
   const normalized = (college ?? "").toLowerCase();
 
-  if (
-    /(iit|iim|aiims|nlsiu|bits pilani|isb|iisc|iit bombay|iit delhi|iit madras)/.test(normalized)
-  ) {
+  if (ELITE_COLLEGE_PATTERN.test(normalized)) {
     return MentorTier.ELITE;
   }
 
-  if (/(nit|iiit|bits|dtu|nsut|du|jnu|iiser|vnit|pec|jamia)/.test(normalized)) {
+  if (VERIFIED_COLLEGE_PATTERN.test(normalized)) {
     return MentorTier.VERIFIED;
   }
 

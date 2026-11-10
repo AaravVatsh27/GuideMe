@@ -1,4 +1,4 @@
-import type { Route } from "next";
+import type { Metadata, Route } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -32,8 +32,14 @@ import { HomepageHeader } from "@/Frontend/components/brand/HomepageHeader";
 import { HomepageFooter } from "@/Frontend/components/brand/HomepageFooter";
 import { formatPaise } from "@/shared/format";
 import { FREE_INTRO_DURATION } from "@/shared/constants";
+import { supportMailto } from "@/shared/site-config";
 
 export const revalidate = 300;
+
+// Shows as "Find a Mentor | Mentra" through the root title template; the root description applies.
+export const metadata: Metadata = {
+  title: "Find a Mentor",
+};
 
 type PageProps = {
   searchParams?: {
@@ -162,14 +168,24 @@ function MentorCard({
               <span>{isElite ? "Elite Senior" : "Verified Senior"}</span>
             </span>
 
-            {/* Rating display */}
-            <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
-              <Star className="size-3 fill-amber-400 text-amber-400" />
-              <span className="font-semibold text-[#1E1B4B]">
-                {mentor.avgRating > 0 ? mentor.avgRating.toFixed(1) : "5.0"}
-              </span>
-              <span>({mentor.totalSessions > 0 ? mentor.totalSessions : 24} sessions)</span>
-            </div>
+            {/* Rating and session count only from real data; nothing at all for a new mentor */}
+            {mentor.totalReviews > 0 || mentor.totalSessions > 0 ? (
+              <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
+                {mentor.totalReviews > 0 ? (
+                  <>
+                    <Star className="size-3 fill-amber-400 text-amber-400" />
+                    <span className="font-semibold text-[#1E1B4B]">
+                      {mentor.avgRating.toFixed(1)}
+                    </span>
+                  </>
+                ) : null}
+                {mentor.totalSessions > 0 ? (
+                  <span>
+                    ({mentor.totalSessions} {mentor.totalSessions === 1 ? "session" : "sessions"})
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -470,7 +486,7 @@ export default async function FindMentorPage({ searchParams }: PageProps) {
                 Find your senior friend & guide.
               </h1>
               <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600">
-                Book 1-on-1 video sessions with verified seniors from IIT, AIIMS, BITS, and IIM. Real, unfiltered advice on entrance strategies, branch choices, and campus realities.
+                Book 1-on-1 video sessions with college seniors who have been through the same decisions. Mentors are reviewed by our team before they go live.
               </p>
 
               {/* Key Trust Signals */}
@@ -670,9 +686,12 @@ export default async function FindMentorPage({ searchParams }: PageProps) {
           {/* Results Summary Header */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">
-                {totalMentorsCount} Verified Senior Mentors
-              </p>
+              {/* Hidden at zero; singular for one */}
+              {totalMentorsCount > 0 ? (
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">
+                  {totalMentorsCount} Verified Senior {totalMentorsCount === 1 ? "Mentor" : "Mentors"}
+                </p>
+              ) : null}
               <h2 className="mt-0.5 text-xl font-bold tracking-tight text-[#1E1B4B] sm:text-2xl">
                 {activeFilterCount > 0
                   ? "Mentors matching your criteria"
@@ -740,26 +759,18 @@ export default async function FindMentorPage({ searchParams }: PageProps) {
                   Need a senior from a specific college or branch?
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  If your target institute isn&apos;t listed above, let us know. We will connect you directly with a verified student or alumnus from that exact department within 24 hours.
+                  Email us the college or branch you need and we&apos;ll tell you if a mentor is available.
                 </p>
               </div>
 
-              <form className="flex w-full max-w-md flex-col gap-2 sm:flex-row">
-                <label className="relative flex-1">
-                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    className="h-11 w-full rounded-full border border-violet-200 bg-white pl-10 pr-4 text-xs sm:text-sm text-[#1E1B4B] shadow-xs outline-none placeholder:text-slate-400 focus:border-[#7C3AED] focus:ring-2 focus:ring-violet-500/10"
-                    placeholder="Enter your college / exam request..."
-                    type="text"
-                  />
-                </label>
-                <button
-                  className="h-11 shrink-0 rounded-full bg-[#1E1B4B] px-5 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-[#7C3AED]"
-                  type="submit"
-                >
-                  Request Senior
-                </button>
-              </form>
+              {/* The old form here had no handler, so requests went nowhere; this opens an email to support instead */}
+              <a
+                href={supportMailto("Mentor request: college or branch")}
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-full bg-[#1E1B4B] px-5 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-[#7C3AED] md:self-center"
+              >
+                <Mail className="size-4" aria-hidden="true" />
+                Email your request
+              </a>
             </div>
           </div>
         </section>
