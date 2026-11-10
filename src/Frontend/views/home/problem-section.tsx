@@ -23,7 +23,7 @@ export function ProblemSection() {
       title: "Thin guidance access",
       copy:
         "One-to-one guidance is difficult to find exactly when students need it most.",
-      solution: "Seniors reviewed before they go live on demand in minutes",
+      solution: "Seniors reviewed before they go live",
     },
     {
       number: "04",

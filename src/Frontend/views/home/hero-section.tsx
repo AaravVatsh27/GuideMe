@@ -1,25 +1,26 @@
 /** Landing page hero and the trust strip under it. */
 
 import Link from "next/link";
-import { ArrowRight, Briefcase, CheckCircle2, Clock3, GraduationCap, HeartHandshake, Laptop, School, ShieldCheck, Star, Users } from "lucide-react";
+import { ArrowRight, Briefcase, Compass, GraduationCap, HeartHandshake, Laptop, School, Star, Users } from "lucide-react";
 import { type PublicPlatformSnapshot } from "@/Backend/server/public-data";
 import dynamic from "next/dynamic";
 
-import { formatNumber, getMentorContext, getMentorGroup, getMentorInitials, getMentorPrice, getMentorProof, getMentorTopic, getStartingPrice } from "@/Frontend/views/home/home-helpers";
+import { formatNumber, getMentorInitials, getStartingPrice } from "@/Frontend/views/home/home-helpers";
 
 const HeroBackground = dynamic(() => import("./hero-background"), {
   ssr: false,
 });
 
 /**
- * Topic chips around the mentor card (768px and up). The top two sit above the card so their
- * connector lines run down to its top edge; the bottom two hang below it.
+ * Topic chips beside the light column (1024px and up), staggered: two upper-right chips with a
+ * connector line fading downward, and two lower-right chips without one.
+ * Positions are relative to the right-hand grid column.
  */
 const heroTopicChips = [
-  { label: "Higher Studies", Icon: GraduationCap, position: "bottom-full left-[6%]", delay: "0s" },
-  { label: "Technical Skills", Icon: Laptop, position: "bottom-full right-[6%]", delay: "-3s" },
-  { label: "Career Guidance", Icon: Briefcase, position: "top-full left-[14%] mt-4", delay: "-1.5s" },
-  { label: "College & More", Icon: School, position: "top-full right-[14%] mt-4", delay: "-4.5s" },
+  { label: "Higher Studies", Icon: GraduationCap, position: "left-[4%] top-[14%]", delay: "0s", connector: true },
+  { label: "Technical Skills", Icon: Laptop, position: "left-[46%] top-[4%]", delay: "-3s", connector: true },
+  { label: "Career Guidance", Icon: Briefcase, position: "left-[12%] top-[62%]", delay: "-1.5s", connector: false },
+  { label: "College & More", Icon: School, position: "left-[54%] top-[76%]", delay: "-4.5s", connector: false },
 ];
 
 export function HeroSection({
@@ -36,7 +37,7 @@ export function HeroSection({
   return (
     <section
       id="top"
-      className="mentra-hero-depth isolate relative overflow-hidden bg-[var(--bg)] pt-16 text-[var(--text)]"
+      className="mentra-hero-depth isolate relative overflow-hidden bg-[var(--bg)] pt-16 text-[var(--text)] lg:flex lg:min-h-[100svh] lg:flex-col"
     >
       <HeroBackground />
       <div
@@ -55,11 +56,11 @@ export function HeroSection({
         }
       `}</style>
 
-      <div className="relative z-20 mx-auto max-w-7xl px-4 pb-14 pt-14 sm:px-6 sm:pb-20 sm:pt-18 lg:px-8 lg:pb-24 lg:pt-20">
-        {/* On large screens the card sits in row 1 beside the label and headline, so it centres on them */}
-        <div className="grid gap-y-0 lg:grid-cols-[1.05fr_0.95fr] lg:gap-x-16">
-          {/* Hero label and headline */}
-          <div className="max-w-3xl lg:col-start-1 lg:row-start-1">
+      {/* On large screens the hero fills the viewport and the copy block is centred vertically in it */}
+      <div className="relative z-20 mx-auto max-w-7xl px-4 pb-14 pt-14 sm:px-6 sm:pb-20 sm:pt-18 lg:flex lg:w-full lg:flex-1 lg:flex-col lg:justify-center lg:px-8 lg:pb-24 lg:pt-20">
+        <div className="grid lg:grid-cols-[1.05fr_0.95fr] lg:gap-x-16">
+          {/* Hero copy */}
+          <div className="max-w-3xl">
             <div className="home-section-label text-xs font-semibold">
               Your senior friend for every big decision
             </div>
@@ -71,10 +72,7 @@ export function HeroSection({
                 mentor.
               </span>
             </h1>
-          </div>
 
-          {/* Hero copy, buttons and proof */}
-          <div className="max-w-3xl lg:col-start-1 lg:row-start-2">
             <p className="mt-7 max-w-xl text-base leading-7 text-[var(--muted)] sm:text-lg sm:leading-8">
               One honest conversation can change everything. Talk to a
               college senior who has recently walked the same road and can
@@ -161,127 +159,32 @@ export function HeroSection({
             ) : null}
           </div>
 
-          {/* Mentor preview */}
-          <div className="relative mx-auto mt-12 w-full max-w-xl md:mb-24 md:mt-24 lg:col-start-2 lg:row-start-1 lg:my-0 lg:self-center">
-            {heroTopicChips.map(({ label, Icon, position, delay }) => (
+          {/* Topic chips: the right-hand grid column starts just right of the light column,
+              so the chips sit beside the beam and can never overlap the headline block. */}
+          <div className="relative hidden lg:block" aria-hidden="true">
+            {heroTopicChips.map(({ label, Icon, position, delay, connector }) => (
               <div
                 key={label}
-                className={`pointer-events-none absolute z-10 hidden flex-col items-center md:flex ${position}`}
-                aria-hidden="true"
+                className={`pointer-events-none absolute flex flex-col items-center ${position}`}
               >
                 <div
-                  className="home-glass-card flex animate-[hero-float_9s_ease-in-out_infinite] items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[var(--text)] motion-reduce:animate-none"
+                  className="home-glass-card flex animate-[hero-float_9s_ease-in-out_infinite] items-center gap-2 whitespace-nowrap px-3.5 py-2 text-xs font-semibold text-[var(--text)] motion-reduce:animate-none"
                   style={{ animationDelay: delay }}
                 >
                   <Icon className="size-3.5 text-[var(--accent)]" strokeWidth={1.75} />
                   {label}
                 </div>
-                <span
-                  className="h-10 w-px"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, color-mix(in srgb, var(--accent) 40%, transparent), transparent)",
-                  }}
-                />
+                {connector ? (
+                  <span
+                    className="h-12 w-px"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, color-mix(in srgb, var(--accent) 40%, transparent), transparent)",
+                    }}
+                  />
+                ) : null}
               </div>
             ))}
-            <div className="home-glass-card relative animate-[hero-float_8s_ease-in-out_infinite] p-5 transition-transform duration-500 hover:-translate-y-1 motion-reduce:animate-none sm:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
-                    Start with someone who has been there
-                  </p>
-
-                  <h2 className="mt-2 text-xl font-bold tracking-tight text-[var(--text)]">
-                    Find a mentor who gets it.
-                  </h2>
-                </div>
-
-                <div className="home-accent-surface flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--border)]">
-                  <HeartHandshake className="size-5" />
-                </div>
-              </div>
-
-              {previewMentors.length > 0 ? (
-                <div className="mt-6 space-y-3">
-                  {previewMentors.map((mentor) => {
-                    const group = getMentorGroup(mentor);
-
-                    return (
-                      <Link
-                        key={mentor.username ?? mentor.name}
-                        href={
-                          mentor.username
-                            ? `/mentor/${encodeURIComponent(
-                                mentor.username,
-                              )}`
-                            : "/find-mentor"
-                        }
-                        className="home-glass-card group flex items-center gap-3 p-3.5 transition duration-200 hover:-translate-y-0.5"
-                      >
-                        <div
-                          className={`flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                            group === "school"
-                            ? "home-accent-surface"
-                            : "home-accent-surface"
-                          }`}
-                        >
-                          {getMentorInitials(mentor.name)}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="truncate text-sm font-semibold text-[var(--text)]">
-                              {mentor.name}
-                            </p>
-
-                            {mentor.totalReviews > 0 && (
-                              <ShieldCheck className="size-3.5 shrink-0 text-[var(--accent)]" />
-                            )}
-                          </div>
-
-                          <p className="truncate text-xs text-[var(--muted)]">
-                            {getMentorContext(mentor)}
-                          </p>
-
-                          <p className="mt-1 text-xs font-medium text-[var(--accent)]">
-                            {getMentorTopic(mentor)}
-                          </p>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-[var(--text)]">
-                            {getMentorPrice(mentor)}
-                          </p>
-
-                          <p className="mt-1 text-[11px] text-[var(--muted)]">
-                            {getMentorProof(mentor)}
-                          </p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-
-                  <Link
-                    href="/find-mentor"
-                    className="home-secondary-button group flex min-h-11 items-center justify-between rounded-2xl border-dashed px-4 text-sm font-semibold backdrop-blur transition"
-                  >
-                    Explore all mentors
-                    <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-                  </Link>
-                </div>
-              ) : (
-                <div className="home-glass-card mt-6 p-6">
-                <p className="text-sm font-semibold text-[var(--text)]">
-                    Mentor profiles are opening now.
-                  </p>
-
-                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                    Search the mentor network and see who is currently live.
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
@@ -332,54 +235,42 @@ export function TrustStrip({
 }: {
   snapshot: PublicPlatformSnapshot;
 }) {
-  const realStats = [
-    { key: "mentors", value: snapshot.totalMentors, label: "Verified mentors", Icon: ShieldCheck },
-    { key: "students", value: snapshot.totalStudents, label: "Students onboarded", Icon: Users },
-    { key: "sessions", value: snapshot.completedSessions, label: "Sessions completed", Icon: CheckCircle2 },
-  ].filter((stat) => stat.value > 0);
-
-  const valuePoints = [
-    { label: "Verified mentors, reviewed before they go live", Icon: ShieldCheck },
-    { label: "Free 10-minute intro call", Icon: Clock3 },
-    { label: "Real students, real experience", Icon: Users },
+  const points = [
+    {
+      title: "Real Guidance",
+      subline: "From college seniors who recently walked the same road.",
+      Icon: Compass,
+    },
+    {
+      title: "Personalized Support",
+      subline: `1:1 sessions, starting with a free ${snapshot.introMinutes}-minute intro.`,
+      Icon: HeartHandshake,
+    },
+    {
+      title: "A Trusted Community",
+      subline: "Verified mentors, reviewed before they go live.",
+      Icon: Users,
+    },
   ];
 
   return (
-    <section className="relative z-10 -mt-px overflow-hidden bg-[var(--bg)] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="home-glass-card group relative overflow-hidden transition-colors duration-200 motion-reduce:transition-none">
-          <div
-            className="relative grid grid-cols-1 divide-y divide-[var(--border)] md:grid-cols-3 md:divide-x md:divide-y-0"
-          >
-            {realStats.length === 3
-              ? realStats.map((stat) => {
-                  const Icon = stat.Icon;
-                  return (
-                    <div key={stat.key} className="flex min-h-[88px] items-center gap-4 px-5 py-5 sm:px-7">
-                      <span className="home-accent-surface flex size-10 shrink-0 items-center justify-center rounded-2xl">
-                        <Icon className="size-4" aria-hidden="true" />
-                      </span>
-                      <div>
-                        <p className="text-2xl font-bold tracking-[-0.03em] text-[var(--text)]">
-                          {formatNumber(stat.value)}
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-[var(--muted)]">
-                          {stat.label}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })
-              : valuePoints.map(({ label, Icon }) => (
-                  <div key={label} className="flex min-h-[88px] items-center gap-4 px-5 py-5 sm:px-7">
-                    <span className="home-accent-surface flex size-10 shrink-0 items-center justify-center rounded-2xl">
-                      <Icon className="size-4" aria-hidden="true" />
-                    </span>
-                    <p className="text-sm font-semibold leading-5 text-[var(--text)] sm:text-base">
-                      {label}
-                    </p>
-                  </div>
-                ))}
+    <section className="relative z-10 -mt-px overflow-hidden bg-[var(--bg)] py-6 sm:py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="home-glass-card relative overflow-hidden">
+          <div className="grid grid-cols-1 divide-y divide-[var(--border)] md:grid-cols-3 md:divide-x md:divide-y-0">
+            {points.map(({ title, subline, Icon }) => (
+              <div key={title} className="flex min-h-[88px] items-center gap-4 px-5 py-5 sm:px-7">
+                <Icon className="size-6 shrink-0 text-[var(--accent)]" strokeWidth={1.5} aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-semibold text-[var(--text)] sm:text-base">
+                    {title}
+                  </p>
+                  <p className="mt-1 text-sm leading-5 text-[var(--muted)]">
+                    {subline}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

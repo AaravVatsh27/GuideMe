@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "guideme-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "basinpulse-web",
+      "runtimeExecutable": "C:/Users/vatsh/OneDrive/Desktop/BasinPulse/.venv/Scripts/python.exe",
+      "runtimeArgs": ["C:/Users/vatsh/OneDrive/Desktop/floodcast-basinpulse/web/server.py"],
+      "port": 8000
+    }
+  ]
+}
