@@ -68,7 +68,8 @@ export function HomeCommunitySection() {
             href="/community"
             className="home-primary-button group inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-sm font-semibold transition duration-200 hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none"
           >
-            Join WhatsApp Community
+            {/* Only promise joining once a real invite link exists; until then the community page takes invite requests */}
+            {COMMUNITY_WHATSAPP_URL ? "Join WhatsApp Community" : "Request a community invite"}
             <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none" />
           </Link>
 
