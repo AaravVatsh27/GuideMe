@@ -4,6 +4,7 @@ import "@/Frontend/styles/globals.css";
 import { AppProviders } from "@/app/providers";
 import { ErrorBoundary } from "@/Frontend/components/ErrorBoundary";
 import { getAppUrl } from "@/Backend/lib/env";
+import { FREE_INTRO_DURATION } from "@/shared/constants";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,8 +29,8 @@ export const metadata: Metadata = {
     default: "Mentra - Your Senior Friend · Your Guide",
     template: "%s | Mentra",
   },
-  description:
-    "Connect with verified college seniors for 1:1 guidance across IITs, AIIMS, BITS, and top universities.",
+  // Only claims the product backs: mentors are approved before going live, and the intro is free.
+  description: `Talk one-on-one with college seniors who have been through the same decisions. Mentors are reviewed before they go live, and your first ${FREE_INTRO_DURATION}-minute intro is free.`,
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "32x32" },

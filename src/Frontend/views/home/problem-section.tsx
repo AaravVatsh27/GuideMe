@@ -30,7 +30,7 @@ export function ProblemSection() {
       title: "Late clarity",
       copy:
         "The right questions often appear after important forms, deadlines, or decisions have already passed.",
-      solution: "Proactive guidance before deadlines",
+      solution: "Clear answers before you decide",
     },
   ];
   const icons = [Compass, Flame, Users, Clock3];
