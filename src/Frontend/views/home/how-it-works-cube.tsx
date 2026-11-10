@@ -28,18 +28,24 @@ function supportsWebGL() {
   }
 }
 
-function makeGlowTexture() {
+/** Warm cream for edges, the core centre and the Mentra mark. */
+const CREAM = "#F5E6D3";
+/** --accent; three.js materials can't read CSS variables, so the token value is repeated here. */
+const ACCENT = "#F2A65A";
+
+/** White radial falloff; each sprite tints it with its own material colour. */
+function makeGlowTexture(falloff = 2.8) {
   const size = 128;
   const pixels = new Uint8Array(size * size * 4);
 
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
       const distance = Math.hypot(x - size / 2, y - size / 2) / (size / 2);
-      const alpha = Math.max(0, 1 - distance) ** 2.8;
+      const alpha = Math.max(0, 1 - distance) ** falloff;
       const offset = (y * size + x) * 4;
-      pixels[offset] = 124;
-      pixels[offset + 1] = 58;
-      pixels[offset + 2] = 237;
+      pixels[offset] = 255;
+      pixels[offset + 1] = 255;
+      pixels[offset + 2] = 255;
       pixels[offset + 3] = Math.round(alpha * 255);
     }
   }
@@ -66,16 +72,10 @@ function CubeModel() {
     source.dispose();
 
     const positions = edges.getAttribute("position");
-    const colors = new Float32Array(positions.count * 3);
-    const edgeColor = new THREE.Color("#C7D2FE");
-
-    for (let index = 0; index < positions.count; index += 1) {
-      colors[index * 3] = edgeColor.r;
-      colors[index * 3 + 1] = edgeColor.g;
-      colors[index * 3 + 2] = edgeColor.b;
-    }
-
-    edges.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    edges.setAttribute(
+      "color",
+      new THREE.BufferAttribute(new Float32Array(positions.count * 3), 3),
+    );
 
     return {
       face,
@@ -84,34 +84,50 @@ function CubeModel() {
     };
   }, []);
 
-  const glowTexture = useMemo(makeGlowTexture, []);
+  const glowTexture = useMemo(() => makeGlowTexture(2.8), []);
+  const centreTexture = useMemo(() => makeGlowTexture(1.4), []);
+
+  // The source mark is a purple-to-pink PNG; redraw its silhouette in solid cream.
+  const logoMask = useMemo(() => {
+    const image = logoTexture.image as HTMLImageElement;
+    const canvas = document.createElement("canvas");
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext("2d");
+    if (context) {
+      context.drawImage(image, 0, 0);
+      context.globalCompositeOperation = "source-in";
+      context.fillStyle = CREAM;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  }, [logoTexture]);
+
   const materials = useMemo(
     () => ({
       face: new THREE.MeshBasicMaterial({
-        color: "#4F46E5",
+        color: ACCENT,
         transparent: true,
-        opacity: 0.06,
+        opacity: 0.04,
         depthWrite: false,
         side: THREE.DoubleSide,
       }),
       edges: new THREE.LineBasicMaterial({
         vertexColors: true,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.75,
         depthWrite: false,
         toneMapped: false,
       }),
-      core: new THREE.MeshStandardMaterial({
-        color: "#A5B4FC",
-        emissive: "#A5B4FC",
-        emissiveIntensity: 0.16,
-        roughness: 0.22,
-        metalness: 0.05,
+      core: new THREE.MeshBasicMaterial({
+        color: ACCENT,
         toneMapped: false,
       }),
       glow: new THREE.SpriteMaterial({
         map: glowTexture,
-        color: "#A5B4FC",
+        color: ACCENT,
         transparent: true,
         opacity: 0.28,
         blending: THREE.AdditiveBlending,
@@ -119,15 +135,24 @@ function CubeModel() {
         depthTest: false,
         toneMapped: false,
       }),
+      centre: new THREE.SpriteMaterial({
+        map: centreTexture,
+        color: CREAM,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false,
+        depthTest: false,
+        toneMapped: false,
+      }),
       logo: new THREE.SpriteMaterial({
-        map: logoTexture,
+        map: logoMask,
         transparent: true,
         opacity: 0.96,
         depthWrite: false,
         depthTest: false,
       }),
     }),
-    [glowTexture, logoTexture],
+    [centreTexture, glowTexture, logoMask],
   );
 
   useEffect(
@@ -135,8 +160,17 @@ function CubeModel() {
       Object.values(geometries).forEach((geometry) => geometry.dispose());
       Object.values(materials).forEach((material) => material.dispose());
       glowTexture.dispose();
+      centreTexture.dispose();
+      logoMask.dispose();
     },
-    [geometries, glowTexture, materials],
+    [centreTexture, geometries, glowTexture, logoMask, materials],
+  );
+
+  // Edge colours: cream, blending to accent on the edges nearest the viewer. Recomputed every
+  // frame because the cube rotates, so which edges face front keeps changing.
+  const edgeColours = useMemo(
+    () => ({ cream: new THREE.Color(CREAM), accent: new THREE.Color(ACCENT), mixed: new THREE.Color(), a: new THREE.Vector3(), b: new THREE.Vector3() }),
+    [],
   );
 
   useFrame((state, delta) => {
@@ -157,9 +191,25 @@ function CubeModel() {
       );
     }
 
+    if (group) {
+      group.updateMatrixWorld();
+      const positions = geometries.edges.getAttribute("position");
+      const colors = geometries.edges.getAttribute("color") as THREE.BufferAttribute;
+      const { cream, accent, mixed, a, b } = edgeColours;
+      for (let index = 0; index < positions.count; index += 2) {
+        a.fromBufferAttribute(positions, index).applyMatrix4(group.matrixWorld);
+        b.fromBufferAttribute(positions, index + 1).applyMatrix4(group.matrixWorld);
+        // Edge midpoint depth: about +1.8 for the nearest edges, -1.8 for the farthest.
+        const front = THREE.MathUtils.smoothstep((a.z + b.z) / 2, 0.3, 1.3);
+        mixed.copy(cream).lerp(accent, front);
+        colors.setXYZ(index, mixed.r, mixed.g, mixed.b);
+        colors.setXYZ(index + 1, mixed.r, mixed.g, mixed.b);
+      }
+      colors.needsUpdate = true;
+    }
+
     const pulse = 0.5 + Math.sin(state.clock.elapsedTime * 1.2) * 0.5;
     materials.glow.opacity = 0.24 + pulse * 0.07;
-    materials.core.emissiveIntensity = 0.14 + pulse * 0.04;
   });
 
   return (
@@ -175,6 +225,11 @@ function CubeModel() {
         geometry={geometries.core}
         material={materials.core}
         position={[0, 0, 0.12]}
+      />
+      <sprite
+        material={materials.centre}
+        position={[0, 0, 0.12]}
+        scale={[0.13, 0.13, 1]}
       />
       <sprite
         material={materials.logo}
@@ -262,12 +317,13 @@ export default function HowItWorksCube() {
       ref={hostRef}
       className="relative mx-auto aspect-square w-full max-w-[460px] overflow-visible"
     >
-      <div
-        className="pointer-events-none absolute inset-[8%] rounded-full bg-[radial-gradient(circle,rgba(79,70,229,0.25)_0%,rgba(79,70,229,0.12)_42%,transparent_72%)] blur-2xl"
-        aria-hidden="true"
-      />
       {showCanvas ? (
         <CubeErrorBoundary>
+          {/* The one glow behind the cube; the SVG fallback draws its own equivalent. */}
+          <div
+            className="pointer-events-none absolute inset-[8%] rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--glow)_22%,transparent)_0%,color-mix(in_srgb,var(--glow)_9%,transparent)_42%,transparent_72%)] blur-2xl"
+            aria-hidden="true"
+          />
           <Canvas
             dpr={[1, 1.5]}
             camera={{ position: [0, 0, 8], fov: 35 }}

@@ -99,9 +99,13 @@ function nearestEdgeMidpoint(rect: DOMRect, origin: Point): Point {
 
 function StepCard({
   step,
+  stepNumber,
+  isLast,
   setCardRef,
 }: {
   step: HowItWorksStep;
+  stepNumber: number;
+  isLast: boolean;
   setCardRef: (id: string, element: HTMLElement | null) => void;
 }) {
   const Icon = step.icon;
@@ -113,6 +117,19 @@ function StepCard({
 
   const content = (
     <>
+      {/* Mobile only: numbered circle beside the card, and a thin line down to the next one */}
+      <span
+        className="absolute -left-12 top-6 flex size-9 items-center justify-center rounded-full border border-[var(--accent)] bg-[var(--bg)] text-sm font-semibold text-[var(--accent)] md:hidden"
+        aria-hidden="true"
+      >
+        {stepNumber}
+      </span>
+      {isLast ? null : (
+        <span
+          className="absolute -bottom-10 -left-[30px] top-[60px] w-px bg-[var(--accent)] opacity-40 md:hidden"
+          aria-hidden="true"
+        />
+      )}
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-semibold tracking-[0.16em] text-[var(--muted)]">
           {step.index}
@@ -243,11 +260,6 @@ export function HomeHowItWorksSection() {
       id="how-it-works"
       className="relative scroll-mt-[100px] bg-[var(--bg)] py-20 sm:py-24 lg:py-28"
     >
-      <div
-        className="home-ambient-glow pointer-events-none absolute left-1/2 top-[55%] z-0 size-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
-        aria-hidden="true"
-      />
-
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <p className="home-section-label text-xs font-semibold uppercase tracking-[0.18em]">
@@ -269,10 +281,10 @@ export function HomeHowItWorksSection() {
 
         <div
           ref={stageRef}
-          className="relative mx-auto mt-10 grid grid-cols-1 gap-4 md:mt-14 md:min-h-[460px] md:grid-cols-[minmax(0,1fr)_minmax(15rem,0.88fr)_minmax(0,1fr)] md:grid-rows-2 md:gap-x-7 md:gap-y-5"
+          className="relative mx-auto mt-10 grid grid-cols-1 gap-4 pl-12 md:mt-14 md:pl-0 md:min-h-[460px] md:grid-cols-[minmax(0,1fr)_minmax(15rem,0.88fr)_minmax(0,1fr)] md:grid-rows-2 md:gap-x-7 md:gap-y-5"
         >
           <svg
-            className="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-visible"
+            className="pointer-events-none absolute inset-0 z-0 hidden h-full w-full overflow-visible md:block"
             viewBox={viewBox}
             preserveAspectRatio="none"
             aria-hidden="true"
@@ -281,7 +293,8 @@ export function HomeHowItWorksSection() {
               className="motion-safe:animate-pulse"
               style={{ animationDuration: "4s" }}
               fill="none"
-              stroke="rgba(199,210,254,0.35)"
+              stroke="#F2A65A"
+              strokeOpacity="0.35"
               strokeDasharray="2 8"
               strokeLinecap="round"
               strokeWidth="1.5"
@@ -297,13 +310,13 @@ export function HomeHowItWorksSection() {
 
           <div
             ref={cubeRef}
-            className="relative z-10 order-1 col-span-full mx-auto aspect-square w-full max-w-[460px] self-center overflow-visible md:order-none md:col-span-1 md:col-start-2 md:row-span-2 md:row-start-1"
+            className="relative z-10 order-1 col-span-full mx-auto hidden aspect-square w-full max-w-[460px] self-center overflow-visible md:order-none md:col-span-1 md:col-start-2 md:row-span-2 md:row-start-1 md:block"
           >
             <HowItWorksCube />
           </div>
 
           <svg
-            className="pointer-events-none absolute inset-0 z-20 h-full w-full overflow-visible"
+            className="pointer-events-none absolute inset-0 z-20 hidden h-full w-full overflow-visible md:block"
             viewBox={viewBox}
             preserveAspectRatio="none"
             aria-hidden="true"
@@ -311,27 +324,33 @@ export function HomeHowItWorksSection() {
             <g className="motion-safe:animate-pulse">
               {Object.entries(layout.nodes).map(([id, point]) => (
                 <g key={id}>
+                  {/* Small soft halo, then the solid accent node */}
                   <circle
                     cx={point.x}
                     cy={point.y}
                     r="10"
-                    fill="#7C3AED"
-                    fillOpacity="0.22"
+                    fill="#F2A65A"
+                    fillOpacity="0.18"
                   />
                   <circle
                     cx={point.x}
                     cy={point.y}
                     r="4"
-                    fill="#A5B4FC"
-                    style={{ filter: "drop-shadow(0 0 7px rgba(165,180,252,0.85))" }}
+                    fill="#F2A65A"
                   />
                 </g>
               ))}
             </g>
           </svg>
 
-          {steps.map((step) => (
-            <StepCard key={step.index} step={step} setCardRef={setCardRef} />
+          {steps.map((step, position) => (
+            <StepCard
+              key={step.index}
+              step={step}
+              stepNumber={position + 1}
+              isLast={position === steps.length - 1}
+              setCardRef={setCardRef}
+            />
           ))}
         </div>
       </div>
