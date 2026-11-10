@@ -1,7 +1,7 @@
 /** Landing page hero and the trust strip under it. */
 
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Clock3, HeartHandshake, ShieldCheck, Star, Users } from "lucide-react";
+import { ArrowRight, Briefcase, CheckCircle2, Clock3, GraduationCap, HeartHandshake, Laptop, School, ShieldCheck, Star, Users } from "lucide-react";
 import { type PublicPlatformSnapshot } from "@/Backend/server/public-data";
 import dynamic from "next/dynamic";
 
@@ -11,13 +11,25 @@ const HeroBackground = dynamic(() => import("./hero-background"), {
   ssr: false,
 });
 
+/**
+ * Topic chips around the mentor card (768px and up). The top two sit above the card so their
+ * connector lines run down to its top edge; the bottom two hang below it.
+ */
+const heroTopicChips = [
+  { label: "Higher Studies", Icon: GraduationCap, position: "bottom-full left-[6%]", delay: "0s" },
+  { label: "Technical Skills", Icon: Laptop, position: "bottom-full right-[6%]", delay: "-3s" },
+  { label: "Career Guidance", Icon: Briefcase, position: "top-full left-[14%] mt-4", delay: "-1.5s" },
+  { label: "College & More", Icon: School, position: "top-full right-[14%] mt-4", delay: "-4.5s" },
+];
+
 export function HeroSection({
   snapshot,
 }: {
   snapshot: PublicPlatformSnapshot;
 }) {
   const previewMentors = snapshot.featuredMentors.slice(0, 3);
-  const startingPrice = getStartingPrice(snapshot);
+  const hasRealPrice =
+    snapshot.minPricePaise > 0 || snapshot.averagePaidSessionPricePaise > 0;
 
   const colleges = snapshot.mentorColleges;
 
@@ -44,9 +56,10 @@ export function HeroSection({
       `}</style>
 
       <div className="relative z-20 mx-auto max-w-7xl px-4 pb-14 pt-14 sm:px-6 sm:pb-20 sm:pt-18 lg:px-8 lg:pb-24 lg:pt-20">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-          {/* Hero copy */}
-          <div className="max-w-3xl">
+        {/* On large screens the card sits in row 1 beside the label and headline, so it centres on them */}
+        <div className="grid gap-y-0 lg:grid-cols-[1.05fr_0.95fr] lg:gap-x-16">
+          {/* Hero label and headline */}
+          <div className="max-w-3xl lg:col-start-1 lg:row-start-1">
             <div className="home-section-label text-xs font-semibold">
               Your senior friend for every big decision
             </div>
@@ -58,7 +71,10 @@ export function HeroSection({
                 mentor.
               </span>
             </h1>
+          </div>
 
+          {/* Hero copy, buttons and proof */}
+          <div className="max-w-3xl lg:col-start-1 lg:row-start-2">
             <p className="mt-7 max-w-xl text-base leading-7 text-[var(--muted)] sm:text-lg sm:leading-8">
               One honest conversation can change everything. Talk to a
               college senior who has recently walked the same road and can
@@ -82,16 +98,26 @@ export function HeroSection({
               </Link>
             </div>
 
+            {/* Price and mentor count only appear once there is real data behind them */}
             <div className="relative z-20 mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--muted)]">
-              <span className="font-semibold text-[var(--accent)]">
-                {startingPrice} / session
-              </span>
-              <span aria-hidden="true">·</span>
+              {hasRealPrice ? (
+                <>
+                  <span className="font-semibold text-[var(--accent)]">
+                    {getStartingPrice(snapshot)} / session
+                  </span>
+                  <span aria-hidden="true">·</span>
+                </>
+              ) : null}
               <span>Free {snapshot.introMinutes}-min intro</span>
-              <span aria-hidden="true">·</span>
-              <span>
-                {formatNumber(snapshot.totalMentors)} verified mentors
-              </span>
+              {snapshot.totalMentors > 0 ? (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>
+                    {formatNumber(snapshot.totalMentors)} verified{" "}
+                    {snapshot.totalMentors === 1 ? "mentor" : "mentors"}
+                  </span>
+                </>
+              ) : null}
             </div>
 
             {/* Social proof from real data; hidden until there is something real to show */}
@@ -136,7 +162,29 @@ export function HeroSection({
           </div>
 
           {/* Mentor preview */}
-          <div className="relative mx-auto w-full max-w-xl">
+          <div className="relative mx-auto mt-12 w-full max-w-xl md:mb-24 md:mt-24 lg:col-start-2 lg:row-start-1 lg:my-0 lg:self-center">
+            {heroTopicChips.map(({ label, Icon, position, delay }) => (
+              <div
+                key={label}
+                className={`pointer-events-none absolute z-10 hidden flex-col items-center md:flex ${position}`}
+                aria-hidden="true"
+              >
+                <div
+                  className="home-glass-card flex animate-[hero-float_9s_ease-in-out_infinite] items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[var(--text)] motion-reduce:animate-none"
+                  style={{ animationDelay: delay }}
+                >
+                  <Icon className="size-3.5 text-[var(--accent)]" strokeWidth={1.75} />
+                  {label}
+                </div>
+                <span
+                  className="h-10 w-px"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, color-mix(in srgb, var(--accent) 40%, transparent), transparent)",
+                  }}
+                />
+              </div>
+            ))}
             <div className="home-glass-card relative animate-[hero-float_8s_ease-in-out_infinite] p-5 transition-transform duration-500 hover:-translate-y-1 motion-reduce:animate-none sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>

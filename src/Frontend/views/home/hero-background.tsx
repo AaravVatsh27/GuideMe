@@ -11,6 +11,8 @@ type FallbackReason = "reduced motion" | "width under 768px" | "no WebGL" | "err
 const CORE_COLOR = "#F5E6D3";
 /** The fixed nav is 64px tall; the column starts right underneath it. */
 const NAV_HEIGHT_PX = 64;
+/** The column fades in over this many pixels just under the nav, so it has no hard top edge. */
+const TOP_FADE_PX = 60;
 /** Width of the bright core of the column. */
 const COLUMN_CORE_PX = 170;
 /** Full width of the column plane, including the soft glow falloff either side of the core. */
@@ -38,6 +40,7 @@ const columnFragmentShader = `
   uniform vec3 uAccentColor;
   uniform vec3 uGlowColor;
   uniform float uCoreRatio;
+  uniform float uTopFade;
   uniform float uTime;
   varying vec2 vUv;
   void main() {
@@ -47,7 +50,7 @@ const columnFragmentShader = `
     float body = exp(-x * x * 1.6);
     float halo = exp(-d * d * 4.0) * (1.0 - smoothstep(0.7, 1.0, d));
 
-    float topCap = 1.0 - smoothstep(0.97, 1.0, vUv.y);
+    float topCap = 1.0 - smoothstep(1.0 - uTopFade, 1.0, vUv.y);
     float vertical = topCap * smoothstep(0.0, 0.92, vUv.y);
     float flicker = 0.97 + 0.03 * sin(uTime * 0.9 + vUv.y * 6.0);
 
@@ -251,6 +254,7 @@ function LightColumn({ palette, layout }: { palette: Palette; layout: HeroLayout
         uniforms: {
           uTime: { value: 0 },
           uCoreRatio: { value: COLUMN_CORE_PX / COLUMN_PLANE_PX },
+          uTopFade: { value: 0.07 },
           uCoreColor: { value: palette.core },
           uAccentColor: { value: palette.accent },
           uGlowColor: { value: palette.glow },
@@ -289,6 +293,9 @@ function LightColumn({ palette, layout }: { palette: Palette; layout: HeroLayout
 
   useFrame(({ clock }) => {
     columnMaterial.uniforms.uTime.value = clock.getElapsedTime();
+    // TOP_FADE_PX as a share of the column height, so the fade stays 60px at any hero height.
+    const height = layout.columnTop - layout.columnBottom;
+    columnMaterial.uniforms.uTopFade.value = height > 0 ? (TOP_FADE_PX * layout.pixelsToWorld) / height : 0;
   });
 
   const { pixelsToWorld, columnTop, columnBottom } = layout;
@@ -462,8 +469,8 @@ function CssFallback({ mobile }: { mobile: boolean }) {
           // On phones the column runs straight behind the copy, so keep it faint enough to read through.
           opacity: mobile ? 0.45 : 1,
           background: `linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--glow) 6%, transparent) 22%, color-mix(in srgb, var(--accent) 22%, transparent) 33%, color-mix(in srgb, var(--accent) 42%, transparent) 42%, color-mix(in srgb, ${CORE_COLOR} 66%, transparent) 48.5%, color-mix(in srgb, ${CORE_COLOR} 66%, transparent) 51.5%, color-mix(in srgb, var(--accent) 42%, transparent) 58%, color-mix(in srgb, var(--accent) 22%, transparent) 67%, color-mix(in srgb, var(--glow) 6%, transparent) 78%, transparent 100%)`,
-          maskImage: "linear-gradient(to bottom, transparent 0%, black 3%, black 25%, transparent 92%)",
-          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 3%, black 25%, transparent 92%)",
+          maskImage: `linear-gradient(to bottom, transparent 0px, black ${TOP_FADE_PX}px, black 25%, transparent 92%)`,
+          WebkitMaskImage: `linear-gradient(to bottom, transparent 0px, black ${TOP_FADE_PX}px, black 25%, transparent 92%)`,
         }}
       />
       {Array.from({ length: mobile ? 8 : 14 }, (_, index) => (
